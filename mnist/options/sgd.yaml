@@ -1,0 +1,7 @@
+parent: abstract.yaml
+exp:
+    dir: logs/mnist/sgd
+optimizer:
+    name: sgd
+    lr: 0.01
+    momentum: 0.5
