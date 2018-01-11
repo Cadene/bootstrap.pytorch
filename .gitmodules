@@ -1,3 +1,0 @@
-[submodule "mnist"]
-	path = mnist
-	url = https://github.com/Cadene/mnist.bootstrap.pytorch

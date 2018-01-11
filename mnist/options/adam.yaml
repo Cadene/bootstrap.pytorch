@@ -1,8 +1,0 @@
-parent: abstract.yaml
-exp:
-    dir: logs/mnist/adam
-optimizer:
-    name: adam
-    lr: 0.0001
-misc:
-    cuda: True
