@@ -1,18 +1,20 @@
 # bootstrap.pytorch
 
 Bootstrap.pytorch is a highlevel framework for starting deep learning projects.
-It aims at accelerate research projects and prototyping by providing a powerfull workflow which is easy to extend.
+It aims at accelerating research projects and prototyping by providing a powerfull workflow which is easy to extend.
 Bootstrap add almost zero layer of abstraction to pytorch.
 
 *Few words from the authors (Remi Cadene, Micael Carvalho, Hedi Ben Younes, Thomas Robert): Bootstrap is the result of the time we spent engineering stuff since the beginning of our PhDs on different libraries and languages (Torch7, Keras, Tensorflow, Pytorch, Torchnet). It is also inspired by the modularity of modern web frameworks (TwitterBootstrap, CakePHP). We think that we were able to come up with a nice workflow and would like to open source it to get critics and to improve it furthermore with your help. Thanks!*
 
-Coming soon:
+**Coming soon**:
 
+- better documentation
 - imagenet module
 - finetuning module
 - cross-modal retrieval module (Triplet loss)
 - vqa module
 - detection module (SSD, FasterRCNN)
+- docker support
 
 ## The principle
 
@@ -29,55 +31,22 @@ Actually, bootstrap handles the rest! It contains:
 
 ## Quick tour
 
-To display options:
+To display parsed options from the yaml file:
 ```
 python main.py --path_opts mnist/options/sgd.yaml -h
-> usage: main.py [-h] [--path_opts PATH_OPTS] [--misc.cuda [MISC.CUDA]]
-> [...]
-> optional arguments:
->  -h, --help            show this help message and exit
->  --path_opts PATH_OPTS
->                        path to a yaml file containing the default options
->                        (default: options/default.yaml)
->  --misc.cuda [MISC.CUDA]
->                        Default: False
-> [...]
 ```
 
 To run an experiment (training + evaluation):
 ```
 python main.py --path_opts mnist/options/sgd.yaml
-> [I 2018-01-11 13:22:37] ...rap/engines/factory.py.8: Creating engine...
-> [I 2018-01-11 13:22:37] ...ap/datasets/factory.py.7: Creating dataset...
-> [I 2018-01-11 13:22:37] ...ap/datasets/factory.py.20: train on trainset (60000 items)
-> [I 2018-01-11 13:22:37] ...ap/datasets/factory.py.25: evaluate on valset (10000 items)
-> [I 2018-01-11 13:22:37] ...trap/models/factory.py.10: Creating model...
-> [I 2018-01-11 13:22:37] .../optimizers/factory.py.8: Creating optimizer...
-> [I 2018-01-11 13:22:37] ...trap/engines/engine.py.60: Launching training procedures
-> [I 2018-01-11 13:22:37] ...trap/engines/engine.py.82: Training model on trainset for epoch 0
-> [I 2018-01-11 13:22:37] ...trap/engines/engine.py.138: train: epoch 0 | batch 0/937
-> [I 2018-01-11 13:22:37] ...trap/engines/engine.py.141:       elapsed: 0:00:00 | left: 0:02:10
-> [I 2018-01-11 13:22:37] ...trap/engines/engine.py.142:       process: 0.13902 | load: 0.07177
-> [I 2018-01-11 13:22:37] ...trap/engines/engine.py.143:       loss: 2.37508
-> [...]
-> [I 2018-01-11 13:23:50] ...trap/engines/engine.py.209: eval: epoch 0 | batch 150/156
-> [I 2018-01-11 13:23:50] ...trap/engines/engine.py.212:       elapsed: 0:00:00 | left: 0:00:00
-> [I 2018-01-11 13:23:50] ...trap/engines/engine.py.213:       process: 0.00507 | load: 0.00101
-> [S 2018-01-11 13:23:50] ...trap/engines/engine.py.66: eval_epoch.epoch: 0.00
-> [S 2018-01-11 13:23:50] ...trap/engines/engine.py.66: eval_epoch.loss: 0.20
-> [S 2018-01-11 13:23:50] ...trap/engines/engine.py.66: eval_epoch.accuracy_top5: 99.93
-> [S 2018-01-11 13:23:50] ...trap/engines/engine.py.66: eval_epoch.accuracy_top1: 94.29
-> [I 2018-01-11 13:23:50] ...trap/engines/engine.py.73: Saving last checkpoint
-> [I 2018-01-11 13:23:50] ...trap/engines/engine.py.279: Saving model...
-> [I 2018-01-11 13:23:50] ...trap/engines/engine.py.283: Saving optimizer...
-> [I 2018-01-11 13:23:50] ...trap/engines/engine.py.287: Saving engine...
-> [I 2018-01-11 13:23:50] ...trap/engines/engine.py.82: Training model on trainset for epoch 1
-> [I 2018-01-11 13:23:50] ...trap/engines/engine.py.138: train: epoch 1 | batch 0/937
-> [I 2018-01-11 13:23:50] ...trap/engines/engine.py.141:       elapsed: 0:00:00 | left: 0:01:19
-> [I 2018-01-11 13:23:50] ...trap/engines/engine.py.142:       process: 0.08468 | load: 0.03953
-> [I 2018-01-11 13:23:50] ...trap/engines/engine.py.143:       loss: 0.70270
-> [...]
 ```
+
+Running an experiment will create 3 files:
+
+- [options.yaml](https://github.com/Cadene/bootstrap.pytorch/blob/master/logs/mnist/sgd/options.yaml) contains the options used for the experiment,
+- [logs.txt](https://github.com/Cadene/bootstrap.pytorch/blob/master/logs/mnist/sgd/logs.txt) contains all the information given to the logger.
+- [logs.json](https://github.com/Cadene/bootstrap.pytorch/blob/master/logs/mnist/sgd/logs.json) contains the following data: train_epoch.loss, train_batch.loss, eval_epoch.accuracy_top1, etc.
+
 
 To save the next experiment in a specific directory:
 ```
@@ -96,41 +65,11 @@ python view.py --path_opts logs/mnist/cuda/options.yaml
 open logs/mnist/cuda/view.html
 ```
 
-To visualize the log file because the server has been switched off:
-```
-less logs/mnist/cuda/logs.txt
-> [...]
-> [I 2018-01-11 13:25:55] ...trap/engines/engine.py.209: eval: epoch 9 | batch 100/156
-> [I 2018-01-11 13:25:55] ...trap/engines/engine.py.212:       elapsed: 0:00:00 | left: 0:00:00
-> [I 2018-01-11 13:25:55] ...trap/engines/engine.py.213:       process: 0.00244 | load: 0.00016
-> [I 2018-01-11 13:25:55] ...trap/engines/engine.py.209: eval: epoch 9 | batch 110/156
-> [I 2018-01-11 13:25:55] ...trap/engines/engine.py.212:       elapsed: 0:00:00 | left: 0:00:00
-> [I 2018-01-11 13:25:55] ...trap/engines/engine.py.213:       process: 0.00248 | load: 0.00013
-> [...]
-```
+Running `view.py` over an experiment will create an html file containing training and evaluation curves. An example is available here: <a href="https://rawgit.com/Cadene/bootstrap.pytorch/master/logs/mnist/sgd/view.html">view.html</a>
 
 To reload an experiment:
 ```
 python main.py --path_opts logs/mnist/cuda/options.yaml --exp.resume last
-```
-
-To run an experiment on the training set only with an other set of options:
-```
-CUDA_VISIBLE_DEVICES=0 python main.py --path_opts mnist/options/adam.yaml \
---dataset.train_split train --dataset.eval_split
-```
-
-To evaluate the best model during the training (useful when the evaluation time is too high):
-```
-CUDA_VISIBLE_DEVICES=1 python main.py --path_opts logs/mnist/adam/options.yaml \
---exp.resume best_accuracy_top1 \
---dataset.train_split --dataset.eval_split val
-```
-
-To magically visualize the training and evaluation curves on the same view:
-```
-python view.py --path_opts logs/mnist/adam/options.yaml
-open logs/mnist/adam/view.html
 ```
 
 ## Documentation
@@ -202,7 +141,7 @@ Simply create a new module containing:
 - your optimizer (if needed) in `myproject/optimizers`,
 - your options in `options/myproject`.
 
-We advise you to keep the same organization than in `bootstrap` directory and avoid modifying the core bootstrap files (`bootstrap/*.py`, `main.py`, `view.py`. Nevertheless, you are free to explore different ways.
+We advise you to keep the same organization than in `bootstrap` directory and avoid modifying the core bootstrap files (`bootstrap/*.py`, `main.py`, `view.py`). Nevertheless, you are free to explore different ways.
 
 ```
 .
@@ -244,4 +183,26 @@ python main.py --path_opts mnist/options/sgd.yaml \
 --exp.dir logs/mnist/`date "+%Y-%m-%d-%H-%M-%S"`_sgd
 ```
 
+To visualize the log file because the server has been switched off:
+```
+less logs/mnist/cuda/logs.txt
+```
 
+To run an experiment on the training set only with an other set of options:
+```
+CUDA_VISIBLE_DEVICES=0 python main.py --path_opts mnist/options/adam.yaml \
+--dataset.train_split train --dataset.eval_split
+```
+
+To evaluate the best model during the training (useful when the evaluation time is too high):
+```
+CUDA_VISIBLE_DEVICES=1 python main.py --path_opts logs/mnist/adam/options.yaml \
+--exp.resume best_accuracy_top1 \
+--dataset.train_split --dataset.eval_split val
+```
+
+To magically visualize the training and evaluation curves on the same view:
+```
+python view.py --path_opts logs/mnist/adam/options.yaml
+open logs/mnist/adam/view.html
+```
