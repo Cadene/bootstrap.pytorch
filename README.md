@@ -88,7 +88,7 @@ python main.py --path_opts logs/mnist/cuda/options.yaml --exp.resume last
 **Logs**
 
 - everything related to an experiment is stored in the same directory (logs, checkpoints, visualizations, options, etc.)
-- the experiment directores can be named as desired (including datetime, hyperparamters, server name, etc.) to ensure a personalized workflow
+- the experiment directores can be named as desired (example: `logs/mnist/2018-01-15-14-59_sgd`, `logs/batch_size_small/server1_gpu2`, etc.) to ensure a personalized workflow
 - the print function is replaced by a logger to be able to add useful information such as line number and file name where the log function has been called
 - the log function write everythings in a text file to ensure that you can access to the full workflow trace at any time
 - information such as the loss per epoch, metrics per epoch, loss per batch, metrics per batch are automatically saved in logs.json
@@ -105,19 +105,20 @@ python main.py --path_opts logs/mnist/cuda/options.yaml --exp.resume last
 **Engine**
 
 - a per epoch engine able to train and evaluate the model after each epochs is used by default
-- hooks functions trigered by the engine can be registered by the model (network, criterion, metric) and the optimizer (example: your mAP metric need to calculate the mAP at the end of the evaluation epoch, so it would register a hook to do it)
+- hooks functions trigered by the engine can be registered by the model (network, criterion, metric) and the optimizer (example: your mAP metric need to calculate the mAP at the end of the evaluation epoch, so you would register a hook for this purpose)
 - easy to extend engine, model and optimizer to be able to build a fully personnalized workflow (example: if you need to save checkpoints during an epoch you can overwrite methods of the default engine)
+
+**Model**
+
+- the model is made of a network (ex: resnet152), criterions (ex: nll) and metrics (ex: accuracy top1/top5)
+- the metrics used during training/evaluation can be different and even non existent in function of the model mode (e.g. train or eval) or the dataset split (e.g. train, val, test)
+- the model is in charge of converting the input to torch.cuda.Tensor (if needed) and to torch.autograd.Variable ; this ensure that you only need to load the model to be able to feed it any input you want (easy debugging, visualization, and deployment)
 
 **Dataset**
 
 - dataset classes handle automatic download and preprocessing to be able to run an experiment with only one command after having installed bootstrap
 - a batch returned by a dataset is a dictionnary (possibly nested) having the network input and the criterion target as well as useful information on items (such as the image path, the item index, etc.)
 - this dictionnary (e.g. batch) is the only input of the model and is by default transferred to the network, criterion and metric ; this ensure easy debugging and easy visualization if needed
-
-**Model**
-
-- the model is made of a network (ex: resnet152), criterions (ex: nll), metrics (ex: accuracy top1/top5)
-- the model is in charge of converting the input to torch.cuda.Tensor (if needed) and to torch.autograd.Variable ; this ensure that you only need to load the model to be able to feed it any input you want (easy debugging, visualization, and deployment)
 
 
 ## Documentation
