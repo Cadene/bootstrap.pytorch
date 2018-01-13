@@ -15,6 +15,7 @@ Bootstrap add almost zero layer of abstraction to pytorch.
 - vqa module
 - detection module (SSD, FasterRCNN)
 - docker support
+- improving visualization extendability
 
 ## The principle
 
@@ -75,8 +76,8 @@ python main.py --path_opts logs/mnist/cuda/options.yaml --exp.resume last
 
 **General**
 
-- modularity and code normalization (but not too much) to ensure code reusability
-- CTRL+V are faster and clearer than bad refactoring
+- bootstrap is organized in a modular way to ensure code reusability
+- a single file "main.py" is used as an entry point to train and/or evaluate a model 
 
 **Options**
 
@@ -94,6 +95,11 @@ python main.py --path_opts logs/mnist/cuda/options.yaml --exp.resume last
 - information such as the loss per epoch, metrics per epoch, loss per batch, metrics per batch are automatically saved in logs.json
 - the logger which manages prints, logs.txt and logs.json is accessible everywhere via a global variable to ensure fast and easy debugging (example: you want to log the output Tensor of a certain layer of your network along the evaluation process)
 
+**Visualizations**
+
+- a single file `view.py` is used to produce visualizations
+- visualizations are generated in a .html file using plotly (curves can be zoomed in, point values are showed on mouseover, etc.)
+- personalized curves ploting are possible using the yaml options file of the experiment
 
 **Checkpoints**
 
