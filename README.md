@@ -194,7 +194,7 @@ Simply create a new module containing:
 - your dataset in `myproject/datasets`,
 - your model (network, criterion, metric) in `myproject/models`,
 - your optimizer (if needed) in `myproject/optimizers`,
-- your options in `options/myproject`.
+- your options in `myproject/options`.
 
 We advise you to keep the same organization than in `bootstrap` directory and avoid modifying the core bootstrap files (`bootstrap/*.py`, `main.py`, `view.py`). Nevertheless, you are free to explore different ways.
 
@@ -202,7 +202,7 @@ We advise you to keep the same organization than in `bootstrap` directory and av
 .
 ├── data
 ├── logs
-├── bootstrap              # don't modify, besides `factory.py` files
+├── bootstrap              # avoid modifications to bootstrap/*
 ├── myproject
 |   ├── options            # add your yaml files here
 |   ├── datasets          
@@ -220,15 +220,14 @@ We advise you to keep the same organization than in `bootstrap` directory and av
 |   |   └── metrics        # if custom metric is needed
 |   |       ├── mymetric.py
 |   |       └── factory.py
-|   ├── engine             # if custom engine is needed
-|   ├── optimizers         # if custom optimizer is needed
-├── main.py                # avoid modifications to main
-└── view.py                # avoid modifications to view
+|   ├── engines            # if custom engine is needed
+|   └── optimizers         # if custom optimizer is needed
+├── main.py                # avoid modifications to main.py
+└── view.py                # avoid modifications to view.py
 ```
 
 Some examples are available in the repository:
 - mnist
-- imagenet
 
 ### Tricks
 
