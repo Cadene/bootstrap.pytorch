@@ -77,7 +77,7 @@ python main.py --path_opts logs/mnist/cuda/options.yaml --exp.resume last
 **General**
 
 - bootstrap is organized in a modular way to ensure code reusability
-- a single file "main.py" is used as an entry point to train and/or evaluate a model 
+- a single file `main.py` is used as an entry point to train and/or evaluate a model 
 
 **Options**
 
