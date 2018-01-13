@@ -1,10 +1,10 @@
 # bootstrap.pytorch
 
 Bootstrap.pytorch is a highlevel framework for starting deep learning projects.
-It aims at accelerating research projects and prototyping by providing a powerfull workflow which is easy to extend.
+It aims at accelerating research projects and prototyping by providing a powerfull workflow which is as flexible as possible and easy to extend.
 Bootstrap add almost zero layer of abstraction to pytorch.
 
-*Few words from the authors (Remi Cadene, Micael Carvalho, Hedi Ben Younes, Thomas Robert): Bootstrap is the result of the time we spent engineering stuff since the beginning of our PhDs on different libraries and languages (Torch7, Keras, Tensorflow, Pytorch, Torchnet). It is also inspired by the modularity of modern web frameworks (TwitterBootstrap, CakePHP). We think that we were able to come up with a nice workflow and would like to open source it to get critics and to improve it furthermore with your help. Thanks!*
+*Few words from the authors (Remi Cadene, Micael Carvalho, Hedi Ben Younes, Thomas Robert): Bootstrap is the result of the time we spent engineering stuff since the beginning of our PhDs on different libraries and languages (Torch7, Keras, Tensorflow, Pytorch, Torchnet). It is also inspired by the modularity of modern web frameworks (TwitterBootstrap, CakePHP). We think that we were able to come up with a nice workflow and good practicies that we would like to share. Criticisms are welcome. Thanks for considering our work!*
 
 **Coming soon**:
 
@@ -27,7 +27,6 @@ Actually, bootstrap handles the rest! It contains:
 - a logger,
 - saving/loading utilities,
 - automatic curves ploting utilities with javascript support.
-
 
 ## Quick tour
 
@@ -71,6 +70,33 @@ To reload an experiment:
 ```
 python main.py --path_opts logs/mnist/cuda/options.yaml --exp.resume last
 ```
+
+## The good practices used to build Bootstrap
+
+- modularity and code normalization (but not too much) to ensure code reusability
+- CTRL+V are faster and clearer than bad refactoring
+- options stored at a single place in a yaml file
+- yaml options files can be extended as in OOP to avoid mistakes when prototyping
+- options from yaml files are parsed to create command line arguments and thus can be overwritten by command line to ensure easy hyper parameters search
+- loaded options are accessible everywhere via a global variable to ensure fast and easy prototyping
+- everything related to an experiment is stored in the same directory (logs, checkpoints, visualizations, options, etc.)
+- the experiment directores can be named as desired (including datetime, hyperparamters, server name, etc.) to ensure a personalized workflow
+- experiments are saved after every epoch with multiple checkpoints (last and best)
+- multiple criteria can be used to save checkpoints (ex: best accuracy top1, best loss, etc.)
+- checkpoints are divided in several parts to ensure that you can delete the optimizer only to save memory space
+- experiments can be stopped and started again using only two commands: path to experiment and name of checkpoint to be resumed
+- the print function is replaced by a logger to be able to add useful information such as line number and file name where the log function has been called
+- the log function write everythings in a text file to ensure that you can access to the full workflow trace at any time
+- information such as the loss per epoch, metrics per epoch, loss per batch, metrics per batch are automatically saved in logs.json
+- the logger which manage prints, logs.txt and logs.json is accessible everywhere via a global variable to ensure fast and easy debugging (example: you want to log the output Tensor of a certain layer of your network along the evaluation process)
+- a per epoch engine to be able to train and evaluate your model after each epochs
+- hooks functions trigered by the engine can be registered by the model (network, criterion, metric) and the optimizer (example: your mAP metric need to calculate the mAP at the end of the evaluation epoch, so it would register a hook to do it)
+- easy to extend engine, model and optimizer to be able to build a fully personnalized workflow (example: if you need to save checkpoints during an epoch you can overwrite methods of the default engine)
+- dataset classes handle automatic download and preprocessing to be able to run an experiment with only one command after having installed bootstrap
+- a batch returned by a dataset is a dictionnary (possibly nested) having the network input and the criterion target as well as useful information on items (such as the image path, the item index, etc.)
+- this dictionnary (e.g. batch) is the only input of the model and is by default transferred to the network, criterion and metric ; this ensure easy debugging and easy visualization if needed
+- the model is in charge of converting the input to torch.cuda.Tensor (if needed) and to torch.autograd.Variable ; this ensuer that you only need to load the model to be able to feed it any input you want (easy debugging, visualization, and deployment)
+
 
 ## Documentation
 
