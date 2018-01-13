@@ -73,29 +73,51 @@ python main.py --path_opts logs/mnist/cuda/options.yaml --exp.resume last
 
 ## The good practices used to build Bootstrap
 
+**General**
+
 - modularity and code normalization (but not too much) to ensure code reusability
 - CTRL+V are faster and clearer than bad refactoring
-- options stored at a single place in a yaml file
+
+**Options**
+
+- options are stored in a single place in a yaml file
 - yaml options files can be extended as in OOP to avoid mistakes when prototyping
 - options from yaml files are parsed to create command line arguments and thus can be overwritten by command line to ensure easy hyper parameters search
 - loaded options are accessible everywhere via a global variable to ensure fast and easy prototyping
+
+**Logs**
+
 - everything related to an experiment is stored in the same directory (logs, checkpoints, visualizations, options, etc.)
 - the experiment directores can be named as desired (including datetime, hyperparamters, server name, etc.) to ensure a personalized workflow
-- experiments are saved after every epoch with multiple checkpoints (last and best)
-- multiple criteria can be used to save checkpoints (ex: best accuracy top1, best loss, etc.)
-- checkpoints are divided in several parts to ensure that you can delete the optimizer only to save memory space
-- experiments can be stopped and started again using only two commands: path to experiment and name of checkpoint to be resumed
 - the print function is replaced by a logger to be able to add useful information such as line number and file name where the log function has been called
 - the log function write everythings in a text file to ensure that you can access to the full workflow trace at any time
 - information such as the loss per epoch, metrics per epoch, loss per batch, metrics per batch are automatically saved in logs.json
-- the logger which manage prints, logs.txt and logs.json is accessible everywhere via a global variable to ensure fast and easy debugging (example: you want to log the output Tensor of a certain layer of your network along the evaluation process)
-- a per epoch engine to be able to train and evaluate your model after each epochs
+- the logger which manages prints, logs.txt and logs.json is accessible everywhere via a global variable to ensure fast and easy debugging (example: you want to log the output Tensor of a certain layer of your network along the evaluation process)
+
+
+**Checkpoints**
+
+- experiments are saved after every epoch with multiple checkpoints (last and best)
+- multiple criteria can be used to save checkpoints (ex: best accuracy top1, best loss, etc.)
+- checkpoints are divided in several parts to ensure that you can delete the optimizer state only to save memory space
+- experiments can be stopped and started again using only two commands: path to experiment and name of checkpoint to be resumed
+
+**Engine**
+
+- a per epoch engine able to train and evaluate the model after each epochs is used by default
 - hooks functions trigered by the engine can be registered by the model (network, criterion, metric) and the optimizer (example: your mAP metric need to calculate the mAP at the end of the evaluation epoch, so it would register a hook to do it)
 - easy to extend engine, model and optimizer to be able to build a fully personnalized workflow (example: if you need to save checkpoints during an epoch you can overwrite methods of the default engine)
+
+**Dataset**
+
 - dataset classes handle automatic download and preprocessing to be able to run an experiment with only one command after having installed bootstrap
 - a batch returned by a dataset is a dictionnary (possibly nested) having the network input and the criterion target as well as useful information on items (such as the image path, the item index, etc.)
 - this dictionnary (e.g. batch) is the only input of the model and is by default transferred to the network, criterion and metric ; this ensure easy debugging and easy visualization if needed
-- the model is in charge of converting the input to torch.cuda.Tensor (if needed) and to torch.autograd.Variable ; this ensuer that you only need to load the model to be able to feed it any input you want (easy debugging, visualization, and deployment)
+
+**Model**
+
+- the model is made of a network (ex: resnet152), criterions (ex: nll), metrics (ex: accuracy top1/top5)
+- the model is in charge of converting the input to torch.cuda.Tensor (if needed) and to torch.autograd.Variable ; this ensure that you only need to load the model to be able to feed it any input you want (easy debugging, visualization, and deployment)
 
 
 ## Documentation
