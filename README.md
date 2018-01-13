@@ -9,8 +9,8 @@ Bootstrap add almost zero layer of abstraction to pytorch.
 **Coming soon**:
 
 - better documentation
-- imagenet module
-- finetuning module
+- multi GPU support
+- image_classification module (including imagenet)
 - cross-modal retrieval module (Triplet loss)
 - vqa module
 - detection module (SSD, FasterRCNN)
