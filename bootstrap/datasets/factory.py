@@ -17,11 +17,11 @@ def factory():
     if Options()['dataset']['train_split']:
         train_split = Options()['dataset']['train_split']
         dataset['train'] = module.factory(train_split)
-        Logger()('train on {}set ({} items)'.format(train_split, len(dataset['train'])))
+        Logger()('Training will take place on {}set ({} items)'.format(train_split, len(dataset['train'])))
 
     if Options()['dataset']['eval_split']:
         eval_split = Options()['dataset']['eval_split']
         dataset['eval'] = module.factory(eval_split)
-        Logger()('evaluate on {}set ({} items)'.format(eval_split, len(dataset['eval'])))
+        Logger()('Evaluation will take place on {}set ({} items)'.format(eval_split, len(dataset['eval'])))
 
     return dataset
