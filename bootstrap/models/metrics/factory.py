@@ -7,7 +7,10 @@ from .accuracy import Accuracy
 
 def factory(engine=None, mode=None):
 
-    Logger()('Creating metric...')
+    if 'metric' not in Options()['model'] or Options()['model']['metric'] is None:
+        return None
+
+    Logger()('Creating metric from bootstrap for {} mode...'.format(mode))
 
     if 'import' in Options()['model']['metric']:
         module = importlib.import_module(Options()['model']['metric']['import'])

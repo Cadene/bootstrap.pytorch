@@ -8,7 +8,10 @@ from .cross_entropy import CrossEntropyLoss
 
 def factory(engine=None, mode=None):
 
-    Logger()('Creating criterion...')
+    if 'criterion' not in Options()['model'] or Options()['model']['criterion'] is None:
+        return None
+
+    Logger()('Creating criterion from bootstrap for {} mode...'.format(mode))
 
     if 'import' in Options()['model']['criterion']:
         module = importlib.import_module(Options()['model']['criterion']['import'])
