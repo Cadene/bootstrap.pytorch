@@ -44,8 +44,11 @@ def init_experiment_directory(exp_dir, resume=None):
     Logger(exp_dir, name=logs_name)
 
 
-def main():
-    # first call to Options() load the options yaml file from --path_opts command line argument
+def main(path_opts=None):
+    # first call to Options() load the options yaml file from --path_opts command line argument if path_opts=None
+    Options(path_opts)
+
+    # make exp directory if resume=None
     init_experiment_directory(Options()['exp']['dir'], Options()['exp']['resume'])
 
     # initialiaze seeds to be able to reproduce experiment on reload
@@ -96,6 +99,9 @@ def main():
 if __name__ == '__main__':
     try:
         main()
+    # to avoid traceback for -h flag in arguments line
+    except SystemExit:
+        pass
     except:
         # to be able to write the error trace to exp_dir/logs.txt
         try:
