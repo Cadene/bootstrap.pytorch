@@ -130,7 +130,13 @@ class Logger(object):
         self.values[name].append(value)
 
         if should_print:
-            message = '{}: {:.2f}'.format(name, value)
+            if type(value) == float:
+                if int(value) == 0:
+                    message = '{}: {:.6f}'.format(name, value)
+                else:
+                    message = '{}: {:.2f}'.format(name, value)
+            else:
+                message = '{}: {}'.format(name, value)
             self.log_message(message, log_level=log_level, stack_displacement=stack_displacement+1, )
 
     def log_dict(self, group, dictionary, description='', stack_displacement=2, should_print=False, log_level=SUMMARY):
@@ -169,8 +175,11 @@ class Logger(object):
 
     def reload_json(self):
         if os.path.isfile(self.path_json):
-            with open(self.path_json, 'r') as json_file:
-                self.values = json.load(json_file)
+            try:
+                with open(self.path_json, 'r') as json_file:
+                    self.values = json.load(json_file)
+            except:
+                self.log_message('json log file can not be open: {}'.format(self.path_json), log_level=self.WARNING)
 
     def flush(self):
         if self.dir_logs:

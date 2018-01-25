@@ -64,11 +64,13 @@ class Engine():
 
             if Options()['dataset']['eval_split']:
                 out = self.eval_epoch(self.model, self.dataset['eval'], self.epoch)
-                for saving_criteria in Options()['engine']['saving_criteria']:
-                    if self.is_best(out, saving_criteria):  
-                        name = saving_criteria.split(':')[0]
-                        Logger()('Saving best checkpoint for strategy {}'.format(name))
-                        self.save(Options()['exp']['dir'], 'best_{}'.format(name), self.model, self.optimizer)
+
+                if 'saving_criteria' in Options()['engine'] and Options()['engine']['saving_criteria'] is not None:
+                    for saving_criteria in Options()['engine']['saving_criteria']:
+                        if self.is_best(out, saving_criteria):
+                            name = saving_criteria.split(':')[0]
+                            Logger()('Saving best checkpoint for strategy {}'.format(name))
+                            self.save(Options()['exp']['dir'], 'best_{}'.format(name), self.model, self.optimizer)
 
             Logger()('Saving last checkpoint')
             self.save(Options()['exp']['dir'], 'last', self.model, self.optimizer)
@@ -129,6 +131,10 @@ class Engine():
                         continue
                     else:
                         value = value[0]
+                if type(value) == list:
+                    continue
+                if type(value) == dict:
+                    continue
                 if key not in out_epoch:
                     out_epoch[key] = []
                 out_epoch[key].append(value)
@@ -201,6 +207,10 @@ class Engine():
                         continue
                     else:
                         value = value[0]
+                if type(value) == list:
+                    continue
+                if type(value) == dict:
+                    continue
                 if key not in out_epoch:
                     out_epoch[key] = []
                 out_epoch[key].append(value)
@@ -218,12 +228,15 @@ class Engine():
             self.hook('eval_on_end_batch')
 
             if Options()['engine']['debug']:
-                if i > 2:
+                if i > 10:
                     break
 
         out = {}
         for key, value in out_epoch.items():
-            out[key] = sum(value)/len(value)
+            try:
+                out[key] = sum(value)/len(value)
+            except:
+                import ipdb; ipdb.set_trace()
 
         Logger().log_value('eval_epoch.epoch', epoch, should_print=True)
         for key, value in out.items():
@@ -267,9 +280,10 @@ class Engine():
         model_state = torch.load(path_template.format(name, 'model'))
         model.load_state_dict(model_state)
 
-        Logger()('Loading optimizer...')
-        optimizer_state = torch.load(path_template.format(name, 'optimizer'))
-        optimizer.load_state_dict(optimizer_state)
+        if Options()['dataset']['train_split'] is not None:
+            Logger()('Loading optimizer...')
+            optimizer_state = torch.load(path_template.format(name, 'optimizer'))
+            optimizer.load_state_dict(optimizer_state)
 
         Logger()('Loading engine...')
         engine_state = torch.load(path_template.format(name, 'engine'))
