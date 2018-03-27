@@ -4,7 +4,12 @@ from ..lib.logger import Logger
 from .engine import Engine
 from .logger import LoggerEngine
 
-def factory():
+
+def factory() -> Engine:
+    """Using the import path from the Options, calls the engine factory from the user-defined module.
+    If the engine name is default or logger (no specific import path specified),
+    uses the default Engine or the LoggerEngine"""
+
     Logger()('Creating engine...')
 
     if 'import' in Options()['engine'] and Options()['engine']['import']:

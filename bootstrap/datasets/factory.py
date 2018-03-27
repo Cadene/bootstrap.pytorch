@@ -3,7 +3,11 @@ import importlib
 from ..lib.options import Options
 from ..lib.logger import Logger
 
-def factory():
+from torch.utils.data import Dataset
+
+
+def factory() -> Dataset:
+    """Using the import path from the Options, calls the dataset factory from the user-defined module"""
     Logger()('Creating dataset...')
 
     if 'import' not in Options()['dataset']:
