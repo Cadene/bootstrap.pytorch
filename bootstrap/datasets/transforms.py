@@ -36,9 +36,13 @@ class ListDictsToDictLists(object):
 
 class PadTensors(object):
 
-    def __init__(self, value=0, avoid_keys=[]):
+    def __init__(self, value=0, use_keys=[], avoid_keys=[]):
         self.value = value
-        self.avoid_keys = avoid_keys
+        self.use_keys = use_keys
+        if len(self.use_keys)>0:
+            self.avoid_keys = []
+        else:
+            self.avoid_keys = avoid_keys
 
     def __call__(self, batch):
         batch = self.pad_tensors(batch)
@@ -48,7 +52,8 @@ class PadTensors(object):
         if isinstance(batch, collections.Mapping):
             out = {}
             for key, value in batch.items():
-                if key not in self.avoid_keys:
+                if (key in self.use_keys) or \
+                   (len(self.use_keys) == 0 and key not in self.avoid_keys):
                     out[key] = self.pad_tensors(value)
                 else:
                     out[key] = value
