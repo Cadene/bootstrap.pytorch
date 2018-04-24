@@ -229,3 +229,35 @@ class ToVariable(object):
         else:
             return batch
 
+
+class SortByKey(object):
+
+    def __init__(self, key='lengths', reverse=True):
+        self.key = key
+        self.reverse = True
+        self.i = 0
+
+    def __call__(self, batch):
+        self.set_sort_keys(batch[self.key]) # must be a list
+        batch = self.sort_by_key(batch)
+        return batch
+
+    def set_sort_keys(self, sort_keys):
+        self.i = 0
+        self.sort_keys = sort_keys
+
+    # ugly hack to be able to sort without lambda function
+    def get_key(self, _):
+        key = self.sort_keys[self.i]
+        self.i += 1
+        if self.i >= len(self.sort_keys):
+            self.i = 0
+        return key
+
+    def sort_by_key(self, batch):
+        if isinstance(batch, collections.Mapping):
+            return {key: self.sort_by_key(value) for key, value in batch.items()}
+        elif type(batch) is list:#isinstance(batch, collections.Sequence):
+            return sorted(batch, key=self.get_key, reverse=self.reverse)
+        else:
+            return batch
