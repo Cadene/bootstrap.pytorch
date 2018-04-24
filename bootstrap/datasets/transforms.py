@@ -184,6 +184,29 @@ class ToCuda(object):
             return batch
 
 
+class ToCpu(object):
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __call__(self, batch):
+        batch = self.to_cpu(batch)
+        return batch
+
+    def to_cpu(self, batch):
+        if isinstance(batch, collections.Mapping):
+            return {key: self.to_cpu(value) for key,value in batch.items()}
+        elif torch.is_tensor(batch):
+            return batch.cpu()
+        elif type(batch).__name__ == 'Variable':
+            # TODO: Really hacky
+            return Variable(batch.data.cpu())
+        elif isinstance(batch, collections.Sequence) and torch.is_tensor(batch[0]):
+            return [self.to_cpu(value) for value in batch]
+        else:
+            return batch
+
+
 class ToVariable(object):
 
     def __init__(self, volatile=False):
