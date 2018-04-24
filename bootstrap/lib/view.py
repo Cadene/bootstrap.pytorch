@@ -11,10 +11,8 @@ import plotly.plotly as py
 import plotly.graph_objs as go
 from plotly import tools
 from plotly.offline import download_plotlyjs, plot
-
-from bootstrap.lib.options import Options
-from bootstrap.lib.logger import Logger
-
+from threading import Thread
+from .logger import Logger
 
 def seaborn_color_to_plotly(list_color):
     n_list_color = []
@@ -26,12 +24,22 @@ def seaborn_color_to_plotly(list_color):
     return n_list_color
 
 
-def generate_view():
+class GenerateView(Thread):
+
+    def __init__(self, options):
+        super(GenerateView, self).__init__()
+        self.options = options
+
+    def run(self):
+        generate_view(self.options)
+
+
+def generate_view(options):
 
     # find all the log_names to load
     log_names = []
     views_per_figure = []
-    for i, view_raw in enumerate(Options()['view']):
+    for i, view_raw in enumerate(options['view']):
         views = []
         for view_interim in view_raw.split('+'):
             log_name, view_name = view_interim.split(':')
@@ -48,7 +56,7 @@ def generate_view():
 
     data_dict = {}
     for log_name in log_names:
-        path_json = os.path.join(Options()['exp']['dir'],
+        path_json = os.path.join(options['exp']['dir'],
                                  '{}.json'.format(log_name))
         if os.path.isfile(path_json):
             with open(path_json, 'r') as handle:
@@ -57,16 +65,17 @@ def generate_view():
         else:
             Logger()("Json log file '{}' not found in '{}'".format(log_name, path_json), log_level=Logger.WARNING)
 
-    nb_keys = len(Options()['view'])
+    nb_keys = len(options['view'])
     nb_rows = math.ceil(nb_keys / 2)
     nb_cols = min(2, nb_keys)
 
     figure = tools.make_subplots(rows=nb_rows, cols=nb_cols,
-        subplot_titles=Options()['view'],
+        subplot_titles=options['view'],
         print_grid=False)
 
     colors = {'train_epoch': 'rgb(214, 39, 40)', 'train_batch': 'rgb(214, 39, 40)',
               #'trainval_epoch': 'rgb(214, 39, 40)', 'trainval_batch': 'rgb(214, 39, 40)',
+              'val_epoch': 'rgb(31, 119, 180)', 'val_batch': 'rgb(31, 119, 180)',
               'eval_epoch': 'rgb(31, 119, 180)', 'eval_batch': 'rgb(31, 119, 180)',
               'test_epoch': 'rgb(31, 180, 80)', 'test_batch': 'rgb(31, 180, 80)'}
 
@@ -95,7 +104,10 @@ def generate_view():
 
             if 'epoch' in view['split_name']:
                 # example: data_dict['logs_last']['test_epoch.epoch']
-                x = data_dict[view['log_name']][view['split_name']+'.epoch']
+                key = view['split_name']+'.epoch' # TODO: ugly fix, to be remove
+                if key not in data_dict[view['log_name']]:
+                    key = 'eval_epoch.epoch'
+                x = data_dict[view['log_name']][key]
             else:
                 x = list(range(len(y)))
 
@@ -112,9 +124,10 @@ def generate_view():
         width=1800,
         height=400*nb_rows
     )
-    path_view = os.path.join(Options()['exp']['dir'], 'view.html')
+    path_view = os.path.join(options['exp']['dir'], 'view.html')
     plot(figure, filename=path_view, auto_open=False)
     Logger()('View generated in '+path_view)
+
 
 # def generate_multi_view():
 #     nb_keys = len(Options()['logs']['views'])
@@ -167,7 +180,8 @@ def generate_view():
 
 
 if __name__ == '__main__':
-    generate_view()
+    from .lib.options import Options
+    generate_view(Options())
     # # Load options.yaml in exp.dir
     # if 'dirs' in Options()['exp'] and len(Options()['exp']['dirs']) > 0:
     #     generate_multi_view()
