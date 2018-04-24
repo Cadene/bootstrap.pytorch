@@ -3,7 +3,7 @@ import importlib
 from ..lib.options import Options
 from ..lib.logger import Logger
 
-from .model import Model
+from .model import DefaultModel
 
 def factory(engine=None):
 
@@ -14,7 +14,7 @@ def factory(engine=None):
         model = module.factory(engine)
 
     elif Options()['model']['name'] == 'default':
-        model = Model(engine)
+        model = DefaultModel(engine)
 
     else:
         raise ValueError()

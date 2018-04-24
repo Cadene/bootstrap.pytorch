@@ -6,6 +6,7 @@ import datetime
 from ..lib import utils
 from ..lib.options import Options
 from ..lib.logger import Logger
+from ..lib.view import GenerateView
 
 from torch.utils.data import Dataset
 from torch.optim import Optimizer
@@ -22,6 +23,16 @@ class Engine:
         self.dataset = None  # type:Dataset
         self.optimizer = None  # type:Optimizer
         self.best_out = {}
+
+        self.register_hook('train_on_flush', self.generate_view)
+        self.register_hook('eval_on_flush', self.generate_view)
+
+    def generate_view(self):
+        # Multi threading
+        thread = GenerateView(Options())
+        thread.start()
+        #path_opts = os.path.join(Options()['exp']['dir'], 'options.yaml')
+        #os.system('python view.py --path_opts {}'.format(path_opts))
 
     def load_state_dict(self, state):
         self.epoch = state['epoch']
@@ -168,6 +179,8 @@ class Engine:
         
         self.hook('train_on_end_epoch')
         Logger().flush()
+        self.hook('train_on_flush')
+
 
     def eval_epoch(self, model, dataset, epoch, mode='eval', logs_json=True):
         utils.set_random_seed(Options()['misc']['seed'] + epoch) # to be able to reproduce exps on reload
@@ -252,6 +265,7 @@ class Engine:
         if logs_json:
             Logger().flush()
 
+        self.hook('eval_on_flush')
         return out
 
     def is_best(self, out, saving_criteria):

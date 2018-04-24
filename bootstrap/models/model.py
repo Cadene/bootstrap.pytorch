@@ -7,46 +7,18 @@ from .metrics.factory import factory as met_factory
 
 class Model(nn.Module):
 
-    def __init__(self, engine=None, cuda_tf=transforms.ToCuda, variable_tf=transforms.ToVariable):
+    def __init__(self, engine=None, cuda_tf=transforms.ToCuda, variable_tf=transforms.ToVariable,
+            network=None,
+            criterions={},
+            metrics={}):
         super(Model, self).__init__()
         self.cuda_tf = cuda_tf
         self.variable_tf = variable_tf
+        self.network = network
+        self.criterions = criterions
+        self.metrics = metrics
         self.is_cuda = False
-        self.network = self._init_network(engine=engine)
-        self.criterions = self._init_criterions(engine=engine)
-        self.metrics = self._init_metrics(engine=engine)        
-        self.eval() # by default eval
-
-    def _init_network(self, engine=None):
-        return net_factory(engine)
-
-    def _init_criterions(self, engine=None):
-        # by default all modes have criterions
-        if engine:
-            modes = list(engine.dataset.keys()) # [train, val] for mnist
-        else:
-            modes = ['train', 'eval']
-
-        criterions = {}
-        for mode in modes:
-            tmp_cri = cri_factory(engine, mode)
-            if tmp_cri is not None:
-                criterions[mode] = tmp_cri
-        return criterions
-
-    def _init_metrics(self, engine=None):
-        # by default all modes have metrics
-        if engine:
-            modes = list(engine.dataset.keys())
-        else:
-            modes = ['train', 'eval']
-
-        metrics = {}
-        for mode in modes:
-            tmp_met = met_factory(engine, mode)
-            if tmp_met is not None:
-                metrics[mode] = tmp_met
-        return metrics
+        self.eval()
 
     def eval(self):
         super(Model, self).train(mode=False)
@@ -87,13 +59,13 @@ class Model(nn.Module):
             cri_tmp = self.criterions[self.mode](net_out, batch)
             if cri_tmp is not None:
                 cri_out = cri_tmp
-            
+
         met_out = {}
         if self.mode in self.metrics:
             met_tmp = self.metrics[self.mode](cri_out, net_out, batch)
             if met_tmp is not None:
                 met_out = met_tmp
-            
+
         out = {}
         if type(net_out) is dict:
             for key, value in net_out.items():
@@ -128,3 +100,44 @@ class Model(nn.Module):
             if hasattr(metric, '__parameters'):
                 metric.load_state_dict(state['metrics'][mode])
 
+
+class DefaultModel(Model):
+
+    def __init__(self, engine=None, cuda_tf=transforms.ToCuda, variable_tf=transforms.ToVariable):
+        super(DefaultModel, self).__init__(engine=engine,
+            cuda_tf=cuda_tf, variable_tf=variable_tf)
+        self.network = self._init_network(engine=engine)
+        self.criterions = self._init_criterions(engine=engine)
+        self.metrics = self._init_metrics(engine=engine)
+        self.eval()
+
+    def _init_network(self, engine=None):
+        return net_factory(engine)
+
+    def _init_criterions(self, engine=None):
+        # by default all modes have criterions
+        if engine:
+            modes = list(engine.dataset.keys()) # [train, val] for mnist
+        else:
+            modes = ['train', 'eval']
+
+        criterions = {}
+        for mode in modes:
+            tmp_cri = cri_factory(engine, mode)
+            if tmp_cri is not None:
+                criterions[mode] = tmp_cri
+        return criterions
+
+    def _init_metrics(self, engine=None):
+        # by default all modes have metrics
+        if engine:
+            modes = list(engine.dataset.keys())
+        else:
+            modes = ['train', 'eval']
+
+        metrics = {}
+        for mode in modes:
+            tmp_met = met_factory(engine, mode)
+            if tmp_met is not None:
+                metrics[mode] = tmp_met
+        return metrics

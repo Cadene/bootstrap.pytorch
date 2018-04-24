@@ -36,9 +36,13 @@ class ListDictsToDictLists(object):
 
 class PadTensors(object):
 
-    def __init__(self, value=0, avoid_keys=[]):
+    def __init__(self, value=0, use_keys=[], avoid_keys=[]):
         self.value = value
-        self.avoid_keys = avoid_keys
+        self.use_keys = use_keys
+        if len(self.use_keys)>0:
+            self.avoid_keys = []
+        else:
+            self.avoid_keys = avoid_keys
 
     def __call__(self, batch):
         batch = self.pad_tensors(batch)
@@ -48,7 +52,8 @@ class PadTensors(object):
         if isinstance(batch, collections.Mapping):
             out = {}
             for key, value in batch.items():
-                if key not in self.avoid_keys:
+                if (key in self.use_keys) or \
+                   (len(self.use_keys) == 0 and key not in self.avoid_keys):
                     out[key] = self.pad_tensors(value)
                 else:
                     out[key] = value
@@ -114,9 +119,13 @@ class StackTensors(object):
 
 class CatTensors(object):
 
-    def __init__(self, use_shared_memory=False, avoid_keys=[]):
+    def __init__(self, use_shared_memory=False, use_keys=[], avoid_keys=[]):
         self.use_shared_memory = use_shared_memory
-        self.avoid_keys = avoid_keys
+        self.use_keys = use_keys
+        if len(self.use_keys)>0:
+            self.avoid_keys = []
+        else:
+            self.avoid_keys = avoid_keys
 
     def __call__(self, batch):
         batch = self.cat_tensors(batch)
@@ -126,8 +135,12 @@ class CatTensors(object):
         if isinstance(batch, collections.Mapping):
             out = {}
             for key, value in batch.items():
-                if key not in self.avoid_keys:
+                if (key in self.use_keys) or \
+                   (len(self.use_keys) == 0 and key not in self.avoid_keys):
                     out[key] = self.cat_tensors(value)
+                    if ('batch_id' not in out) and torch.is_tensor(value[0]):
+                        out['batch_id'] = torch.cat([i*torch.ones(x.size(0)) \
+                                                     for i,x in enumerate(value)], 0)
                 else:
                     out[key] = value
             return out
@@ -171,6 +184,29 @@ class ToCuda(object):
             return batch
 
 
+class ToCpu(object):
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __call__(self, batch):
+        batch = self.to_cpu(batch)
+        return batch
+
+    def to_cpu(self, batch):
+        if isinstance(batch, collections.Mapping):
+            return {key: self.to_cpu(value) for key,value in batch.items()}
+        elif torch.is_tensor(batch):
+            return batch.cpu()
+        elif type(batch).__name__ == 'Variable':
+            # TODO: Really hacky
+            return Variable(batch.data.cpu())
+        elif isinstance(batch, collections.Sequence) and torch.is_tensor(batch[0]):
+            return [self.to_cpu(value) for value in batch]
+        else:
+            return batch
+
+
 class ToVariable(object):
 
     def __init__(self, volatile=False):
@@ -193,3 +229,35 @@ class ToVariable(object):
         else:
             return batch
 
+
+class SortByKey(object):
+
+    def __init__(self, key='lengths', reverse=True):
+        self.key = key
+        self.reverse = True
+        self.i = 0
+
+    def __call__(self, batch):
+        self.set_sort_keys(batch[self.key]) # must be a list
+        batch = self.sort_by_key(batch)
+        return batch
+
+    def set_sort_keys(self, sort_keys):
+        self.i = 0
+        self.sort_keys = sort_keys
+
+    # ugly hack to be able to sort without lambda function
+    def get_key(self, _):
+        key = self.sort_keys[self.i]
+        self.i += 1
+        if self.i >= len(self.sort_keys):
+            self.i = 0
+        return key
+
+    def sort_by_key(self, batch):
+        if isinstance(batch, collections.Mapping):
+            return {key: self.sort_by_key(value) for key, value in batch.items()}
+        elif type(batch) is list:#isinstance(batch, collections.Sequence):
+            return sorted(batch, key=self.get_key, reverse=self.reverse)
+        else:
+            return batch
