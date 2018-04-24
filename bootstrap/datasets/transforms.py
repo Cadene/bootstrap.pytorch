@@ -119,9 +119,13 @@ class StackTensors(object):
 
 class CatTensors(object):
 
-    def __init__(self, use_shared_memory=False, avoid_keys=[]):
+    def __init__(self, use_shared_memory=False, use_keys=[], avoid_keys=[]):
         self.use_shared_memory = use_shared_memory
-        self.avoid_keys = avoid_keys
+        self.use_keys = use_keys
+        if len(self.use_keys)>0:
+            self.avoid_keys = []
+        else:
+            self.avoid_keys = avoid_keys
 
     def __call__(self, batch):
         batch = self.cat_tensors(batch)
@@ -131,8 +135,12 @@ class CatTensors(object):
         if isinstance(batch, collections.Mapping):
             out = {}
             for key, value in batch.items():
-                if key not in self.avoid_keys:
+                if (key in self.use_keys) or \
+                   (len(self.use_keys) == 0 and key not in self.avoid_keys):
                     out[key] = self.cat_tensors(value)
+                    if ('batch_id' not in out) and torch.is_tensor(value[0]):
+                        out['batch_id'] = torch.cat([i*torch.ones(x.size(0)) \
+                                                     for i,x in enumerate(value)], 0)
                 else:
                     out[key] = value
             return out
