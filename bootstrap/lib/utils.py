@@ -8,13 +8,17 @@ import numpy
 import random
 import datetime
 import argparse
+from typing import Dict
 
-def merge_dictionaries(dict1, dict2):
+
+def merge_dictionaries(dict1: Dict, dict2: Dict):
+    """Recursively merge two dictionaries"""
     for key in dict2:
         if key in dict1 and isinstance(dict1[key], dict) and isinstance(dict2[key], dict):
             merge_dictionaries(dict1[key], dict2[key])
         else:
             dict1[key] = dict2[key]
+
 
 def update_values(dict_from, dict_to):
     for key, value in dict_from.items():
@@ -23,6 +27,7 @@ def update_values(dict_from, dict_to):
         elif value is not None:
             dict_to[key] = dict_from[key] 
     return dict_to
+
 
 # to be able to reproduce exps on reload
 def set_random_seed(seed):
