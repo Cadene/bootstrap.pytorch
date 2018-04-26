@@ -8,14 +8,20 @@ from ..lib.options import Options
 from ..lib.logger import Logger
 from ..lib.view import GenerateView
 
-class Engine():
+from torch.utils.data import Dataset
+from torch.optim import Optimizer
+from torch.nn import Module
+
+
+class Engine:
+    """Includes a model, dataset and an optimizer. Takes care of training and evaluation."""
 
     def __init__(self):
         self.hooks = {}
         self.epoch = 0
-        self.model = None
-        self.dataset = None
-        self.optimizer = None
+        self.model = None  # type:Module
+        self.dataset = None  # type:Dataset
+        self.optimizer = None  # type:Optimizer
         self.best_out = {}
 
         self.register_hook('train_on_flush', self.generate_view)
