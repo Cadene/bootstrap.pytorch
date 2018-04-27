@@ -30,11 +30,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--nb_epochs', default=-1, type=int)
     parser.add_argument('--dir_logs', default='', type=str, nargs='*')
-    parser.add_argument('--keys', type=str, nargs='*',
-        default=['eval_epoch.epoch',
-                 'eval_epoch.accuracy_top1',
-                 'eval_epoch.overall',
-                 'eval_epoch.map'])
+    parser.add_argument('-k', '--keys', type=str, action='append', nargs='2',
+                        default=[['eval_epoch.epoch', 'max'],
+                                 ['eval_epoch.accuracy_top1', 'max'],
+                                 ['eval_epoch.overall', 'max'],
+                                 ['eval_epoch.map', 'max']])
     args = parser.parse_args()
 
     dir_logs = {}
@@ -49,7 +49,7 @@ if __name__ == '__main__':
             raise ValueError(raw)
         dir_logs[key] = path
 
-    keys = [key for key in args.keys]
+    keys = {key: min_or_max for key, min_or_max in args.keys}
 
     logs = {}
     for log_name in dir_logs.keys():
