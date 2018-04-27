@@ -74,7 +74,7 @@ class Options(object):
         Options.__instance.options = Options.__instance.load_yaml_opts(path_yaml)
         print('Options.load_from_yaml(path_yaml) is depreciated. Please use Options(path_yaml) instead.')
 
-    def load_yaml_opts(self, path_yaml):
+    def load_yaml_opts(self, path_yaml: str):
         result = {}
         with open(path_yaml, 'r') as yaml_file:
             options_yaml = yaml.load(yaml_file)

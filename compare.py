@@ -1,4 +1,5 @@
 import json
+import numpy as np
 import argparse
 from os import path as osp
 from tabulate import tabulate
@@ -8,23 +9,22 @@ def load_max_logs(dir_logs, nb_epochs=-1):
     path_val_oe = osp.join(dir_logs, 'logs_eval_val_oe.json')
     logs = json.load(open(path_logs))
     out = {}
+    epochs = logs["eval_epoch.epoch"]
     for k,v in logs.items():
         if 'eval_epoch' in k:
-            if nb_epochs != -1:
-                out[k] = max(v[:nb_epochs])
-            else:
-                out[k] = max(v)
+            argmax = np.argmax(v[:nb_epochs]) if nb_epochs != -1 else np.argmax(v)
+            out[k] = epochs[argmax], v[argmax]
     if osp.isfile(path_val_oe):
         val_oe = json.load(open(path_val_oe))
         for k,v in val_oe.items():
-            if nb_epochs != -1:
-                out[k] = max(v[:nb_epochs])
-            else:
-                out[k] = max(v)
+            argmax = np.argmax(v[:nb_epochs]) if nb_epochs != -1 else np.argmax(v)
+            out[k] = epochs[argmax], v[argmax]
     return out
+
 
 def argmax(list_):
     return list_.index(max(list_))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
@@ -33,7 +33,8 @@ if __name__ == '__main__':
     parser.add_argument('--keys', type=str, nargs='*',
         default=['eval_epoch.epoch',
                  'eval_epoch.accuracy_top1',
-                 'val_epoch.overall'])
+                 'eval_epoch.overall',
+                 'eval_epoch.map'])
     args = parser.parse_args()
 
     dir_logs = {}
@@ -49,7 +50,6 @@ if __name__ == '__main__':
         dir_logs[key] = path
 
     keys = [key for key in args.keys]
-    #keys = sorted(logs['relvqa'].keys())
 
     logs = {}
     for log_name in dir_logs.keys():
@@ -58,17 +58,16 @@ if __name__ == '__main__':
     for key in keys:
         names = []
         values = []
+        epochs = []
         for name, log_values in logs.items():
             if key in log_values:
                 names.append(name)
-                values.append(log_values[key])
-        values_names = sorted(zip(values,names),reverse=True)
+                epoch, value = log_values[key]
+                epochs.append(epoch)
+                values.append(value)
+        values_names = sorted(zip(values,names, epochs),reverse=True)
         values_names = [[i+1, name, value] for i, (value, name) in enumerate(values_names)]
-        #if values_names[0][1] == 'bottomup':   
-        print('\n\n## {}\n'.format(key))     
-        print(tabulate(values_names, headers=['Place', 'Method', 'Score']))
-        # for i, (value, name) in enumerate(values_names):
-        #     place = i+1
-        #     print('{}\t{}\t{:.4f}'.format(place, name, value))
+        print('\n\n## {}\n'.format(key))
+        print(tabulate(values_names, headers=['Place', 'Method', 'Score', 'Epoch']))
 
 
