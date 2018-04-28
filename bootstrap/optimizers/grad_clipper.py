@@ -7,9 +7,11 @@ class GradClipper():
         self.grad_clip = grad_clip
 
     def step(self):
+        params = []
         for group in self.optimizer.param_groups:
             for p in group['params']:
-                clip_grad_norm(p, self.grad_clip)
+                params.append(p)
+        clip_grad_norm(params, self.grad_clip)
         self.optimizer.step()
 
     def zero_grad(self):
