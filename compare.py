@@ -34,8 +34,8 @@ def argmax(list_):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--nb_epochs', default=-1, type=int)
-    parser.add_argument('--dir_logs', default='', type=str, nargs='*')
+    parser.add_argument('-n', '--nb_epochs', default=-1, type=int)
+    parser.add_argument('-d', '--dir_logs', default='', type=str, nargs='*')
     parser.add_argument('-k', '--keys', type=str, action='append', nargs=2,
                         metavar=('metric', 'order'),
                         default=[['eval_epoch.epoch', 'max'],
@@ -51,7 +51,7 @@ if __name__ == '__main__':
             key, path = tmp
         elif len(tmp) == 1:
             path = tmp[0]
-            key = osp.basename(path)
+            key = osp.basename(osp.normpath(path))
         else:
             raise ValueError(raw)
         dir_logs[key] = path
@@ -67,13 +67,15 @@ if __name__ == '__main__':
         values = []
         epochs = []
         for name, log_values in logs.items():
-            names.append(name)
-            epoch, value = log_values[key]
-            epochs.append(epoch)
-            values.append(value)
-        values_names = sorted(zip(values, names, epochs),reverse=True)
-        values_names = [[i+1, name, value] for i, (value, name) in enumerate(values_names)]
-        print('\n\n## {}\n'.format(key))
-        print(tabulate(values_names, headers=['Place', 'Method', 'Score', 'Epoch']))
+            if key in log_values:
+                names.append(name)
+                epoch, value = log_values[key]
+                epochs.append(epoch)
+                values.append(value)
+        if values:
+            values_names = sorted(zip(values, names, epochs),reverse=True)
+            values_names = [[i+1, name, value, epoch] for i, (value, name, epoch) in enumerate(values_names)]
+            print('\n\n## {}\n'.format(key))
+            print(tabulate(values_names, headers=['Place', 'Method', 'Score', 'Epoch']))
 
 
