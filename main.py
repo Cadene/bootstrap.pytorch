@@ -29,7 +29,10 @@ def init_experiment_directory(exp_dir, resume=None):
                 os._exit(1)
 
     # if resume to evaluate the model on one epoch
-    if resume and Options()['dataset']['train_split'] is None:
+    if 'logs_name' in Options()['misc'] and Options()['misc']['logs_name'] is not None:
+        logs_name = Options()['misc']['logs_name']
+        path_yaml = os.path.join(exp_dir, 'options_{}.yaml'.format(logs_name))
+    elif resume and Options()['dataset']['train_split'] is None:
         eval_split = Options()['dataset']['eval_split']
         path_yaml = os.path.join(exp_dir, 'options_eval_{}.yaml'.format(eval_split))
         logs_name = 'logs_eval_{}'.format(eval_split)
