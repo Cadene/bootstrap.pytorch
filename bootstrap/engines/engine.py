@@ -26,7 +26,7 @@ class Engine():
         thread = GenerateView(Options())
         thread.start()
         #path_opts = os.path.join(Options()['exp']['dir'], 'options.yaml')
-        #os.system('python view.py --path_opts {}'.format(path_opts))
+        #os.system('python -m bootstrap.lib.view --path_opts {}'.format(path_opts))
 
     def load_state_dict(self, state):
         self.epoch = state['epoch']

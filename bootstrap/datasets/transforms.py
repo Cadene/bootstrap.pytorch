@@ -92,12 +92,13 @@ class StackTensors(object):
         batch = self.stack_tensors(batch)
         return batch
 
-    def stack_tensors(self, batch):
+    # key argument is useful for debuging
+    def stack_tensors(self, batch, key=None):
         if isinstance(batch, collections.Mapping):
             out = {}
             for key, value in batch.items():
                 if key not in self.avoid_keys:
-                    out[key] = self.stack_tensors(value)
+                    out[key] = self.stack_tensors(value, key=key)
                 else:
                     out[key] = value
             return out

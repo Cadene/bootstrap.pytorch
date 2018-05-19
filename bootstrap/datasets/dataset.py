@@ -53,7 +53,10 @@ class ListDatasets(data.Dataset):
         self.bootstrapping = bootstrapping
         self.seed = seed
 
-        self.lengths = [len(d) for d in datasets]
+        self.make_lengths_and_ids()
+
+    def make_lengths_and_ids(self):
+        self.lengths = [len(d) for d in self.datasets]
         self.cum_lengths = list(itertools.accumulate(self.lengths))
         self.cum_lengths_min = [0] + self.cum_lengths
 

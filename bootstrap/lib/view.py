@@ -6,6 +6,7 @@ import math
 #import pandas
 #import random
 #import numpy as np
+import argparse
 import seaborn as sns
 import plotly.plotly as py
 import plotly.graph_objs as go
@@ -180,8 +181,11 @@ def generate_view(options):
 
 
 if __name__ == '__main__':
-    from .lib.options import Options
-    generate_view(Options())
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('--path_opts', default='', type=str)
+    args = parser.parse_args()
+    from .options import Options
+    generate_view(Options(args.path_opts))
     # # Load options.yaml in exp.dir
     # if 'dirs' in Options()['exp'] and len(Options()['exp']['dirs']) > 0:
     #     generate_multi_view()

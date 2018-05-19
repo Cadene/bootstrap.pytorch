@@ -8,5 +8,5 @@ class CrossEntropyLoss(nn.Module):
 
     def forward(self, net_out, batch):
         out = {}
-        out['loss'] = self.loss(net_out, batch['class_id'].squeeze(1))
+        out['loss'] = self.loss(net_out, batch['class_id'].view(-1))
         return out
