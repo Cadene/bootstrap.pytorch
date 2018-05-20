@@ -32,7 +32,7 @@ def argmax(list_):
     return list_.index(max(list_))
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('-n', '--nb_epochs', default=-1, type=int)
     parser.add_argument('-d', '--dir_logs', default='', type=str, nargs='*')
@@ -78,3 +78,6 @@ if __name__ == '__main__':
             print('\n\n## {}\n'.format(key))
             print(tabulate(values_names, headers=['Place', 'Method', 'Score', 'Epoch']))
 
+
+if __name__ == '__main__':
+    main()

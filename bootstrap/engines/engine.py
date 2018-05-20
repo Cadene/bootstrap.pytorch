@@ -3,30 +3,31 @@ import math
 import time
 import torch
 import datetime
+import threading
 from ..lib import utils
 from ..lib.options import Options
 from ..lib.logger import Logger
-from ..lib.view import GenerateView
 
 class Engine():
 
     def __init__(self):
         self.hooks = {}
         self.epoch = 0
-        self.model = None
         self.dataset = None
+        self.model = None
         self.optimizer = None
+        self.view = None
         self.best_out = {}
 
+        # generate_view will be executed at the end of each
+        # training and evaluation epoch
         self.register_hook('train_on_flush', self.generate_view)
         self.register_hook('eval_on_flush', self.generate_view)
 
     def generate_view(self):
-        # Multi threading
-        thread = GenerateView(Options())
-        thread.start()
-        #path_opts = os.path.join(Options()['exp']['dir'], 'options.yaml')
-        #os.system('python -m bootstrap.lib.view --path_opts {}'.format(path_opts))
+        threading.Thread(target=self.view.generate).start()
+        # path_opts = os.path.join(Options()['exp']['dir'], 'options.yaml')
+        # os.system('python -m bootstrap.views.view --path_opts {}'.format(path_opts))
 
     def load_state_dict(self, state):
         self.epoch = state['epoch']
@@ -135,13 +136,12 @@ class Engine():
             Logger().log_value('train_batch.timer.load', timer['load'], should_print=False)
 
             for key, value in out.items():
-                if type(value) == torch.autograd.variable.Variable:
-                    value = value.data
                 if torch.is_tensor(value):
-                    if value.dim() != 1 or value.size(0) != 1:
-                        continue
+                    if value.dim() == 0:
+                        #value = value.detach() # not tracked by autograd anymore
+                        value = value.item() # get number from a torch scalar
                     else:
-                        value = value[0]
+                        continue
                 if type(value) == list:
                     continue
                 if type(value) == dict:
@@ -213,13 +213,12 @@ class Engine():
             Logger().log_value('eval_batch.timer.load', timer['load'], should_print=False)
 
             for key, value in out.items():
-                if type(value) == torch.autograd.variable.Variable:
-                    value = value.data
                 if torch.is_tensor(value):
-                    if value.dim() != 1 or value.size(0) != 1:
-                        continue
+                    if value.dim() == 0:
+                        #value = value.detach() # not tracked by autograd anymore
+                        value = value.item() # get number from a torch scalar
                     else:
-                        value = value[0]
+                        continue
                 if type(value) == list:
                     continue
                 if type(value) == dict:

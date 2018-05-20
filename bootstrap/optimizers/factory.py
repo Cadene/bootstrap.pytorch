@@ -7,6 +7,26 @@ from ..lib.logger import Logger
 from .lr_scheduler import LearningRateScheduler
 from .grad_clipper import GradClipper
 
+def factory(engine):
+    if not 'optimizer' in Options():
+        return None
+
+    if 'import' in Options()['optimizer']:
+        # import usually is "yourmodule.optimizers.factory"
+        module = importlib.import_module(Options()['optimizer']['import'])
+        optimizer = module.factory(engine)
+    else:
+        optimizer = factory_optimizer(engine.model)
+
+        if 'lr_scheduler' in Options()['optimizer']:
+            optimizer = factory_scheduler(optimizer)
+
+        if 'grad_clip' in Options()['optimizer']:
+            optimizer = factory_grad_clip(optimizer)
+
+    return optimizer
+
+
 def factory_optimizer(model):
     Logger()('Creating optimizer {} ...'.format(Options()['optimizer']['name']))
 
@@ -53,52 +73,5 @@ def factory_grad_clip(optimizer):
     return optimizer
 
 
-def factory(model, engine):
-    if not 'optimizer' in Options():
-        return None
-
-    if 'import' in Options()['optimizer']:
-        # import usually is "yourmodule.optimizers.factory"
-        module = importlib.import_module(Options()['optimizer']['import'])
-        optimizer = module.factory(model, engine)
-    else:
-        optimizer = factory_optimizer(model)
-
-        if 'lr_scheduler' in Options()['optimizer']:
-            optimizer = factory_scheduler(optimizer)
-
-        if 'grad_clip' in Options()['optimizer']:
-            optimizer = factory_grad_clip(optimizer)
-
-    return optimizer
 
 
-# TO REMOVE
-def wrap_lr_scheduler(optimizer, name='StepLR', step_size=1, gamma=1):
-    Logger()('Creating scheduler {}...'.format(name))
-
-    optimizer = torch.optim.lr_scheduler.__dict__[name](
-        optimizer,
-        step_size,
-        gamma=gamma)
-
-    # ugly hack to add zero_grad method to wrapper optimizer
-    optimizer.step_scheduler = optimizer.step
-    def step(self):
-        self.step_scheduler()
-        self.optimizer.step()
-
-    def zero_grad(self):
-        self.optimizer.zero_grad()
-
-    def state_dict(self):
-        return self.optimizer.state_dict()
-
-    def load_state_dict(self, state):
-        self.optimizer.load_state_dict(state)
-
-    setattr(optimizer.__class__, 'step', step)
-    setattr(optimizer.__class__, 'zero_grad', zero_grad)
-    setattr(optimizer.__class__, 'state_dict', state_dict)
-    setattr(optimizer.__class__, 'load_state_dict', load_state_dict)
-    return optimizer

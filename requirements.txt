@@ -1,4 +1,4 @@
-torch<0.4
+torch>=0.4
 numpy
 argparse
 pyyaml

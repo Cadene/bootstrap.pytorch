@@ -5,15 +5,14 @@ import traceback
 import torch.backends.cudnn as cudnn
 cudnn.benchmark = True
 
-import bootstrap.models as models
-import bootstrap.lib.utils as utils
-import bootstrap.datasets as datasets
-import bootstrap.engines as engines
-import bootstrap.optimizers as optimizers
-
-from bootstrap.lib.logger import Logger
-from bootstrap.lib.options import Options
-
+from .lib import utils
+from .lib.logger import Logger
+from .lib.options import Options
+from . import engines
+from . import datasets
+from . import models
+from . import optimizers
+from . import views
 
 def init_experiment_directory(exp_dir, resume=None):
     # create the experiment directory
@@ -47,11 +46,11 @@ def init_experiment_directory(exp_dir, resume=None):
     Logger(exp_dir, name=logs_name)
 
 
-def main(path_opts=None):
+def run(path_opts=None):
     # first call to Options() load the options yaml file from --path_opts command line argument if path_opts=None
     Options(path_opts)
 
-    # make exp directory if resume=None
+    # make exp directory if --exp.resume is empty
     init_experiment_directory(Options()['exp']['dir'], Options()['exp']['resume'])
 
     # initialiaze seeds to be able to reproduce experiment on reload
@@ -69,20 +68,22 @@ def main(path_opts=None):
     # engine can save and load the model and optimizer
     engine = engines.factory()
 
-    # dataset is a dictionnary which contains all the needed datasets indexed by splits
-    # (example: dataset.keys() -> ['train','val'])
-    dataset = datasets.factory()
-    engine.dataset = dataset
+    # dataset is a dictionary that contains all the needed datasets indexed by modes
+    # (example: dataset.keys() -> ['train','eval'])
+    engine.dataset = datasets.factory(engine)
 
     # model includes a network, a criterion and a metric
     # model can register engine hooks (begin epoch, end batch, end batch, etc.)
     # (example: "calculate mAP at the end of the evaluation epoch")
-    model = models.factory(engine)
-    engine.model = model
+    # note: model can access to datasets using engine.dataset
+    engine.model = models.factory(engine)
 
     # optimizer can register engine hooks
-    optimizer = optimizers.factory(model, engine)
-    engine.optimizer = optimizer    
+    engine.optimizer = optimizers.factory(engine)    
+
+    # view will save a view.html in the experiment directory
+    # with some nice plots and curves to monitor training
+    engine.view = views.factory(engine)
 
     # load the model and optimizer from a checkpoint
     if Options()['exp']['resume']:
@@ -99,9 +100,9 @@ def main(path_opts=None):
     engine.train()
         
 
-if __name__ == '__main__':
+def main(path_opts=None):
     try:
-        main()
+        run(path_opts=path_opts)
     # to avoid traceback for -h flag in arguments line
     except SystemExit:
         pass
@@ -111,3 +112,8 @@ if __name__ == '__main__':
             Logger()(traceback.format_exc(), Logger.ERROR)
         except:
             pass
+
+
+if __name__ == '__main__':
+    main()
+    
