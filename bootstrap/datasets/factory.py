@@ -11,17 +11,12 @@ def factory(engine=None):
 
     # import looks like "yourmodule.datasets.factory"
     module = importlib.import_module(Options()['dataset']['import'])
+    dataset = module.factory(engine=engine)
 
-    dataset = {}
+    if 'train' in dataset:
+        Logger()('Training will take place on {}set ({} items)'.format(dataset['train'].split, len(dataset['train'])))
 
-    if Options()['dataset']['train_split']:
-        train_split = Options()['dataset']['train_split']
-        dataset['train'] = module.factory(train_split)
-        Logger()('Training will take place on {}set ({} items)'.format(train_split, len(dataset['train'])))
-
-    if Options()['dataset']['eval_split']:
-        eval_split = Options()['dataset']['eval_split']
-        dataset['eval'] = module.factory(eval_split)
-        Logger()('Evaluation will take place on {}set ({} items)'.format(eval_split, len(dataset['eval'])))
+    if 'eval' in dataset:
+        Logger()('Evaluation will take place on {}set ({} items)'.format(dataset['eval'].split, len(dataset['eval'])))
 
     return dataset
