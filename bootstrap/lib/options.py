@@ -80,6 +80,28 @@ class Options(object):
         return json.dumps(self.options, indent=2)
 
 
+    def get(self, key, default):
+        return self.options.get(key, default)
+
+    def copy(self):
+        return self.options.copy()
+
+    def has_key(self, k):
+        return k in self.options
+
+    # def update(self, *args, **kwargs):
+    #     return self.options.update(*args, **kwargs)
+
+    def keys(self):
+        return self.options.keys()
+
+    def values(self):
+        return self.options.values()
+
+    def items(self):
+        return self.options.items()
+
+
     def add_options(self, parser, options, prefix=''):
         if prefix:
             prefix += '.'
