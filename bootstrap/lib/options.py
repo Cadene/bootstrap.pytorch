@@ -1,6 +1,7 @@
 import os
 import sys
 import yaml
+import json
 import copy
 import argparse
 import collections
@@ -34,10 +35,13 @@ class Options(object):
             else:
                 try:
                     optfile_parser = argparse.ArgumentParser(add_help=False)
+                    if optfile_parser.parse_known_args()[1][0] == '-h':
+                        print('/!\\ -o/--path_opts needed to load the yaml options file')
                     fullopt_parser = Options.HelpParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-                    optfile_parser.add_argument('--path_opts', default='options/default.yaml', help='path to a yaml file containing the default options')
-                    fullopt_parser.add_argument('--path_opts', default='options/default.yaml', help='path to a yaml file containing the default options')
+                    optfile_parser.add_argument('-o', '--path_opts', type=str, required=True)
+                    fullopt_parser.add_argument('-o', '--path_opts', type=str, required=True)
+
 
                     options_yaml = Options.load_yaml_opts(optfile_parser.parse_known_args()[0].path_opts)
                     Options.__instance.add_options(fullopt_parser, options_yaml)
@@ -69,6 +73,10 @@ class Options(object):
 
     def __getattr__(self, name):
         return self.options[name]
+
+
+    def __str__(self):
+        return json.dumps(self.options, indent=2)
 
 
     def add_options(self, parser, options, prefix=''):
@@ -116,18 +124,20 @@ class Options(object):
     # Static methods
 
     def load_yaml_opts(path_yaml):
+        # TODO: include the parent options when seen, not after having loaded the child options
         result = {}
         with open(path_yaml, 'r') as yaml_file:
             options_yaml = yaml.load(yaml_file)
-            if '!include' in options_yaml.keys() and options_yaml['!include'] is not None:
-                parent = Options.load_yaml_opts('{}/{}'.format(os.path.dirname(path_yaml), options_yaml['!include']))
+            if '__include__' in options_yaml.keys() and options_yaml['__include__'] is not None:
+                parent = Options.load_yaml_opts('{}/{}'.format(os.path.dirname(path_yaml), options_yaml['__include__']))
                 merge_dictionaries(result, parent)
             merge_dictionaries(result, options_yaml)
-        result.pop('!include', None)
+        result.pop('__include__', None)
         return result
 
     def save_yaml_opts(opts, path_yaml):
         # Warning: copy is not nested
+        # TODO: save the options in same order they have been viewed
         options = copy.copy(opts)
         del options['path_opts']
         with open(path_yaml, 'w') as yaml_file:
