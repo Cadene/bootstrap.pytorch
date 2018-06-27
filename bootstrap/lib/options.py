@@ -35,13 +35,10 @@ class Options(object):
             else:
                 try:
                     optfile_parser = argparse.ArgumentParser(add_help=False)
-                    if optfile_parser.parse_known_args()[1][0] == '-h':
-                        print('/!\\ -o/--path_opts needed to load the yaml options file')
                     fullopt_parser = Options.HelpParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
                     optfile_parser.add_argument('-o', '--path_opts', type=str, required=True)
                     fullopt_parser.add_argument('-o', '--path_opts', type=str, required=True)
-
 
                     options_yaml = Options.load_yaml_opts(optfile_parser.parse_known_args()[0].path_opts)
                     Options.__instance.add_options(fullopt_parser, options_yaml)
