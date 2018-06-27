@@ -15,3 +15,7 @@ if __name__ == '__main__':
     pprint(Options.load_yaml_opts('test/adam.yaml'))
     print('-'*60)
     pprint(Options.load_yaml_opts('test/saved.yaml'))
+
+
+    print(Options()['message'])
+    print('message' in Options())

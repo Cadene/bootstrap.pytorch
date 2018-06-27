@@ -68,8 +68,12 @@ class Options(object):
         return Options.__instance
 
 
-    def __getattr__(self, name):
-        return self.options[name]
+    def __getitem__(self, key):
+        return self.options[key]
+
+
+    def __contains__(self, item):
+        return item in self.options
 
 
     def __str__(self):
