@@ -1,8 +1,5 @@
-__include__: default.yaml
-exp:
-  dir: logs/mnist/adam
-optimizer:
-  name: adam
-  lr: 0.0001
-misc:
-  cuda: True
+__include__:
+  - default.yaml
+  - sgd.yaml
+message: adam
+adam: True

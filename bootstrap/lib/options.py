@@ -124,14 +124,18 @@ class Options(object):
     # Static methods
 
     def load_yaml_opts(path_yaml):
-        # TODO: include the parent options when seen, not after having loaded the child options
+        # TODO: include the parent options when seen, not after having loaded the main options
         result = {}
         with open(path_yaml, 'r') as yaml_file:
             options_yaml = yaml.load(yaml_file)
-            if '__include__' in options_yaml.keys() and options_yaml['__include__'] is not None:
-                parent = Options.load_yaml_opts('{}/{}'.format(os.path.dirname(path_yaml), options_yaml['__include__']))
-                merge_dictionaries(result, parent)
-            merge_dictionaries(result, options_yaml)
+            includes = options_yaml.get('__include__', False)
+            if includes:
+                if type(includes) != list:
+                    includes = [includes]
+                for include in includes:
+                    parent = Options.load_yaml_opts('{}/{}'.format(os.path.dirname(path_yaml), include))
+                    merge_dictionaries(result, parent)
+            merge_dictionaries(result, options_yaml) # to be sure the main options overwrite the parent options
         result.pop('__include__', None)
         return result
 
