@@ -7,16 +7,16 @@ from ..lib.logger import Logger
 from .lr_scheduler import LearningRateScheduler
 from .grad_clipper import GradClipper
 
-def factory(engine):
+def factory(model, engine=None):
     if not 'optimizer' in Options():
         return None
 
     if 'import' in Options()['optimizer']:
         # import usually is "yourmodule.optimizers.factory"
         module = importlib.import_module(Options()['optimizer']['import'])
-        optimizer = module.factory(engine)
+        optimizer = module.factory(model, engine)
     else:
-        optimizer = factory_optimizer(engine.model)
+        optimizer = factory_optimizer(model)
 
         if 'lr_scheduler' in Options()['optimizer']:
             optimizer = factory_scheduler(optimizer)

@@ -10,11 +10,13 @@ class Model(nn.Module):
     def __init__(self,
             engine=None,
             cuda_tf=transforms.ToCuda,
+            detach_tf=transforms.ToDetach,
             network=None,
             criterions={},
             metrics={}):
         super(Model, self).__init__()
         self.cuda_tf = cuda_tf
+        self.detach_tf = detach_tf
         self.network = network
         self.criterions = criterions
         self.metrics = metrics
@@ -47,6 +49,8 @@ class Model(nn.Module):
     def prepare_batch(self, batch):
         if self.is_cuda:
             batch = self.cuda_tf()(batch)
+        if self.mode == 'eval':
+            batch = self.detach_tf()(batch)
         return batch
 
     def forward(self, batch):
@@ -102,8 +106,13 @@ class Model(nn.Module):
 
 class DefaultModel(Model):
 
-    def __init__(self, engine=None, cuda_tf=transforms.ToCuda,):
-        super(DefaultModel, self).__init__(engine=engine, cuda_tf=cuda_tf)
+    def __init__(self, engine=None,
+                 cuda_tf=transforms.ToCuda,
+                 detach_tf=transforms.ToDetach):
+        super(DefaultModel, self).__init__(
+            engine=engine,
+            cuda_tf=cuda_tf,
+            detach_tf=detach_tf)
         self.network = self._init_network(engine=engine)
         self.criterions = self._init_criterions(engine=engine)
         self.metrics = self._init_metrics(engine=engine)

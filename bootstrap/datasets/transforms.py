@@ -231,6 +231,26 @@ class ToVariable(object):
             return batch
 
 
+class ToDetach(object):
+
+    def __init__(self):
+        pass
+
+    def __call__(self, batch):
+        batch = self.to_detach(batch)
+        return batch
+
+    def to_detach(self, batch):
+        if torch.is_tensor(batch):
+            return batch.detach_()
+        elif isinstance(batch, collections.Mapping):
+            return {key: self.to_detach(value) for key, value in batch.items()}
+        elif isinstance(batch, collections.Sequence) and torch.is_tensor(batch[0]):
+            return [self.to_detach(value) for value in batch]
+        else:
+            return batch
+
+
 class SortByKey(object):
 
     def __init__(self, key='lengths', reverse=True):

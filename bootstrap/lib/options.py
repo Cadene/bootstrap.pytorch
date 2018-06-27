@@ -13,8 +13,8 @@ class Options(object):
 
     # Attributs
 
-    __instance = None
-    options = None
+    __instance = None # singleton
+    options = None # dictionnary of the singleton
 
     class HelpParser(argparse.ArgumentParser):
         def error(self, message):
@@ -22,14 +22,14 @@ class Options(object):
             self.print_help()
             sys.exit(2)
 
-    # Methods
+    # Build the singleton as Options()
 
     def __new__(self, path_yaml=None, arguments_callback=None):
         if not Options.__instance:
             Options.__instance = object.__new__(Options)
 
             if path_yaml:
-                Options.__instance.options = Options.__instance.load_yaml_opts(path_yaml)
+                Options.__instance.options = Options.load_yaml_opts(path_yaml)
 
             else:
                 try:
@@ -39,7 +39,7 @@ class Options(object):
                     optfile_parser.add_argument('--path_opts', default='options/default.yaml', help='path to a yaml file containing the default options')
                     fullopt_parser.add_argument('--path_opts', default='options/default.yaml', help='path to a yaml file containing the default options')
 
-                    options_yaml = Options.__instance.load_yaml_opts(optfile_parser.parse_known_args()[0].path_opts)
+                    options_yaml = Options.load_yaml_opts(optfile_parser.parse_known_args()[0].path_opts)
                     Options.__instance.add_options(fullopt_parser, options_yaml)
 
                     arguments = fullopt_parser.parse_args()
@@ -59,38 +59,17 @@ class Options(object):
                                 position[piece] = {}
                                 position = position[piece]
                         position[nametree[-1]] = value
-                    
+
                 except:
                     Options.__instance = None
                     raise
-        
-        return Options.__instance.options
-    
-    def get_instance(self):
+
         return Options.__instance
 
-    def load_from_yaml(path_yaml):
-        Options.__instance = object.__new__(Options)
-        Options.__instance.options = Options.__instance.load_yaml_opts(path_yaml)
-        print('Options.load_from_yaml(path_yaml) is depreciated. Please use Options(path_yaml) instead.')
 
-    def load_yaml_opts(self, path_yaml):
-        result = {}
-        with open(path_yaml, 'r') as yaml_file:
-            options_yaml = yaml.load(yaml_file)
-            if 'parent' in options_yaml.keys() and options_yaml['parent'] is not None:
-                parent = self.load_yaml_opts('{}/{}'.format(os.path.dirname(path_yaml), options_yaml['parent']))
-                merge_dictionaries(result, parent)
-            merge_dictionaries(result, options_yaml)
-        result.pop('parent', None)
-        return result
+    def __getattr__(self, name):
+        return self.options[name]
 
-    def save_yaml_opts(path_yaml):
-        # Warning: copy is not nested
-        options = copy.copy(Options.__instance.options)
-        del options['path_opts']
-        with open(path_yaml, 'w') as yaml_file:
-            yaml.dump(options, yaml_file, default_flow_style=False)
 
     def add_options(self, parser, options, prefix=''):
         if prefix:
@@ -129,3 +108,29 @@ class Options(object):
             elif v.lower() in false_strings:
                 return False
         raise argparse.ArgumentTypeError('{} cant be converted to bool ('.format(v)+'|'.join(true_strings+false_strings)+' can be)')
+
+
+    def save(self, path_yaml):
+        Options.save_yaml_opts(self.options, path_yaml)
+
+    # Static methods
+
+    def load_yaml_opts(path_yaml):
+        result = {}
+        with open(path_yaml, 'r') as yaml_file:
+            options_yaml = yaml.load(yaml_file)
+            if '!include' in options_yaml.keys() and options_yaml['!include'] is not None:
+                parent = Options.load_yaml_opts('{}/{}'.format(os.path.dirname(path_yaml), options_yaml['!include']))
+                merge_dictionaries(result, parent)
+            merge_dictionaries(result, options_yaml)
+        result.pop('!include', None)
+        return result
+
+    def save_yaml_opts(opts, path_yaml):
+        # Warning: copy is not nested
+        options = copy.copy(opts)
+        del options['path_opts']
+        with open(path_yaml, 'w') as yaml_file:
+            yaml.dump(options, yaml_file, default_flow_style=False)
+
+

@@ -38,9 +38,9 @@ def init_experiment_directory(exp_dir, resume=None):
     else:
         path_yaml = os.path.join(exp_dir, 'options.yaml')
         logs_name = 'logs'
-        
+
     # create the options.yaml file
-    Options.save_yaml_opts(path_yaml)
+    Options().save(path_yaml)
 
     # open(write) the logs.txt file and init logs.json path for later
     Logger(exp_dir, name=logs_name)
@@ -79,7 +79,7 @@ def run(path_opts=None):
     engine.model = models.factory(engine)
 
     # optimizer can register engine hooks
-    engine.optimizer = optimizers.factory(engine)    
+    engine.optimizer = optimizers.factory(engine.model, engine)
 
     # view will save a view.html in the experiment directory
     # with some nice plots and curves to monitor training
@@ -92,13 +92,13 @@ def run(path_opts=None):
     # if no training split, evaluate the model on the evaluation split
     # (example: $ python main.py --dataset.train_split --dataset.eval_split test)
     engine.eval()
-  
+
     # optimize the model on the training split for several epochs
     # (example: $ python main.py --dataset.train_split train)
     # if evaluation split, evaluate the model after each epochs
     # (example: $ python main.py --dataset.train_split train --dataset.eval_split val)
     engine.train()
-        
+
 
 def main(path_opts=None):
     try:
@@ -116,4 +116,4 @@ def main(path_opts=None):
 
 if __name__ == '__main__':
     main()
-    
+
