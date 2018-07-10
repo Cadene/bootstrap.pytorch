@@ -5,10 +5,67 @@ import json
 import copy
 import argparse
 import collections
-from .utils import merge_dictionaries
+from collections import OrderedDict
 
 # Options is a singleton
 # https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
+
+
+def merge_dictionaries(dict1, dict2):
+    for key in dict2:
+        if key in dict1 and isinstance(dict1[key], OptionsDict) and isinstance(dict2[key], OptionsDict):
+            merge_dictionaries(dict1[key], dict2[key])
+        else:
+            dict1[key] = dict2[key]
+
+
+class OptionsDict(OrderedDict):
+
+    def __init__(self, *args, **kwargs):
+        super(OptionsDict, self).__init__(*args, **kwargs)
+
+    def __getitem__(self, key):
+        if key in self:
+            val = OrderedDict.__getitem__(self, key)
+        elif '.' in key:
+            keys = key.split('.')
+            val = self[keys[0]]
+            for k in keys[1:]:
+                val = val[k]
+        else:
+            OrderedDict.__getitem__(self, key)
+        return val
+
+    def __setitem__(self, key, val):
+        if type(val) == dict:
+            val = OptionsDict(val)
+            OrderedDict.__setitem__(self, key, val)
+        elif '.' in key:
+            keys = key.split('.')
+            d = self[keys[0]]
+            for k in keys[1:-1]:
+                d = d[k]
+            d[keys[-1]] = val
+        else:
+            OrderedDict.__setitem__(self, key, val)
+
+    def __getattr__(self, key):
+        if key in self:
+            return self[key]
+        else:
+            OrderedDict.__getattr__(self, key)
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def __repr__(self):
+        dictrepr = dict.__repr__(self)
+        return '{}({})'.format(type(self).__name__, dictrepr)
+
+    def update(self, *args, **kwargs):
+        for k, v in OrderedDict(*args, **kwargs).items():
+            self[k] = v
+
 
 class Options(object):
 
@@ -16,6 +73,7 @@ class Options(object):
 
     __instance = None # singleton
     options = None # dictionnary of the singleton
+    path_yaml = None
 
     class HelpParser(argparse.ArgumentParser):
         def error(self, message):
@@ -29,47 +87,55 @@ class Options(object):
         if not Options.__instance:
             Options.__instance = object.__new__(Options)
 
+            fullopt_parser = Options.HelpParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
             if path_yaml:
-                Options.__instance.options = Options.load_yaml_opts(path_yaml)
-
+                #Options.__instance.options = Options.load_yaml_opts(path_yaml)
+                self.path_yaml = path_yaml
             else:
-                try:
-                    optfile_parser = argparse.ArgumentParser(add_help=False)
-                    fullopt_parser = Options.HelpParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                optfile_parser = argparse.ArgumentParser(add_help=False)
+                optfile_parser.add_argument('-o', '--path_opts', type=str, required=True)
+                fullopt_parser.add_argument('-o', '--path_opts', type=str, required=True)
+                self.path_yaml = optfile_parser.parse_known_args()[0].path_opts
 
-                    optfile_parser.add_argument('-o', '--path_opts', type=str, required=True)
-                    fullopt_parser.add_argument('-o', '--path_opts', type=str, required=True)
+            options_yaml = Options.load_yaml_opts(self.path_yaml)
+            Options.__instance.add_options(fullopt_parser, options_yaml)
 
-                    options_yaml = Options.load_yaml_opts(optfile_parser.parse_known_args()[0].path_opts)
-                    Options.__instance.add_options(fullopt_parser, options_yaml)
+            arguments = fullopt_parser.parse_args()
+            if arguments_callback:
+                arguments = arguments_callback(Options.__instance, arguments, options_yaml)
 
-                    arguments = fullopt_parser.parse_args()
-                    if arguments_callback:
-                        arguments = arguments_callback(Options.__instance, arguments, options_yaml)
+            Options.__instance.options = OptionsDict()
+            for argname in vars(arguments):
+                nametree = argname.split('.')
+                value = getattr(arguments, argname)
 
-                    Options.__instance.options = {}
-                    for argname in vars(arguments):
-                        nametree = argname.split('.')
-                        value = getattr(arguments, argname)
-
-                        position = Options.__instance.options
-                        for piece in nametree[:-1]:
-                            if piece in position and isinstance(position[piece], collections.Mapping):
-                                position = position[piece]
-                            else:
-                                position[piece] = {}
-                                position = position[piece]
-                        position[nametree[-1]] = value
-
-                except:
-                    Options.__instance = None
-                    raise
+                position = Options.__instance.options
+                for piece in nametree[:-1]:
+                    if piece in position and isinstance(position[piece], collections.Mapping):
+                        position = position[piece]
+                    else:
+                        position[piece] = {}
+                        position = position[piece]
+                position[nametree[-1]] = value
 
         return Options.__instance
 
 
     def __getitem__(self, key):
-        return self.options[key]
+        val = self.options[key]
+        return val
+
+
+    def __setitem__(self, key, val):
+        self.options[key] = val
+
+
+    def __getattr__(self, key):
+        if key in self:
+            return self[key]
+        else:
+            return object.__getattr__(self, key)
 
 
     def __contains__(self, item):
@@ -160,14 +226,97 @@ class Options(object):
                     merge_dictionaries(result, parent)
             merge_dictionaries(result, options_yaml) # to be sure the main options overwrite the parent options
         result.pop('__include__', None)
+        result = OptionsDict(result)
         return result
 
     def save_yaml_opts(opts, path_yaml):
         # Warning: copy is not nested
-        # TODO: save the options in same order they have been viewed
         options = copy.copy(opts)
-        del options['path_opts']
+        if 'path_opts' in options:
+            del options['path_opts']
         with open(path_yaml, 'w') as yaml_file:
             yaml.dump(options, yaml_file, default_flow_style=False)
 
 
+if __name__ == '__main__':
+
+    # # # # # # # # # # # # # # # #
+    # Init OptionsDict from empty dict
+
+    d = OptionsDict()
+    d['a0'] = {'a1':'a2'}
+    d['a0.b1'] = 'a2' # recursive setitem
+    # d['a0.c1'] = 'a2' FAIL: must create dict first
+    d.b0 = {} # setattr == setitem and {} converted into OptionsDict
+    d.b0.a1 = 'a2'
+
+    print(json.dumps(d, indent=2))
+    # {
+    #   "a0": {
+    #     "a1": "b2"
+    #   },
+    #   "b0": {
+    #     "a1": "a2"
+    #   }
+    # }
+
+    print(d)
+    # OptionsDict({'a0': OptionsDict({'a1': 'b2'}), 'b0': OptionsDict({'a1': 'a2'})})
+
+    print(d['a0']['a1'])
+    # a2
+
+    print(d['a0.a1'])
+    # a2
+
+    print(d.a0.a1)
+    # a2
+
+    # # # # # # # # # # # # # # # #
+    # Init OptionsDict from dict
+
+    d = {'ha0':{'ha1':'ha2'}}
+    print(json.dumps(d, indent=2))
+    # {
+    #   "ha0": {
+    #     "ha1": "ha2"
+    #   }
+    # }
+    print(d)
+    # {'ha0': {'ha1': 'ha2'}}
+
+    d = OptionsDict(d)
+    print(json.dumps(d, indent=2))
+    # {
+    #   "ha0": {
+    #     "ha1": "ha2"
+    #   }
+    # }
+    print(d)
+    # OptionsDict({'ha0': OptionsDict({'ha1': 'ha2'})})
+
+    # # # # # # # # # # # # # # # #
+    # Init Options
+
+    # path = 'bootstrap/options/example.yaml'
+    # Options(path)
+    Options()
+    print(json.dumps(Options().options, indent=2))
+
+    print(Options()['dataset']['dir'])
+    # /mnt/apcv_data/rcadene/data/cifar10
+    print(Options()['dataset.dir'])
+    # /mnt/apcv_data/rcadene/data/cifar10
+    print(Options().dataset.dir)
+    # /mnt/apcv_data/rcadene/data/cifar10
+    print(Options().options['dataset']['dir'])
+    # /mnt/apcv_data/rcadene/data/cifar10
+    print(Options().options['dataset.dir'])
+    # /mnt/apcv_data/rcadene/data/cifar10
+    print(Options().options.dataset.dir)
+    # /mnt/apcv_data/rcadene/data/cifar10
+    Options().dataset.lol = 10
+    print(Options()['dataset.lol'])
+    # 10
+    print(Options().options.dataset.lol)
+    # 10
