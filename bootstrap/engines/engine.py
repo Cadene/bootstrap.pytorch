@@ -198,7 +198,8 @@ class Engine():
             self.hook('eval_on_start_batch')
             timer['load'] = time.time() - timer['elapsed']
 
-            out = model(batch)
+            with torch.no_grad():
+                out = model(batch)
             #torch.cuda.synchronize()
             self.hook('eval_on_forward')
 
