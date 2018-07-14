@@ -81,27 +81,27 @@ class Model(nn.Module):
                 out[key] = value
         return out
 
-    def state_dict(self):
+    def state_dict(self, *args, **kwgs):
         state = {}
-        state['network'] = self.network.state_dict()
+        state['network'] = self.network.state_dict(*args, **kwgs)
         state['criterions'] = {}
         for mode, criterion in self.criterions.items():
             if hasattr(criterion, '__parameters'):
-                state['criterions'][mode] = criterion.state_dict()
+                state['criterions'][mode] = criterion.state_dict(*args, **kwgs)
         state['metrics'] = {}
         for mode, metric in self.metrics.items():
             if hasattr(metric, '__parameters'):
-                state['metrics'][mode] = metric.state_dict()
+                state['metrics'][mode] = metric.state_dict(*args, **kwgs)
         return state
 
-    def load_state_dict(self, state):
-        self.network.load_state_dict(state['network'])
+    def load_state_dict(self, state, *args, **kwgs):
+        self.network.load_state_dict(state['network'], *args, **kwgs)
         for mode, criterion in self.criterions.items():
             if hasattr(criterion, '__parameters'):
-                criterion.load_state_dict(state['criterions'][mode])
+                criterion.load_state_dict(state['criterions'][mode], *args, **kwgs)
         for mode, metric in self.metrics.items():
             if hasattr(metric, '__parameters'):
-                metric.load_state_dict(state['metrics'][mode])
+                metric.load_state_dict(state['metrics'][mode], *args, **kwgs)
 
 
 class DefaultModel(Model):

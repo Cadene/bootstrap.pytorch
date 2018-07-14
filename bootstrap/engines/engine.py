@@ -158,7 +158,7 @@ class Engine():
                     datetime.timedelta(seconds=math.floor(time.time() - timer['begin'])),
                     datetime.timedelta(seconds=math.floor(timer['run_avg'] * (len(batch_loader) - 1 - i)))))
                 Logger()("{} process: {:.5f} | load: {:.5f}".format(' '*len(mode), timer['process'], timer['load']))
-                Logger()("{} loss: {:.5f}".format(' '*len(mode), out['loss'].data[0]))
+                Logger()("{} loss: {:.5f}".format(' '*len(mode), out['loss'].data.item()))
                 self.hook('train_on_print')
 
             timer['elapsed'] = time.time()
