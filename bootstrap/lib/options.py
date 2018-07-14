@@ -13,7 +13,7 @@ from collections import OrderedDict
 
 def merge_dictionaries(dict1, dict2):
     for key in dict2:
-        if key in dict1 and isinstance(dict1[key], OptionsDict) and isinstance(dict2[key], OptionsDict):
+        if key in dict1 and isinstance(dict1[key], dict) and isinstance(dict2[key], dict):
             merge_dictionaries(dict1[key], dict2[key])
         else:
             dict1[key] = dict2[key]
@@ -213,7 +213,7 @@ class Options(object):
     # Static methods
 
     def load_yaml_opts(path_yaml):
-        # TODO: include the parent options when seen, not after having loaded the main options
+        # TODO: include the parent options when parsed, instead of after having loaded the main options
         result = {}
         with open(path_yaml, 'r') as yaml_file:
             options_yaml = yaml.load(yaml_file)
