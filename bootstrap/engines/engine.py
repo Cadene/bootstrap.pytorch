@@ -138,8 +138,7 @@ class Engine():
 
             for key, value in out.items():
                 if torch.is_tensor(value):
-                    if value.dim() == 0:
-                        #value = value.detach() # not tracked by autograd anymore
+                    if value.dim() <= 1:
                         value = value.item() # get number from a torch scalar
                     else:
                         continue
@@ -216,8 +215,7 @@ class Engine():
 
             for key, value in out.items():
                 if torch.is_tensor(value):
-                    if value.dim() == 0:
-                        #value = value.detach() # not tracked by autograd anymore
+                    if value.dim() <= 1:
                         value = value.item() # get number from a torch scalar
                     else:
                         continue
