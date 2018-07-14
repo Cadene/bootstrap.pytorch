@@ -148,3 +148,42 @@ class DefaultModel(Model):
             if tmp_met is not None:
                 metrics[mode] = tmp_met
         return metrics
+
+
+class SimpleModel(DefaultModel):
+
+    def __init__(self, engine=None,
+                 cuda_tf=transforms.ToCuda,
+                 detach_tf=transforms.ToDetach):
+        super(SimpleModel, self).__init__(
+            engine=engine,
+            cuda_tf=cuda_tf,
+            detach_tf=detach_tf)
+
+    def forward(self, batch):
+        batch = self.prepare_batch(batch)
+        net_out = self.network(batch['data'])
+
+        cri_out = {}
+        if self.mode in self.criterions:
+            cri_tmp = self.criterions[self.mode](net_out, batch)
+            if cri_tmp is not None:
+                cri_out = cri_tmp
+
+        met_out = {}
+        if self.mode in self.metrics:
+            met_tmp = self.metrics[self.mode](cri_out, net_out, batch)
+            if met_tmp is not None:
+                met_out = met_tmp
+
+        out = {}
+        if type(net_out) is dict:
+            for key, value in net_out.items():
+                out[key] = value
+        if type(cri_out) is dict:
+            for key, value in cri_out.items():
+                out[key] = value
+        if type(met_out) is dict:
+            for key, value in met_out.items():
+                out[key] = value
+        return out

@@ -4,6 +4,7 @@ from ..lib.options import Options
 from ..lib.logger import Logger
 
 from .model import DefaultModel
+from .model import SimpleModel
 
 def factory(engine=None):
 
@@ -15,6 +16,9 @@ def factory(engine=None):
 
     elif Options()['model']['name'] == 'default':
         model = DefaultModel(engine)
+
+    elif Options()['model']['name'] == 'simple':
+        model = SimpleModel(engine)
 
     else:
         raise ValueError()
