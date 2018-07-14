@@ -71,6 +71,7 @@ class Engine():
     def train(self):
         Logger()('Launching training procedures')
 
+        self.hook('train_on_start')
         while self.epoch < Options()['engine']['nb_epochs']:
             self.train_epoch(self.model, self.dataset['train'], self.optimizer, self.epoch)
 
