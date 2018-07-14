@@ -13,7 +13,7 @@ def factory(engine=None, mode=None):
 
     Logger()('Creating criterion from bootstrap for {} mode...'.format(mode))
 
-    if 'import' in Options()['model']['criterion']:
+    if Options()['model']['criterion'].get('import', False):
         module = importlib.import_module(Options()['model']['criterion']['import'])
         criterion = module.factory(engine, mode)
 

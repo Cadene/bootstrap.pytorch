@@ -9,7 +9,7 @@ def factory(engine=None):
 
     Logger()('Creating model...')
 
-    if 'import' in Options()['model']:
+    if Options()['model'].get('import', False):
         module = importlib.import_module(Options()['model']['import'])
         model = module.factory(engine)
 

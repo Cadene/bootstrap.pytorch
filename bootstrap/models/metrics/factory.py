@@ -12,7 +12,7 @@ def factory(engine=None, mode=None):
 
     Logger()('Creating metric from bootstrap for {} mode...'.format(mode))
 
-    if 'import' in Options()['model']['metric']:
+    if Options()['model']['metric'].get('import', False):
         module = importlib.import_module(Options()['model']['metric']['import'])
         metric = module.factory(engine, mode)
 

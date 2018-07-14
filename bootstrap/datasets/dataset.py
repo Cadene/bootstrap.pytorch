@@ -23,11 +23,11 @@ class Dataset(data.Dataset):
             bootstrap_tf.StackTensors()
         ])
 
-    def make_batch_loader(self):
+    def make_batch_loader(self, batch_size=None, shuffle=None):
         batch_loader = data.DataLoader(
             dataset=self,
-            batch_size=self.batch_size,
-            shuffle=self.shuffle,
+            batch_size=self.batch_size if batch_size is None else batch_size,
+            shuffle=self.shuffle if shuffle is None else shuffle,
             pin_memory=self.pin_memory,
             num_workers=self.nb_threads,
             collate_fn=self.collate_fn)

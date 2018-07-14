@@ -11,7 +11,7 @@ def factory(model, engine=None):
     if not 'optimizer' in Options():
         return None
 
-    if 'import' in Options()['optimizer']:
+    if Options()['optimizer'].get('import', False):
         # import usually is "yourmodule.optimizers.factory"
         module = importlib.import_module(Options()['optimizer']['import'])
         optimizer = module.factory(model, engine)
@@ -30,10 +30,7 @@ def factory(model, engine=None):
 def factory_optimizer(model):
     Logger()('Creating optimizer {} ...'.format(Options()['optimizer']['name']))
 
-    if 'weight_decay' in Options()['optimizer']:
-        weight_decay = Options()['optimizer']['weight_decay']
-    else:
-        weight_decay = 0
+    weight_decay = Options()['optimizer'].get('weight_decay', 0)
 
     if Options()['optimizer']['name'] == 'adam':
         optimizer = torch.optim.Adam(

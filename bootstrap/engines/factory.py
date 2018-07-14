@@ -7,7 +7,7 @@ from .logger import LoggerEngine
 def factory():
     Logger()('Creating engine...')
 
-    if 'import' in Options()['engine'] and Options()['engine']['import']:
+    if Options()['engine'].get('import', False):
         # import usually is "yourmodule.engine.factory"
         module = importlib.import_module(Options()['engine']['import'])
         engine = module.factory()
