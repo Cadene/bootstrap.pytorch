@@ -1,0 +1,36 @@
+exp:
+  dir: data/debug
+  resume: # last, best_[...], or empty (from scratch)
+dataset:
+  import: __abstract__
+  dir: data/abstract
+  train_split: train
+  eval_split: val
+  nb_threads: 4
+  batch_size: 256
+model:
+  name: simple
+  network: __abstract__
+  criterion:
+    name: cross_entropy
+  metric:
+    name: accuracy
+    topk: [1]
+optimizer:
+  name: adam
+  lr: 0.0004
+engine:
+  name: default
+  debug: False
+  nb_epochs: 1000
+  print_freq: 10
+  saving_criteria:
+    - accuracy_top1:gt # save when new_best > best
+misc:
+  cuda: True
+  seed: 1337
+view:
+  - logs:train_epoch.loss+logs:eval_epoch.loss
+  - logs:train_batch.loss
+  - logs:train_epoch.accuracy_top1+logs:eval_epoch.accuracy_top1
+  - logs:train_epoch.lr

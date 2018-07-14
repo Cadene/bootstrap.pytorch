@@ -1,0 +1,19 @@
+__include__: abstract.yaml
+exp:
+  dir: data/example
+dataset:
+  import: example.datasets.factory
+  name: ExampleDataset
+  dir: data/example
+model:
+  network:
+    import: example.models.networks.factory
+    name: ExampleNetwork
+    F: 44
+    n_heads: 1
+optimizer:
+  import: example.optimizers.factory
+  name: ExampleOptimizer
+  lr: 0.025
+  momentum: 0.
+  weight_decay: 0.
