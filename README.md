@@ -46,7 +46,7 @@ Running an experiment will create 4 files:
 - [options.yaml](https://github.com/Cadene/bootstrap.pytorch/blob/master/logs/mnist/sgd/options.yaml) contains the options used for the experiment,
 - [logs.txt](https://github.com/Cadene/bootstrap.pytorch/blob/master/logs/mnist/sgd/logs.txt) contains all the information given to the logger.
 - [logs.json](https://github.com/Cadene/bootstrap.pytorch/blob/master/logs/mnist/sgd/logs.json) contains the following data: train_epoch.loss, train_batch.loss, eval_epoch.accuracy_top1, etc.
-- [view.json](https://github.com/Cadene/bootstrap.pytorch/blob/master/logs/mnist/sgd/logs.json) contains the following data: train_epoch.loss, train_batch.loss, eval_epoch.accuracy_top1, etc.
+- <a href="https://rawgit.com/Cadene/bootstrap.pytorch/master/logs/mnist/sgd/view.html">view.html</a> contains training and evaluation curves with javascript utilities (plotly).
 
 
 To save the next experiment in a specific directory:
@@ -59,10 +59,6 @@ To run with cuda:
 python -m bootstrap.run -o mnist/options/sgd.yaml \
 --exp.dir logs/mnist/cuda --misc.cuda True
 ```
-
-
-
-Running `view.py` over an experiment will create an html file containing training and evaluation curves. An example is available here: <a href="https://rawgit.com/Cadene/bootstrap.pytorch/master/logs/mnist/sgd/view.html">view.html</a>
 
 To reload an experiment:
 ```
