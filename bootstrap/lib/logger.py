@@ -27,7 +27,7 @@ class Logger(object):
     WARNING = 2
     ERROR = 3
     SYSTEM = 4
-    __instance = None
+    _instance = None
     indicator = {INFO: 'I', SUMMARY: 'S', WARNING: 'W', ERROR: 'E', SYSTEM: 'S'}
 
     class Colors:
@@ -58,30 +58,38 @@ class Logger(object):
     # Methods
 
     def __new__(self, dir_logs=None, name='logs'):
-        if not Logger.__instance:
-            Logger.__instance = object.__new__(Logger)
-            Logger.__instance.set_level(Logger.__instance.INFO)
+        if Logger._instance is None:
+
+            Logger._instance = object.__new__(Logger)
+
+            Logger._instance.set_level(Logger._instance.INFO)
+
             if dir_logs:
-                Logger.__instance.name = name
-                Logger.__instance.dir_logs = dir_logs
-                Logger.__instance.path_txt = os.path.join(dir_logs, '{}.txt'.format(name))
-                Logger.__instance.file_txt = open(os.path.join(dir_logs, '{}.txt'.format(name)), 'a+')
-                Logger.__instance.path_json = os.path.join(dir_logs, '{}.json'.format(name))
-                Logger.__instance.reload_json()
+                Logger._instance.name = name
+                Logger._instance.dir_logs = dir_logs
+                Logger._instance.path_txt = os.path.join(dir_logs, '{}.txt'.format(name))
+                Logger._instance.file_txt = open(os.path.join(dir_logs, '{}.txt'.format(name)), 'a+')
+                Logger._instance.path_json = os.path.join(dir_logs, '{}.json'.format(name))
+                Logger._instance.reload_json()
             else:
-                Logger.__instance.log_message('No logs files will be created (dir_logs attribut is empty)', log_level=Logger.WARNING)
-        return Logger.__instance
+                Logger._instance.log_message('No logs files will be created (dir_logs attribut is empty)', log_level=Logger.WARNING)
+
+        return Logger._instance
+
 
     def __call__(self, *args, **kwargs):
         return self.log_message(*args, **kwargs, stack_displacement=2)
 
+
     def set_level(self, log_level):
         self.log_level = log_level
+
 
     def set_json_compact(self, is_compact):
         self.compactjson = is_compact
 
-    def log_message(self, message, log_level=INFO, break_line=True, print_header=True, stack_displacement=1):
+
+    def log_message(self, *message, log_level=INFO, break_line=True, print_header=True, stack_displacement=1):
         if log_level < self.log_level:
             return -1
 
@@ -89,6 +97,8 @@ class Logger(object):
             raise Exception('Critical: Log file not defined. Do you have write permissions for {}?'.format(self.dir_logs))
         
         caller_info = inspect.getframeinfo(inspect.stack()[stack_displacement][0])
+
+        message = ' '.join([str(m) for m in list(message)])
 
         if print_header:
             message_header = '[{} {:%Y-%m-%d %H:%M:%S}]'.format(self.indicator[log_level],
@@ -124,6 +134,7 @@ class Logger(object):
         if log_level==self.ERROR:
             raise Exception(message)
 
+
     def log_value(self, name, value, stack_displacement=2, should_print=False, log_level=SUMMARY):
         if name not in self.values:
             self.values[name] = []
@@ -138,6 +149,7 @@ class Logger(object):
             else:
                 message = '{}: {}'.format(name, value)
             self.log_message(message, log_level=log_level, stack_displacement=stack_displacement+1, )
+
 
     def log_dict(self, group, dictionary, description='', stack_displacement=2, should_print=False, log_level=SUMMARY):
         if group not in self.perf_memory:
@@ -159,17 +171,18 @@ class Logger(object):
         if should_print:
             self.log_dict_message(group, dictionary, description, stack_displacement+1, log_level)
 
+
     def log_dict_message(self, group, dictionary, description='', stack_displacement=2, log_level=SUMMARY):
         def print_subitem(prefix, subdictionary, stack_displacement=3):
             for key, value in sorted(subdictionary.items()):
                 message = prefix + key + ':'
                 if not isinstance(value, collections.Mapping):
                     message += ' ' + str(value)
-                self.log_message(message, log_level, stack_displacement=stack_displacement)
+                self.log_message(message, log_level=log_level, stack_displacement=stack_displacement)
                 if isinstance(value, collections.Mapping):
                     print_subitem(prefix + '  ', value, stack_displacement=stack_displacement+1)
 
-        self.log_message('{}: {}'.format(group, description), log_level, stack_displacement=stack_displacement)
+        self.log_message('{}: {}'.format(group, description), log_level=log_level, stack_displacement=stack_displacement)
         print_subitem('  ', dictionary, stack_displacement=stack_displacement+1)
 
 
@@ -181,6 +194,7 @@ class Logger(object):
             except:
                 self.log_message('json log file can not be open: {}'.format(self.path_json), log_level=self.WARNING)
 
+
     def flush(self):
         if self.dir_logs:
             with open(self.path_json, 'w') as json_file:
@@ -189,3 +203,10 @@ class Logger(object):
                 else:
                     json.dump(self.values, json_file, indent=4)
 
+
+if __name__ == '__main__':
+    Logger()('lol')
+    Logger()('lol')
+    Logger()('lol')
+    Logger()('lol')
+    Logger()('lol')
