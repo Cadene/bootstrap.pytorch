@@ -33,43 +33,40 @@ Actually, bootstrap handles the rest! It contains:
 
 To display parsed options from the yaml file:
 ```
-python main.py --path_opts mnist/options/sgd.yaml -h
+python -m bootstrap.run -o mnist/options/sgd.yaml -h
 ```
 
 To run an experiment (training + evaluation):
 ```
-python main.py --path_opts mnist/options/sgd.yaml
+python -m bootstrap.run -o mnist/options/sgd.yaml
 ```
 
-Running an experiment will create 3 files:
+Running an experiment will create 4 files:
 
 - [options.yaml](https://github.com/Cadene/bootstrap.pytorch/blob/master/logs/mnist/sgd/options.yaml) contains the options used for the experiment,
 - [logs.txt](https://github.com/Cadene/bootstrap.pytorch/blob/master/logs/mnist/sgd/logs.txt) contains all the information given to the logger.
 - [logs.json](https://github.com/Cadene/bootstrap.pytorch/blob/master/logs/mnist/sgd/logs.json) contains the following data: train_epoch.loss, train_batch.loss, eval_epoch.accuracy_top1, etc.
+- [view.json](https://github.com/Cadene/bootstrap.pytorch/blob/master/logs/mnist/sgd/logs.json) contains the following data: train_epoch.loss, train_batch.loss, eval_epoch.accuracy_top1, etc.
 
 
 To save the next experiment in a specific directory:
 ```
-python main.py --path_opts mnist/options/sgd.yaml --exp.dir logs/mnist/custom
+python -m bootstrap.run -o mnist/options/sgd.yaml --exp.dir logs/mnist/custom
 ```
 
 To run with cuda:
 ```
-python main.py --path_opts mnist/options/sgd.yaml \
+python -m bootstrap.run -o mnist/options/sgd.yaml \
 --exp.dir logs/mnist/cuda --misc.cuda True
 ```
 
-To create and visualize the training curves:
-```
-python view.py --path_opts logs/mnist/cuda/options.yaml
-open logs/mnist/cuda/view.html
-```
+
 
 Running `view.py` over an experiment will create an html file containing training and evaluation curves. An example is available here: <a href="https://rawgit.com/Cadene/bootstrap.pytorch/master/logs/mnist/sgd/view.html">view.html</a>
 
 To reload an experiment:
 ```
-python main.py --path_opts logs/mnist/cuda/options.yaml --exp.resume last
+python -m bootstrap.run -o logs/mnist/cuda/options.yaml --exp.resume last
 ```
 
 ## The good practices used to build Bootstrap
@@ -136,13 +133,19 @@ First install python 3 (we don't provide support for python 2). We advise you to
 - [python with anaconda](https://www.continuum.io/downloads)
 - [pytorch with CUDA](http://pytorch.org/)
 
-Bootstrap is not a lib such as pytorch, it is framework and thus need to be forked/cloned.
+We advise you to clone bootstrap to start a new project. By doing so, it is easier to debug your code, because you have a direct access to bootstrap core functions: 
 
 ```
 cd $HOME
-git clone https://github.com/Cadene/bootstrap.pytorch.git 
-cd bootstrap.pytorch
+git clone https://github.com/Cadene/bootstrap.pytorch.git new-project.bootstrap.pytorch
+cd new-project.bootstrap.pytorch
 pip install -r requirements.txt
+```
+
+You can also pip install:
+
+```
+pip install bootstrap.pytorch
 ```
 
 Then you can download any module you want. Let's install mnist:
@@ -155,13 +158,16 @@ git submodule update --init mnist
 
 ```
 .
-├── data                   # contains data only (raw and preprocessed)
-├── logs                   # experiments dir (one dir per exp)
-├── bootstrap      
+├── bootstrap   
+|   ├── run.py             # train & eval models
+|   ├── compare.py         # compare experiments
 |   ├── engines
 |   |   ├── engine.py
 |   |   └── factory.py
 |   ├── datasets           # datasets classes & functions
+|   |   ├── dataset.py
+|   |   ├── transforms.py
+|   |   ├── utils.py
 |   |   └── factory.py
 |   ├── models
 |   |   ├── model.py
@@ -176,12 +182,20 @@ git submodule update --init mnist
 |   |       ├── accuracy.py
 |   |       └── factory.py
 |   ├── optimizers 
+|   |   ├── grad_clipper.py
+|   |   ├── lr_scheduler.py
+|   |   └── factory.py
+|   ├── options
+|   |   ├── abstract.py   # example of default options
+|   |   └── example.py
+|   ├── views             # plotting utilities
+|   |   ├── view.py
 |   |   └── factory.py
 |   └── lib        
 |       └── logger.py      # logs manager
 |       └── options.py     # options manager
-├── main.py                # train & eval models
-└── view.py                # visualize logs and training curves
+├── data                   # contains data only (raw and preprocessed)
+└── logs                   # experiments dir (one directory per experiment)
 ```
 
 /!\ usually `data` contains symbolic links to directories stored on your fastest drive.
@@ -200,8 +214,7 @@ We advise you to keep the same organization than in `bootstrap` directory and av
 
 ```
 .
-├── data
-├── logs
+
 ├── bootstrap              # avoid modifications to bootstrap/*
 ├── myproject
 |   ├── options            # add your yaml files here
@@ -221,9 +234,10 @@ We advise you to keep the same organization than in `bootstrap` directory and av
 |   |       ├── mymetric.py
 |   |       └── factory.py
 |   ├── engines            # if custom engine is needed
-|   └── optimizers         # if custom optimizer is needed
-├── main.py                # avoid modifications to main.py
-└── view.py                # avoid modifications to view.py
+|   ├── optimizers         # if custom optimizer is needed
+|   └── views              # if custom plotting is needed
+├── data
+└── logs
 ```
 
 Some examples are available in the repository:
@@ -233,7 +247,7 @@ Some examples are available in the repository:
 
 Creating an experiment directory with the current datetime:
 ```
-python main.py --path_opts mnist/options/sgd.yaml \
+python -m bootstrap.run -o mnist/options/sgd.yaml \
 --exp.dir logs/mnist/`date "+%Y-%m-%d-%H-%M-%S"`_sgd
 ```
 
@@ -244,19 +258,26 @@ less logs/mnist/cuda/logs.txt
 
 To run an experiment on the training set only with an other set of options:
 ```
-CUDA_VISIBLE_DEVICES=0 python main.py --path_opts mnist/options/adam.yaml \
+CUDA_VISIBLE_DEVICES=0 python -m bootstrap.run -o mnist/options/adam.yaml \
 --dataset.train_split train --dataset.eval_split
 ```
 
 To evaluate the best model during the training (useful when the evaluation time is too high):
 ```
-CUDA_VISIBLE_DEVICES=1 python main.py --path_opts logs/mnist/adam/options.yaml \
+CUDA_VISIBLE_DEVICES=1 python -m bootstrap.run -o logs/mnist/adam/options.yaml \
 --exp.resume best_accuracy_top1 \
 --dataset.train_split --dataset.eval_split val
 ```
 
-To magically visualize the training and evaluation curves on the same view:
+To plot the curves:
 ```
-python view.py --path_opts logs/mnist/adam/options.yaml
+python -m bootstrap.views.view -o logs/mnist/adam/options.yaml
 open logs/mnist/adam/view.html
 ```
+
+To compare experiments:
+```
+python -m bootstrap.compare -d logs/mnist/adam logs/mnist/sgd
+```
+
+
