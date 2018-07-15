@@ -1,55 +1,44 @@
-!!python/object/apply:bootstrap.lib.options.OptionsDict
-dictitems:
-  dataset: !!python/object/apply:bootstrap.lib.options.OptionsDict
-    dictitems:
-      batch_size: 64
-      dir: data/mnist
-      eval_split: val
-      import: mnist.datasets.factory
-      name: mnist
-      nb_threads: 4
-      train_split: train
-  engine: !!python/object/apply:bootstrap.lib.options.OptionsDict
-    dictitems:
-      debug: false
-      name: default
-      nb_epochs: 10
-      print_freq: 10
-      saving_criteria:
-      - loss:lt
-      - accuracy_top1:gt
-      - accuracy_top5:gt
-  exp: !!python/object/apply:bootstrap.lib.options.OptionsDict
-    dictitems:
-      dir: logs/mnist/sgd
-      resume: null
-  misc: !!python/object/apply:bootstrap.lib.options.OptionsDict
-    dictitems:
-      cuda: false
-      seed: 1337
-  model: !!python/object/apply:bootstrap.lib.options.OptionsDict
-    dictitems:
-      criterion: !!python/object/apply:bootstrap.lib.options.OptionsDict
-        dictitems:
-          name: nll
-      metric: !!python/object/apply:bootstrap.lib.options.OptionsDict
-        dictitems:
-          name: accuracy
-          topk:
-          - 1
-          - 5
-      name: simple
-      network: !!python/object/apply:bootstrap.lib.options.OptionsDict
-        dictitems:
-          import: mnist.models.networks.factory
-          name: net
-  optimizer: !!python/object/apply:bootstrap.lib.options.OptionsDict
-    dictitems:
-      lr: 0.01
-      momentum: 0.5
-      name: sgd
-  view:
-  - logs:train_epoch.loss+logs:eval_epoch.loss
-  - logs:train_batch.loss
-  - logs:train_epoch.accuracy_top1+logs:eval_epoch.accuracy_top1
-  - logs:train_epoch.accuracy_top5+logs:eval_epoch.accuracy_top5
+exp:
+  dir: logs/mnist/sgd
+  resume: null
+dataset:
+  import: mnist.datasets.factory
+  name: mnist
+  dir: data/mnist
+  train_split: train
+  eval_split: val
+  nb_threads: 4
+  batch_size: 64
+model:
+  name: simple
+  network:
+    import: mnist.models.networks.factory
+    name: net
+  criterion:
+    name: nll
+  metric:
+    name: accuracy
+    topk:
+    - 1
+    - 5
+optimizer:
+  name: sgd
+  lr: 0.01
+  momentum: 0.5
+engine:
+  name: default
+  debug: false
+  nb_epochs: 10
+  print_freq: 10
+  saving_criteria:
+  - loss:lt
+  - accuracy_top1:gt
+  - accuracy_top5:gt
+misc:
+  cuda: false
+  seed: 1337
+view:
+- logs:train_epoch.loss+logs:eval_epoch.loss
+- logs:train_batch.loss
+- logs:train_epoch.accuracy_top1+logs:eval_epoch.accuracy_top1
+- logs:train_epoch.accuracy_top5+logs:eval_epoch.accuracy_top5

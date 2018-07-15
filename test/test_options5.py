@@ -1,10 +1,11 @@
 """
-# Merge two dictionnary
+# Merge two dictionnary and transform to dict
 
 - cli: `python test/test_options5.py`
 - expected behavior:
 ```
 OptionsDict({'exp': OptionsDict({'dir': 'lol2', 'resume': None})})
+{'exp': {'dir': 'lol2', 'resume': None}}
 ```
 """
 from bootstrap.lib.options import merge_dictionaries
@@ -27,3 +28,5 @@ if __name__ == '__main__':
     merge_dictionaries(dict1, dict2)
     print(dict1)
 
+    dict1 = dict1.asdict()
+    print(dict1)

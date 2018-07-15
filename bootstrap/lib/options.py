@@ -6,10 +6,7 @@ import copy
 import argparse
 import collections
 from collections import OrderedDict
-
-# Options is a singleton
-# https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
-
+from yaml import Dumper
 
 def merge_dictionaries(dict1, dict2):
     for key in dict2:
@@ -66,7 +63,18 @@ class OptionsDict(OrderedDict):
         for k, v in OrderedDict(*args, **kwargs).items():
             self[k] = v
 
+    def asdict(self):
+        d = {}
+        for k, v in self.items():
+            if isinstance(v, dict):
+                d[k] = dict(v)
+            else:
+                d[k] = v
+        return d
 
+
+# Options is a singleton
+# https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
 class Options(object):
 
     # Attributs
@@ -234,8 +242,14 @@ class Options(object):
         options = copy.copy(opts)
         if 'path_opts' in options:
             del options['path_opts']
+
+        # https://gist.github.com/oglops/c70fb69eef42d40bed06
+        def dict_representer(dumper, data):
+            return dumper.represent_dict(data.items())
+        Dumper.add_representer(OptionsDict, dict_representer)
+
         with open(path_yaml, 'w') as yaml_file:
-            yaml.dump(options, yaml_file, default_flow_style=False)
+            yaml.dump(options, yaml_file, Dumper=Dumper, default_flow_style=False)
 
 
 if __name__ == '__main__':
