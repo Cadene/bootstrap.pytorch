@@ -1,9 +1,8 @@
 import os
 import click
 import traceback
-
+import torch
 import torch.backends.cudnn as cudnn
-cudnn.benchmark = True
 
 from .lib import utils
 from .lib.logger import Logger
@@ -27,7 +26,8 @@ def init_experiment_directory(exp_dir, resume=None):
             else:
                 os._exit(1)
 
-    # if resume to evaluate the model on one epoch
+    # get the logs name which is used for the txt, json and yaml files
+    # default is `logs.txt`, `logs.json` and `options.yaml`
     if 'logs_name' in Options()['misc'] and Options()['misc']['logs_name'] is not None:
         logs_name = Options()['misc']['logs_name']
         path_yaml = os.path.join(exp_dir, 'options_{}.yaml'.format(logs_name))
@@ -42,7 +42,7 @@ def init_experiment_directory(exp_dir, resume=None):
     # create the options.yaml file
     Options().save(path_yaml)
 
-    # open(write) the logs.txt file and init logs.json path for later
+    # create the logs.txt and logs.json files
     Logger(exp_dir, name=logs_name)
 
 
@@ -56,13 +56,12 @@ def run(path_opts=None):
     # initialiaze seeds to be able to reproduce experiment on reload
     utils.set_random_seed(Options()['misc']['seed'])
 
-    # display and save options as yaml file in exp dir
-    Logger().log_dict('options', Options(), should_print=True)
+    Logger().log_dict('options', Options(), should_print=True) # display options
+    Logger()(os.uname()) # display server name
 
-    # display server name and GPU(s) id(s)
-    Logger()(os.uname())
-    if 'CUDA_VISIBLE_DEVICES' in os.environ:
-        Logger()('CUDA_VISIBLE_DEVICES='+os.environ['CUDA_VISIBLE_DEVICES'])
+    if torch.cuda.is_available():
+        cudnn.benchmark = True
+        Logger()('Available GPUs: {}'.format(utils.available_gpu_ids()))
 
     # engine can train, eval, optimize the model
     # engine can save and load the model and optimizer

@@ -1,7 +1,3 @@
-# import itertools
-# import collections
-# import torch
-# import numpy as np
 import os
 import torch
 import numpy
@@ -33,3 +29,12 @@ def set_random_seed(seed):
     random.seed(seed) # useful ? thread safe
 
 
+def available_gpu_ids():
+    if 'CUDA_VISIBLE_DEVICES' in os.environ:
+        gpu_ids = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
+        gpu_ids = [int(idx) for idx in gpu_ids]
+    elif torch.cuda.is_available():
+        gpu_ids = list(range(torch.cuda.device_count()))
+    else:
+        gpu_ids = []
+    return gpu_ids
