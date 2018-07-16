@@ -25,7 +25,8 @@ engine:
   nb_epochs: 1000
   print_freq: 10
   saving_criteria:
-    - accuracy_top1:gt # save when new_best > best
+    - loss:min # loss is a criteria to minimize
+    - accuracy_top1:max # acc top1 is a criteria to maximize
 misc:
   cuda: True
   seed: 1337

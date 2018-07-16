@@ -262,16 +262,16 @@ class Engine():
         return out
 
     def is_best(self, out, saving_criteria):
-        if ':lt' in saving_criteria:
-            name = saving_criteria.replace(':lt', '') # less than
-            order = '<' #first_best = float('+inf')
-        elif ':gt' in saving_criteria:
-            name = saving_criteria.replace(':gt', '') # greater than
-            order = '>' #first_best = float('-inf')
+        if ':min' in saving_criteria:
+            name = saving_criteria.replace(':min', '')
+            order = '<'
+        elif ':max' in saving_criteria:
+            name = saving_criteria.replace(':max', '')
+            order = '>'
         else:
-            error_msg = """'--engine.saving_criteria' named '{}' does not specify order
-            by ending with a ':lt' (new best value < last best value) or 
-            ':gt' (resp. >) to specify order""".format(saving_criteria)
+            error_msg = """'--engine.saving_criteria' named '{}' does not specify order,
+            you need to chose between '{}' or '{}' to specify if the criteria needs to be minimize or maximize""".format(
+                saving_criteria, saving_criteria+':min', saving_criteria+':max')
             raise ValueError(error_msg)
         
         if name not in out:
