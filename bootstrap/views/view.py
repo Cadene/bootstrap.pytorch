@@ -11,6 +11,7 @@ from plotly.offline import download_plotlyjs, plot
 #from threading import Thread
 from ..lib.logger import Logger
 from ..lib.options import Options
+from ..run import main
 
 def seaborn_color_to_plotly(list_color):
     n_list_color = []
@@ -183,20 +184,8 @@ class View():
 #     plot(figure, filename=path_view, auto_open=False)
 #     print('View generated in '+path_view)
 
-def main():
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--path_opts', default='', type=str)
-    args = parser.parse_args()
-
-    view = View(Options(args.path_opts))
-    view.generate()
-    # # Load options.yaml in exp.dir
-    # if 'dirs' in Options()['exp'] and len(Options()['exp']['dirs']) > 0:
-    #     generate_multi_view()
-    # elif 'dir' in Options()['exp']:
-    #     generate_view()
-    # else:
-    #     raise ValueError
+def view(path_opts=None):
+    View(Options(path_opts)).generate()
 
 if __name__ == '__main__':
-    main()
+    main(run=view)
