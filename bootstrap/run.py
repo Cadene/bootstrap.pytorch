@@ -99,7 +99,7 @@ def run(path_opts=None):
     engine.train()
 
 
-def main(path_opts=None):
+def main(path_opts=None, run=None):
     try:
         run(path_opts=path_opts)
     # to avoid traceback for -h flag in arguments line
@@ -114,5 +114,5 @@ def main(path_opts=None):
 
 
 if __name__ == '__main__':
-    main()
+    main(run=run)
 
