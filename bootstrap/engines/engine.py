@@ -137,9 +137,11 @@ class Engine():
             Logger().log_value('train_batch.timer.load', timer['load'], should_print=False)
 
             for key, value in out.items():
+                if type(value) == torch.autograd.Variable:
+                    value = value.data
                 if torch.is_tensor(value):
                     if value.dim() <= 1:
-                        value = value.item() # get number from a torch scalar
+                        value = value[0] # get number from a torch scalar
                     else:
                         continue
                 if type(value) == list:
@@ -157,7 +159,7 @@ class Engine():
                     datetime.timedelta(seconds=math.floor(time.time() - timer['begin'])),
                     datetime.timedelta(seconds=math.floor(timer['run_avg'] * (len(batch_loader) - 1 - i)))))
                 Logger()("{} process: {:.5f} | load: {:.5f}".format(' '*len(mode), timer['process'], timer['load']))
-                Logger()("{} loss: {:.5f}".format(' '*len(mode), out['loss'].data.item()))
+                Logger()("{} loss: {:.5f}".format(' '*len(mode), out['loss'].data[0]))
                 self.hook('train_on_print')
 
             timer['elapsed'] = time.time()
@@ -197,8 +199,7 @@ class Engine():
             self.hook('eval_on_start_batch')
             timer['load'] = time.time() - timer['elapsed']
 
-            with torch.no_grad():
-                out = model(batch)
+            out = model(batch)
             #torch.cuda.synchronize()
             self.hook('eval_on_forward')
 
@@ -214,9 +215,11 @@ class Engine():
             Logger().log_value('eval_batch.timer.load', timer['load'], should_print=False)
 
             for key, value in out.items():
+                if type(value) == torch.autograd.Variable:
+                    value = value.data
                 if torch.is_tensor(value):
                     if value.dim() <= 1:
-                        value = value.item() # get number from a torch scalar
+                        value = value[0] # get number from a torch scalar
                     else:
                         continue
                 if type(value) == list:

@@ -10,7 +10,7 @@ class Model(nn.Module):
     def __init__(self,
             engine=None,
             cuda_tf=transforms.ToCuda,
-            detach_tf=transforms.ToDetach,
+            detach_tf=transforms.ToVariable,
             network=None,
             criterions={},
             metrics={}):
@@ -50,7 +50,9 @@ class Model(nn.Module):
         if self.is_cuda:
             batch = self.cuda_tf()(batch)
         if self.mode == 'eval':
-            batch = self.detach_tf()(batch)
+            batch = self.detach_tf(volatile=True)(batch)
+        else:
+            batch = self.detach_tf(volatile=False)(batch)
         return batch
 
     def forward(self, batch):
