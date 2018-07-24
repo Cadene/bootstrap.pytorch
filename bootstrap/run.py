@@ -26,10 +26,12 @@ def init_experiment_directory(exp_dir, resume=None):
             else:
                 os._exit(1)
 
+
+def init_logs_options_files(exp_dir, resume=None):
     # get the logs name which is used for the txt, json and yaml files
     # default is `logs.txt`, `logs.json` and `options.yaml`
     if 'logs_name' in Options()['misc'] and Options()['misc']['logs_name'] is not None:
-        logs_name = Options()['misc']['logs_name']
+        logs_name = 'logs_{}'.format(Options()['misc']['logs_name'])
         path_yaml = os.path.join(exp_dir, 'options_{}.yaml'.format(logs_name))
     elif resume and Options()['dataset']['train_split'] is None:
         eval_split = Options()['dataset']['eval_split']
@@ -40,7 +42,8 @@ def init_experiment_directory(exp_dir, resume=None):
         logs_name = 'logs'
 
     # create the options.yaml file
-    Options().save(path_yaml)
+    if not os.path.isfile(path_yaml):
+        Options().save(path_yaml)
 
     # create the logs.txt and logs.json files
     Logger(exp_dir, name=logs_name)
@@ -49,12 +52,11 @@ def init_experiment_directory(exp_dir, resume=None):
 def run(path_opts=None):
     # first call to Options() load the options yaml file from --path_opts command line argument if path_opts=None
     Options(path_opts)
-
-    # make exp directory if --exp.resume is empty
-    init_experiment_directory(Options()['exp']['dir'], Options()['exp']['resume'])
-
     # initialiaze seeds to be able to reproduce experiment on reload
     utils.set_random_seed(Options()['misc']['seed'])
+
+    init_experiment_directory(Options()['exp']['dir'], Options()['exp']['resume'])
+    init_logs_options_files(Options()['exp']['dir'], Options()['exp']['resume'])
 
     Logger().log_dict('options', Options(), should_print=True) # display options
     Logger()(os.uname()) # display server name
