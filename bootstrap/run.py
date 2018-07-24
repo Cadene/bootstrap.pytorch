@@ -13,6 +13,7 @@ from . import models
 from . import optimizers
 from . import views
 
+
 def init_experiment_directory(exp_dir, resume=None):
     # create the experiment directory
     if not os.path.isdir(exp_dir):
@@ -92,13 +93,15 @@ def run(path_opts=None):
 
     # if no training split, evaluate the model on the evaluation split
     # (example: $ python main.py --dataset.train_split --dataset.eval_split test)
-    engine.eval()
+    if not Options()['dataset']['train_split']:
+        engine.eval()
 
     # optimize the model on the training split for several epochs
     # (example: $ python main.py --dataset.train_split train)
     # if evaluation split, evaluate the model after each epochs
     # (example: $ python main.py --dataset.train_split train --dataset.eval_split val)
-    engine.train()
+    if Options()['dataset']['train_split']:
+        engine.train()
 
 
 def main(path_opts=None, run=None):

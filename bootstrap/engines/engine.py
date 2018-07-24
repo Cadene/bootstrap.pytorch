@@ -57,16 +57,14 @@ class Engine():
         self.epoch += 1
 
     def eval(self):
-        if not Options()['dataset']['train_split']:
-            Logger()('Launching evaluation procedures')
+        Logger()('Launching evaluation procedures')
 
-            if Options()['dataset']['eval_split']:
-                # self.epoch-1 to be equal to the same resumed epoch 
-                # or to be equal to -1 when not resumed
-                self.eval_epoch(self.model, self.dataset['eval'], self.epoch-1, logs_json=True)
+        if Options()['dataset']['eval_split']:
+            # self.epoch-1 to be equal to the same resumed epoch
+            # or to be equal to -1 when not resumed
+            self.eval_epoch(self.model, self.dataset['eval'], self.epoch-1, logs_json=True)
 
-            Logger()('Ending evaluation procedures')
-            os._exit(1)
+        Logger()('Ending evaluation procedures')
 
     def train(self):
         Logger()('Launching training procedures')
