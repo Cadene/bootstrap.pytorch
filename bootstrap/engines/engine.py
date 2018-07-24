@@ -25,7 +25,8 @@ class Engine():
         self.register_hook('eval_on_flush', self.generate_view)
 
     def generate_view(self):
-        threading.Thread(target=self.view.generate).start()
+        if self.view is not None:
+            threading.Thread(target=self.view.generate).start()
         # path_opts = os.path.join(Options()['exp']['dir'], 'options.yaml')
         # os.system('python -m bootstrap.views.view --path_opts {}'.format(path_opts))
 
