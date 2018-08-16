@@ -85,7 +85,8 @@ class View():
                   #'trainval_epoch': 'rgb(214, 39, 40)', 'trainval_batch': 'rgb(214, 39, 40)',
                   'val_epoch': 'rgb(31, 119, 180)', 'val_batch': 'rgb(31, 119, 180)',
                   'eval_epoch': 'rgb(31, 119, 180)', 'eval_batch': 'rgb(31, 119, 180)',
-                  'test_epoch': 'rgb(31, 180, 80)', 'test_batch': 'rgb(31, 180, 80)'}
+                  'test_epoch': 'rgb(31, 180, 80)', 'test_batch': 'rgb(31, 180, 80)',
+                  'eval_pruned_epoch': 'rgb(31, 180, 80)', 'eval_pruned_batch': 'rgb(31, 180, 80)'}
 
         for figure_id, views in enumerate(views_per_figure):
             
