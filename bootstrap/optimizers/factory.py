@@ -1,10 +1,10 @@
-import importlib
+import copy
 import torch
-import torch.optim.lr_scheduler
+import importlib
 from ..lib.options import Options
 from ..lib.logger import Logger
 
-from .lr_scheduler import LearningRateScheduler
+from . import lr_scheduler
 from .grad_clipper import GradClipper
 
 def factory(model, engine=None):
@@ -19,7 +19,7 @@ def factory(model, engine=None):
         optimizer = factory_optimizer(model)
 
         if 'lr_scheduler' in Options()['optimizer']:
-            optimizer = factory_scheduler(optimizer)
+            optimizer = factory_scheduler(optimizer, engine)
 
         if 'grad_clip' in Options()['optimizer']:
             optimizer = factory_grad_clip(optimizer)
@@ -53,12 +53,10 @@ def factory_optimizer(model):
     return optimizer
 
 
-def factory_scheduler(optimizer):
+def factory_scheduler(optimizer, engine=None):
     Logger()('Creating lr_scheduler {}...'.format(Options()['optimizer']['lr_scheduler']['name']))
-    optimizer = LearningRateScheduler(optimizer,
-        name=Options()['optimizer']['lr_scheduler']['name'],
-        step_size=Options()['optimizer']['lr_scheduler']['step_size'],
-        gamma=Options()['optimizer']['lr_scheduler']['gamma'])
+    opt = copy.copy(Options()['optimizer']['lr_scheduler'])
+    optimizer = lr_scheduler.__dict__[opt.pop('name', None)](optimizer, engine, **opt)
     return optimizer
 
 
