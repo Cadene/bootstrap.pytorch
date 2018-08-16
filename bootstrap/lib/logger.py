@@ -197,11 +197,18 @@ class Logger(object):
 
     def flush(self):
         if self.dir_logs:
-            with open(self.path_json, 'w') as json_file:
-                if self.compactjson:
-                    json.dump(self.values, json_file, separators=(',', ':'))
-                else:
-                    json.dump(self.values, json_file, indent=4)
+            self.path_tmp = self.path_json + '.tmp'
+            try:
+                with open(self.path_tmp, 'w') as json_file:
+                    if self.compactjson:
+                        json.dump(self.values, json_file, separators=(',', ':'))
+                    else:
+                        json.dump(self.values, json_file, indent=4)
+                os.system('rm '+self.path_json)
+                os.system('mv {} {}'.format(self.path_tmp, self.path_json))
+            except Exception as e:
+                print(e)
+                import ipdb;ipdb.set_trace()
 
 
 if __name__ == '__main__':
