@@ -293,13 +293,19 @@ class Engine():
         model.load_state_dict(model_state)
 
         if Options()['dataset']['train_split'] is not None:
-            Logger()('Loading optimizer...')
-            optimizer_state = torch.load(path_template.format(name, 'optimizer'))
-            optimizer.load_state_dict(optimizer_state)
+            if os.path.isfile(path_template.format(name, 'optimizer')):
+                Logger()('Loading optimizer...')
+                optimizer_state = torch.load(path_template.format(name, 'optimizer'))
+                optimizer.load_state_dict(optimizer_state)
+            else:
+                Logger()('No optimizer checkpoint', log_level=Logger.WARNING)
 
-        Logger()('Loading engine...')
-        engine_state = torch.load(path_template.format(name, 'engine'))
-        self.load_state_dict(engine_state)
+        if os.path.isfile(path_template.format(name, 'engine')):
+            Logger()('Loading engine...')
+            engine_state = torch.load(path_template.format(name, 'engine'))
+            self.load_state_dict(engine_state)
+        else:
+            Logger()('No engine checkpoint', log_level=Logger.WARNING)
 
     def save(self, dir_logs, name, model, optimizer):
         path_template = os.path.join(dir_logs, 'ckpt_{}_{}.pth.tar')
