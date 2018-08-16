@@ -17,6 +17,7 @@ class Dataset(data.Dataset):
         self.shuffle = shuffle
         self.pin_memory = pin_memory
         self.nb_threads = nb_threads
+        self.sampler = None
 
         self.collate_fn = bootstrap_tf.Compose([
             bootstrap_tf.ListDictsToDictLists(),
@@ -30,7 +31,8 @@ class Dataset(data.Dataset):
             shuffle=self.shuffle if shuffle is None else shuffle,
             pin_memory=self.pin_memory,
             num_workers=self.nb_threads,
-            collate_fn=self.collate_fn)
+            collate_fn=self.collate_fn,
+            sampler=None)
         return batch_loader
 
 
