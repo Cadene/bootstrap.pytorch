@@ -11,7 +11,6 @@ from plotly.offline import download_plotlyjs, plot
 #from threading import Thread
 from ..lib.logger import Logger
 from ..lib.options import Options
-from ..run import main
 
 def seaborn_color_to_plotly(list_color):
     n_list_color = []
@@ -189,4 +188,5 @@ def view(path_opts=None):
     View(Options(path_opts)).generate()
 
 if __name__ == '__main__':
+    from ..run import main
     main(run=view)
