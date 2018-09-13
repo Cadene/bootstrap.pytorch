@@ -103,7 +103,6 @@ class Engine():
             'load': None,
             'run_avg': 0
         }
-
         out_epoch = {}
         batch_loader = dataset.make_batch_loader()
 
@@ -187,19 +186,18 @@ class Engine():
             'load': None,
             'run_avg': 0
         }
-
         out_epoch = {}
         batch_loader = dataset.make_batch_loader()
 
-        self.hook('eval_on_start_epoch')
+        self.hook('{}_on_start_epoch'.format(mode))
         for i, batch in enumerate(batch_loader):
-            self.hook('eval_on_start_batch')
             timer['load'] = time.time() - timer['elapsed']
+            self.hook('{}_on_start_batch'.format(mode))
 
             with torch.no_grad():
                 out = model(batch)
             #torch.cuda.synchronize()
-            self.hook('eval_on_forward')
+            self.hook('{}_on_forward'.format(mode))
 
             timer['process'] = time.time() - timer['elapsed']
             if i == 0:
@@ -207,10 +205,10 @@ class Engine():
             else:
                 timer['run_avg'] = timer['run_avg'] * 0.8 + timer['process'] * 0.2
 
-            Logger().log_value('eval_batch.batch', i, should_print=False)
-            Logger().log_value('eval_batch.epoch', epoch, should_print=False)
-            Logger().log_value('eval_batch.timer.process', timer['process'], should_print=False)
-            Logger().log_value('eval_batch.timer.load', timer['load'], should_print=False)
+            Logger().log_value('{}_batch.batch'.format(mode), i, should_print=False)
+            Logger().log_value('{}_batch.epoch'.format(mode), epoch, should_print=False)
+            Logger().log_value('{}_batch.timer.process'.format(mode), timer['process'], should_print=False)
+            Logger().log_value('{}_batch.timer.load'.format(mode), timer['load'], should_print=False)
 
             for key, value in out.items():
                 if torch.is_tensor(value):
@@ -225,7 +223,7 @@ class Engine():
                 if key not in out_epoch:
                     out_epoch[key] = []
                 out_epoch[key].append(value)
-                Logger().log_value('eval_batch.'+key, value, should_print=False)
+                Logger().log_value('{}_batch.{}'.format(mode, key), value, should_print=False)
 
             if i % Options()['engine']['print_freq'] == 0:
                 Logger()("{}: epoch {} | batch {}/{}".format(mode, epoch, i, len(batch_loader) - 1))
@@ -233,10 +231,10 @@ class Engine():
                     datetime.timedelta(seconds=math.floor(time.time() - timer['begin'])),
                     datetime.timedelta(seconds=math.floor(timer['run_avg'] * (len(batch_loader) - 1 - i)))))
                 Logger()("{}  process: {:.5f} | load: {:.5f}".format(' '*len(mode), timer['process'], timer['load']))
-                self.hook('eval_on_print')
+                self.hook('{}_on_print'.format(mode))
             
             timer['elapsed'] = time.time()
-            self.hook('eval_on_end_batch')
+            self.hook('{}_on_end_batch'.format(mode))
 
             if Options()['engine']['debug']:
                 if i > 10:
@@ -249,15 +247,15 @@ class Engine():
             except:
                 import ipdb; ipdb.set_trace()
 
-        Logger().log_value('eval_epoch.epoch', epoch, should_print=True)
+        Logger().log_value('{}_epoch.epoch'.format(mode), epoch, should_print=True)
         for key, value in out.items():
-            Logger().log_value('eval_epoch.'+key, value, should_print=True)
+            Logger().log_value('{}_epoch.{}'.format(mode, key), value, should_print=True)
 
-        self.hook('eval_on_end_epoch')
+        self.hook('{}_on_end_epoch'.format(mode))
         if logs_json:
             Logger().flush()
 
-        self.hook('eval_on_flush')
+        self.hook('{}_on_flush'.format(mode))
         return out
 
     def is_best(self, out, saving_criteria):

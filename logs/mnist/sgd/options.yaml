@@ -31,9 +31,9 @@ engine:
   nb_epochs: 10
   print_freq: 10
   saving_criteria:
-  - loss:lt
-  - accuracy_top1:gt
-  - accuracy_top5:gt
+  - loss:min
+  - accuracy_top1:max
+  - accuracy_top5:max
 misc:
   cuda: false
   seed: 1337

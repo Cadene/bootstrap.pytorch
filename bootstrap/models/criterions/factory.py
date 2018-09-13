@@ -4,6 +4,8 @@ from bootstrap.lib.options import Options
 from bootstrap.lib.logger import Logger
 
 from .nll import NLLLoss
+from .bce import BCEWithLogitsLoss
+from .cross_entropy import CrossEntropyLoss
 from .cross_entropy import CrossEntropyLoss
 
 def factory(engine=None, mode=None):
@@ -22,6 +24,9 @@ def factory(engine=None, mode=None):
 
     elif Options()['model']['criterion']['name'] == 'cross_entropy':
         criterion = CrossEntropyLoss()
+
+    elif Options()['model']['criterion']['name'] == 'BCEWithLogitsLoss':
+        criterion = BCEWithLogitsLoss()
 
     else:
         raise ValueError()
