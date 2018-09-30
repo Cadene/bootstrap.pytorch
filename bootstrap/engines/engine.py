@@ -8,7 +8,9 @@ from ..lib import utils
 from ..lib.options import Options
 from ..lib.logger import Logger
 
-class Engine():
+class Engine(object):
+    """Contains training and evaluation procedures
+    """
 
     def __init__(self):
         self.hooks = {}
@@ -25,32 +27,62 @@ class Engine():
         self.register_hook('eval_on_flush', self.generate_view)
 
     def generate_view(self):
+        """ Generate a view.html via an asynchronous call to `self.view.generate()`
+        """
         if self.view is not None:
             threading.Thread(target=self.view.generate).start()
         # path_opts = os.path.join(Options()['exp']['dir'], 'options.yaml')
         # os.system('python -m bootstrap.views.view --path_opts {}'.format(path_opts))
 
     def load_state_dict(self, state):
+        """ 
+        """
         self.epoch = state['epoch']
         self.best_out = state['best_out']
 
     def state_dict(self):
+        """ 
+        """
         state = {}
         state['epoch'] = self.epoch
         state['best_out'] = self.best_out
         return state
 
     def hook(self, name):
+        """ Run all the callback functions that have been registered
+            for a hook.
+
+            Args:
+                name: the name of the hook
+        """
         if name in self.hooks:
             for func in self.hooks[name]:
                 func()
 
     def register_hook(self, name, func):
+        """ Register a callback function to be triggered when the hook
+            is called.
+
+            Args:
+                name: the name of the hook
+                func: the callback function (no argument)
+
+            Example usage:
+            
+            .. code-block:: python
+
+                def func():
+                    print('hooked!')
+
+                engine.register_hook('train_on_start_batch', func)
+        """
         if name not in self.hooks:
             self.hooks[name] = []
         self.hooks[name].append(func)
 
     def resume(self):
+        """ Resume a checkpoint using the `bootstrap.lib.options.Options`
+        """
         Logger()('Loading {} checkpoint'.format(Options()['exp']['resume']))
         self.load(Options()['exp']['dir'],
                   Options()['exp']['resume'],
@@ -58,6 +90,8 @@ class Engine():
         self.epoch += 1
 
     def eval(self):
+        """ Launch evaluation procedures
+        """
         Logger()('Launching evaluation procedures')
 
         if Options()['dataset']['eval_split']:
@@ -68,6 +102,13 @@ class Engine():
         Logger()('Ending evaluation procedures')
 
     def train(self):
+        """ Launch training procedures
+
+            List of the hooks:
+            
+            - train_on_start: before the full training procedure
+
+        """
         Logger()('Launching training procedures')
 
         self.hook('train_on_start')
@@ -88,10 +129,23 @@ class Engine():
             self.save(Options()['exp']['dir'], 'last', self.model, self.optimizer)
             self.epoch += 1
 
-
         Logger()('Ending training procedures')
 
     def train_epoch(self, model, dataset, optimizer, epoch, mode='train'):
+        """ Launch training procedures for one epoch
+
+            List of the hooks:
+
+            - train_on_start_epoch: before the training procedure for an epoch
+            - train_on_start_batch: before the training precedure for a batch
+            - train_on_forward: after the forward of the model
+            - train_on_bachward: after the backward of the loss
+            - train_on_update: after the optimization step
+            - train_on_print: after the print to the terminal
+            - train_on_end_batch: end of the training procedure for a batch
+            - train_on_end_epoch: before saving the logs in logs.json
+            - train_on_flush: end of the training procedure for an epoch
+        """
         utils.set_random_seed(Options()['misc']['seed'] + epoch) # to be able to reproduce exps on reload
         Logger()('Training model on {}set for epoch {}'.format(dataset.split, epoch))
         model.train()
@@ -175,6 +229,21 @@ class Engine():
 
 
     def eval_epoch(self, model, dataset, epoch, mode='eval', logs_json=True):
+        """ Launch evaluation procedures for one epoch
+
+            List of the hooks (``mode='eval'`` by default):
+
+            - mode_on_start_epoch: before the evaluation procedure for an epoch
+            - mode_on_start_batch: before the evaluation precedure for a batch
+            - mode_on_forward: after the forward of the model
+            - mode_on_print: after the print to the terminal
+            - mode_on_end_batch: end of the evaluation procedure for a batch
+            - mode_on_end_epoch: before saving the logs in logs.json
+            - mode_on_flush: end of the evaluation procedure for an epoch
+
+            Returns:
+                out(dict): mean of all the scalar outputs of the model, indexed by output name, for this epoch
+        """
         utils.set_random_seed(Options()['misc']['seed'] + epoch) # to be able to reproduce exps on reload
         Logger()('Evaluating model on {}set for epoch {}'.format(dataset.split, epoch))
         model.eval()
@@ -259,6 +328,26 @@ class Engine():
         return out
 
     def is_best(self, out, saving_criteria):
+        """ Verify if the last model is the best for a specific saving criteria
+
+            Args:
+                out(dict): mean of all the scalar outputs of model indexed by output name
+                saving_criteria(str):
+
+            Returns:
+                is_best(bool)
+
+            Example usage:
+            
+            .. code-block:: python
+
+                out = {
+                    'loss': 0.2,
+                    'acctop1': 87.02
+                }
+
+                engine.is_best(out, 'loss:min')
+        """
         if ':min' in saving_criteria:
             name = saving_criteria.replace(':min', '')
             order = '<'
@@ -284,6 +373,14 @@ class Engine():
         return False
 
     def load(self, dir_logs, name, model, optimizer):
+        """ Load a checkpoint
+
+            Args:
+                dir_logs: directory of the checkpoint
+                name: name of the checkpoint
+                model: model associated to the checkpoint
+                optimizer: optimizer associated to the checkpoint
+        """
         path_template = os.path.join(dir_logs, 'ckpt_{}_{}.pth.tar')
 
         Logger()('Loading model...')
@@ -306,6 +403,14 @@ class Engine():
             Logger()('No engine checkpoint', log_level=Logger.WARNING)
 
     def save(self, dir_logs, name, model, optimizer):
+        """ Save a checkpoint
+
+            Args:
+                dir_logs: directory of the checkpoint
+                name: name of the checkpoint
+                model: model associated to the checkpoint
+                optimizer: optimizer associated to the checkpoint
+        """
         path_template = os.path.join(dir_logs, 'ckpt_{}_{}.pth.tar')
 
         Logger()('Saving model...')

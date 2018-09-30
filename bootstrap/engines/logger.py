@@ -2,6 +2,24 @@ from ..lib.logger import Logger
 from .engine import Engine
 
 class LoggerEngine(Engine):
+    """ LoggerEngine is similar to Engine. The only difference is a more powerful is_best method.
+        It is able to look into the logger dictionary that contains the list of all the logged variables
+        indexed by name.
+
+        Example usage:
+            
+            .. code-block:: python
+
+                out = {
+                    'loss': 0.2,
+                    'acctop1': 87.02
+                }
+                engine.is_best(out, 'loss:min')
+
+                # Logger().values['eval_epoch.recall_at_1'] contains a list
+                # of all the recall at 1 values for each evaluation epoch
+                engine.is_best(out, 'eval_epoch.recall_at_1')
+    """
 
     def __init__(self):
         super(LoggerEngine, self).__init__()

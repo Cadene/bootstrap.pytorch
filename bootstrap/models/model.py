@@ -6,6 +6,8 @@ from .criterions.factory import factory as cri_factory
 from .metrics.factory import factory as met_factory
 
 class Model(nn.Module):
+    """ Model contains a network, two criterions (train, eval) and two metrics.
+    """
 
     def __init__(self,
             engine=None,
@@ -24,29 +26,36 @@ class Model(nn.Module):
         self.eval()
 
     def eval(self):
+        """ Activate evaluation mode
+        """
         super(Model, self).train(mode=False)
         self.mode = 'eval'
 
     def train(self):
+        """ Activate training mode
+        """
         super(Model, self).train(mode=True)
         self.mode = 'train'
 
     def cuda(self, device_id=None):
-        """Moves all model parameters and buffers to the GPU.
+        """ Moves all model parameters and buffers to the GPU.
 
-        Arguments:
-            device_id (int, optional): if specified, all parameters will be
-                copied to that device
+            Args:
+                device_id (int, optional): if specified, all parameters will be
+                    copied to that device
         """
         self.is_cuda = True
         return self._apply(lambda t: t.cuda(device_id))
 
     def cpu(self):
-        """Moves all model parameters and buffers to the CPU."""
+        """ Moves all model parameters and buffers to the CPU.
+        """
         self.is_cuda = False
         return self._apply(lambda t: t.cpu())
 
     def prepare_batch(self, batch):
+        """ Prepare a batch with two functions: cuda_tf and detach_tf (only in eval mode)
+        """
         if self.is_cuda:
             batch = self.cuda_tf()(batch)
         if self.mode == 'eval':
@@ -54,6 +63,11 @@ class Model(nn.Module):
         return batch
 
     def forward(self, batch):
+        """ Prepare the batch and feed it to the network, criterion and metric.
+
+            Returns:
+                out (dict): a dictionary of outputs
+        """
         batch = self.prepare_batch(batch)
         net_out = self.network(batch)
 
@@ -82,6 +96,8 @@ class Model(nn.Module):
         return out
 
     def state_dict(self, *args, **kwgs):
+        """
+        """
         state = {}
         state['network'] = self.network.state_dict(*args, **kwgs)
         state['criterions'] = {}
@@ -95,6 +111,8 @@ class Model(nn.Module):
         return state
 
     def load_state_dict(self, state, *args, **kwgs):
+        """
+        """
         self.network.load_state_dict(state['network'], *args, **kwgs)
         for mode, criterion in self.criterions.items():
             if hasattr(criterion, '__parameters'):
@@ -105,6 +123,8 @@ class Model(nn.Module):
 
 
 class DefaultModel(Model):
+    """ An extension of Model that relies on factory calls
+    """
 
     def __init__(self, engine=None,
                  cuda_tf=transforms.ToCuda,
@@ -119,9 +139,13 @@ class DefaultModel(Model):
         self.eval()
 
     def _init_network(self, engine=None):
+        """ Create the network using the bootstrap network factory
+        """
         return net_factory(engine)
 
     def _init_criterions(self, engine=None):
+        """ Create the two criterions using the bootstrap criterion factory
+        """
         # by default all modes have criterions
         if engine:
             modes = list(engine.dataset.keys()) # [train, val] for mnist
@@ -136,6 +160,8 @@ class DefaultModel(Model):
         return criterions
 
     def _init_metrics(self, engine=None):
+        """ Create the two metrics using the bootstrap metric factory
+        """
         # by default all modes have metrics
         if engine:
             modes = list(engine.dataset.keys())
@@ -151,6 +177,8 @@ class DefaultModel(Model):
 
 
 class SimpleModel(DefaultModel):
+    """ An extension of DefaultModel that modifies the forward function
+    """
 
     def __init__(self, engine=None,
                  cuda_tf=transforms.ToCuda,
@@ -161,6 +189,8 @@ class SimpleModel(DefaultModel):
             detach_tf=detach_tf)
 
     def forward(self, batch):
+        """ The forward call to the network uses batch['data'] instead of batch
+        """
         batch = self.prepare_batch(batch)
         net_out = self.network(batch['data'])
 

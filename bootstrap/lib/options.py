@@ -17,6 +17,8 @@ def merge_dictionaries(dict1, dict2):
 
 
 class OptionsDict(OrderedDict):
+    """ Dictionary of options contained in the Options class
+    """
 
     def __init__(self, *args, **kwargs):
         super(OptionsDict, self).__init__(*args, **kwargs)
@@ -73,9 +75,27 @@ class OptionsDict(OrderedDict):
         return d
 
 
-# Options is a singleton
 # https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
 class Options(object):
+    """ Options is a singleton. It parses a yaml file to generate rules to the argument parser.
+        If a path to a yaml file is not provided, it relies on the `-o/--path_opts` command line argument.
+
+        Args:
+            path_yaml(str): path to the yaml file
+
+        Example usage:
+            
+            .. code-block:: python
+
+                # parse the yaml file and create options
+                Options(path_yaml='bootstrap/options/example.yaml')
+                
+                opt = Options() # get the options dictionary from the singleton
+                print(opt['exp'])     # display a dictionary
+                print(opt['exp.dir']) # display a value
+                print(opt['exp']['dir']) # display the same value
+                
+    """
 
     # Attributs
 
@@ -131,6 +151,8 @@ class Options(object):
 
 
     def __getitem__(self, key):
+        """
+        """
         val = self.options[key]
         return val
 
@@ -216,11 +238,15 @@ class Options(object):
 
 
     def save(self, path_yaml):
+        """ Write options dictionary to a yaml file
+        """
         Options.save_yaml_opts(self.options, path_yaml)
 
     # Static methods
 
     def load_yaml_opts(path_yaml):
+        """ Load options dictionary from a yaml file
+        """
         # TODO: include the parent options when parsed, instead of after having loaded the main options
         result = {}
         with open(path_yaml, 'r') as yaml_file:

@@ -2,6 +2,7 @@
 logs/*
 data/*
 !.gitkeep
+docs/src
 
 # Apple
 .DS_Store

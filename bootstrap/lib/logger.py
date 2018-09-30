@@ -15,10 +15,22 @@ import inspect
 import datetime
 import collections
 
-# Logger is a singleton
 # https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
-
 class Logger(object):
+    """ The Logger class is a singleton. It contains all the utilities
+        for logging variables in a key-value dictionary.
+        It can also be considered as a replacement for the print function.
+
+        .. code-block:: python
+
+            Logger(dir_logs='logs/mnist')
+            Logger().log_value('train_epoch.epoch', epoch)
+            Logger().log_value('train_epoch.mean_acctop1', mean_acctop1)
+            Logger().flush() # write the logs.json
+
+            Logger()("Launching training procedures") # written to logs.txt
+            > [I 2018-07-23 18:58:31] ...trap/engines/engine.py.80: Launching training procedures
+    """
 
     # Attributs
 
@@ -90,6 +102,8 @@ class Logger(object):
 
 
     def log_message(self, *message, log_level=INFO, break_line=True, print_header=True, stack_displacement=1):
+        """
+        """
         if log_level < self.log_level:
             return -1
 
@@ -136,6 +150,8 @@ class Logger(object):
 
 
     def log_value(self, name, value, stack_displacement=2, should_print=False, log_level=SUMMARY):
+        """
+        """
         if name not in self.values:
             self.values[name] = []
         self.values[name].append(value)
@@ -152,6 +168,8 @@ class Logger(object):
 
 
     def log_dict(self, group, dictionary, description='', stack_displacement=2, should_print=False, log_level=SUMMARY):
+        """
+        """
         if group not in self.perf_memory:
             self.perf_memory[group] = {}
         else:
@@ -196,6 +214,8 @@ class Logger(object):
 
 
     def flush(self):
+        """
+        """
         if self.dir_logs:
             self.path_tmp = self.path_json + '.tmp'
             try:
