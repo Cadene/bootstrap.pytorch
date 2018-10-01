@@ -228,12 +228,3 @@ class Logger(object):
                 os.system('mv {} {}'.format(self.path_tmp, self.path_json))
             except Exception as e:
                 print(e)
-                import ipdb;ipdb.set_trace()
-
-
-if __name__ == '__main__':
-    Logger()('lol')
-    Logger()('lol')
-    Logger()('lol')
-    Logger()('lol')
-    Logger()('lol')

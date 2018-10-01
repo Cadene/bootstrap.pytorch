@@ -3,17 +3,12 @@ import sys
 import yaml
 import json
 import copy
+import inspect
 import argparse
 import collections
 from collections import OrderedDict
 from yaml import Dumper
-
-def merge_dictionaries(dict1, dict2):
-    for key in dict2:
-        if key in dict1 and isinstance(dict1[key], dict) and isinstance(dict2[key], dict):
-            merge_dictionaries(dict1[key], dict2[key])
-        else:
-            dict1[key] = dict2[key]
+from bootstrap.lib.utils import merge_dictionaries
 
 
 class OptionsDict(OrderedDict):
@@ -21,6 +16,7 @@ class OptionsDict(OrderedDict):
     """
 
     def __init__(self, *args, **kwargs):
+        self.__locked = False
         super(OptionsDict, self).__init__(*args, **kwargs)
 
     def __getitem__(self, key):
@@ -36,17 +32,24 @@ class OptionsDict(OrderedDict):
         return val
 
     def __setitem__(self, key, val):
-        if type(val) == dict:
-            val = OptionsDict(val)
+        if key == '_{}__locked'.format(type(self).__name__):
             OrderedDict.__setitem__(self, key, val)
-        elif '.' in key:
-            keys = key.split('.')
-            d = self[keys[0]]
-            for k in keys[1:-1]:
-                d = d[k]
-            d[keys[-1]] = val
+        elif hasattr(self, '_{}__locked'.format(type(self).__name__)):
+            if self.__locked:
+                raise PermissionError('Options\' dictionnary is locked and cannot be changed.')
+            if type(val) == dict:
+                val = OptionsDict(val)
+                OrderedDict.__setitem__(self, key, val)
+            elif '.' in key:
+                keys = key.split('.')
+                d = self[keys[0]]
+                for k in keys[1:-1]:
+                    d = d[k]
+                d[keys[-1]] = val
+            else:
+                OrderedDict.__setitem__(self, key, val)
         else:
-            OrderedDict.__setitem__(self, key, val)
+            raise PermissionError('Tried to access Options\' dictionnary bypassing the lock feature.')
 
     def __getattr__(self, key):
         if key in self:
@@ -74,6 +77,28 @@ class OptionsDict(OrderedDict):
                 d[k] = v
         return d
 
+    def lock(self):
+        self.__locked = True
+        for key in self.keys():
+            if type(key) == OptionsDict:
+                self[key].lock()
+
+    def islocked():
+        return self.__locked
+
+    def unlock(self):
+        stack_this = inspect.stack()[1]
+        stack_caller = inspect.stack()[2]
+        if stack_this.filename != stack_caller.filename or stack_this.function != stack_caller.function:
+            for i in range(10):
+                print('WARNING: Options unlocked by {}[{}]: {}.'.format(
+                    stack_caller.filename,
+                    stack_caller.lineno,
+                    stack_caller.function))
+        self.__locked = False
+        for key in self.keys():
+            if type(key) == OptionsDict:
+                self[key].unlock()
 
 # https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
 class Options(object):
@@ -99,7 +124,7 @@ class Options(object):
 
     # Attributs
 
-    __instance = None # singleton
+    __instance = None # singleton instance of this class
     options = None # dictionnary of the singleton
     path_yaml = None
 
@@ -109,18 +134,17 @@ class Options(object):
             self.print_help()
             sys.exit(2)
 
-    # Build the singleton as Options()
-
-    def __new__(self, path_yaml=None, arguments_callback=None):
+    def __new__(self, path_yaml=None, arguments_callback=None, lock=False):
+        # Options is a singleton, we will only build if it has not been built before
         if not Options.__instance:
             Options.__instance = object.__new__(Options)
 
             fullopt_parser = Options.HelpParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
             if path_yaml:
-                #Options.__instance.options = Options.load_yaml_opts(path_yaml)
                 self.path_yaml = path_yaml
             else:
+                # Parsing only the path_opts argument to find yaml file
                 optfile_parser = argparse.ArgumentParser(add_help=False)
                 optfile_parser.add_argument('-o', '--path_opts', type=str, required=True)
                 fullopt_parser.add_argument('-o', '--path_opts', type=str, required=True)
@@ -147,6 +171,8 @@ class Options(object):
                         position = position[piece]
                 position[nametree[-1]] = value
 
+        if lock:
+            Options.__instance.lock()
         return Options.__instance
 
 
@@ -179,20 +205,22 @@ class Options(object):
     def get(self, key, default):
         return self.options.get(key, default)
 
+
     def copy(self):
         return self.options.copy()
+
 
     def has_key(self, k):
         return k in self.options
 
-    # def update(self, *args, **kwargs):
-    #     return self.options.update(*args, **kwargs)
 
     def keys(self):
         return self.options.keys()
 
+
     def values(self):
         return self.options.values()
+
 
     def items(self):
         return self.options.items()
@@ -203,7 +231,6 @@ class Options(object):
             prefix += '.'
 
         for key, value in options.items():
-            #try:
             if isinstance(value, dict):
                 self.add_options(parser, value, '{}{}'.format(prefix, key))
             else:
@@ -220,15 +247,12 @@ class Options(object):
                         datatype = type(value[0])
                 else:
                     datatype = type(value)
-                #datatype = str if value is None else type(value[0]) if isinstance(value, list) else type(value)
                 parser.add_argument(argname, help='Default: %(default)s', default=value, nargs=nargs, type=datatype)
-            # except:
-            #     import ipdb; ipdb.set_trace()
 
 
     def str_to_bool(self, v):
-        true_strings = ['yes', 'true']#, 't', 'y', '1')
-        false_strings = ['no', 'false']#, 'f', 'n', '0')
+        true_strings = ['yes', 'true']
+        false_strings = ['no', 'false']
         if isinstance(v, str):
             if v.lower() in true_strings:
                 return True
@@ -242,7 +266,17 @@ class Options(object):
         """
         Options.save_yaml_opts(self.options, path_yaml)
 
+
+    def lock(self):
+        Options.__instance.options.lock()
+
+
+    def unlock(self):
+        Options.__instance.options.unlock()
+
+
     # Static methods
+
 
     def load_yaml_opts(path_yaml):
         """ Load options dictionary from a yaml file
@@ -276,87 +310,3 @@ class Options(object):
 
         with open(path_yaml, 'w') as yaml_file:
             yaml.dump(options, yaml_file, Dumper=Dumper, default_flow_style=False)
-
-
-if __name__ == '__main__':
-
-    # # # # # # # # # # # # # # # #
-    # Init OptionsDict from empty dict
-
-    d = OptionsDict()
-    d['a0'] = {'a1':'a2'}
-    d['a0.b1'] = 'a2' # recursive setitem
-    # d['a0.c1'] = 'a2' FAIL: must create dict first
-    d.b0 = {} # setattr == setitem and {} converted into OptionsDict
-    d.b0.a1 = 'a2'
-
-    print(json.dumps(d, indent=2))
-    # {
-    #   "a0": {
-    #     "a1": "b2"
-    #   },
-    #   "b0": {
-    #     "a1": "a2"
-    #   }
-    # }
-
-    print(d)
-    # OptionsDict({'a0': OptionsDict({'a1': 'b2'}), 'b0': OptionsDict({'a1': 'a2'})})
-
-    print(d['a0']['a1'])
-    # a2
-
-    print(d['a0.a1'])
-    # a2
-
-    print(d.a0.a1)
-    # a2
-
-    # # # # # # # # # # # # # # # #
-    # Init OptionsDict from dict
-
-    d = {'ha0':{'ha1':'ha2'}}
-    print(json.dumps(d, indent=2))
-    # {
-    #   "ha0": {
-    #     "ha1": "ha2"
-    #   }
-    # }
-    print(d)
-    # {'ha0': {'ha1': 'ha2'}}
-
-    d = OptionsDict(d)
-    print(json.dumps(d, indent=2))
-    # {
-    #   "ha0": {
-    #     "ha1": "ha2"
-    #   }
-    # }
-    print(d)
-    # OptionsDict({'ha0': OptionsDict({'ha1': 'ha2'})})
-
-    # # # # # # # # # # # # # # # #
-    # Init Options
-
-    # path = 'bootstrap/options/example.yaml'
-    # Options(path)
-    Options()
-    print(json.dumps(Options().options, indent=2))
-
-    print(Options()['dataset']['dir'])
-    # /mnt/apcv_data/rcadene/data/cifar10
-    print(Options()['dataset.dir'])
-    # /mnt/apcv_data/rcadene/data/cifar10
-    print(Options().dataset.dir)
-    # /mnt/apcv_data/rcadene/data/cifar10
-    print(Options().options['dataset']['dir'])
-    # /mnt/apcv_data/rcadene/data/cifar10
-    print(Options().options['dataset.dir'])
-    # /mnt/apcv_data/rcadene/data/cifar10
-    print(Options().options.dataset.dir)
-    # /mnt/apcv_data/rcadene/data/cifar10
-    Options().dataset.lol = 10
-    print(Options()['dataset.lol'])
-    # 10
-    print(Options().options.dataset.lol)
-    # 10
