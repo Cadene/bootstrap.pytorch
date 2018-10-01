@@ -20,14 +20,13 @@ def update_values(dict_from, dict_to):
             dict_to[key] = dict_from[key] 
     return dict_to
 
-# to be able to reproduce exps on reload
+# to be able to reproduce exps on reload
 def set_random_seed(seed):
-    # is pytorch dataloader with multi-threads deterministic ?
+    # is pytorch dataloader with multi-threads deterministic ?
     # cudnn may not be deterministic anyway
     torch.manual_seed(seed) # on CPU and GPU
     numpy.random.seed(seed) # useful ? not thread safe
-    random.seed(seed) # useful ? thread safe
-
+    random.seed(seed) # useful ? thread safe
 
 def available_gpu_ids():
     if 'CUDA_VISIBLE_DEVICES' in os.environ:
