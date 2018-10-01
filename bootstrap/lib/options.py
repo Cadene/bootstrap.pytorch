@@ -3,17 +3,18 @@ import sys
 import yaml
 import json
 import copy
+import inspect
 import argparse
 import collections
 from collections import OrderedDict
 from yaml import Dumper
-from utils import merge_dictionaries
+from bootstrap.lib.utils import merge_dictionaries
 
 
 class OptionsDict(OrderedDict):
-    __locked = False
-
+    
     def __init__(self, *args, **kwargs):
+        self.__locked = False
         super(OptionsDict, self).__init__(*args, **kwargs)
 
     def __getitem__(self, key):
@@ -29,19 +30,24 @@ class OptionsDict(OrderedDict):
         return val
 
     def __setitem__(self, key, val):
-        if self.__locked:
-            raise PermissionError('Options\' dictionnary is locked and cannot be changed.')
-        if type(val) == dict:
-            val = OptionsDict(val)
+        if key == '_{}__locked'.format(type(self).__name__):
             OrderedDict.__setitem__(self, key, val)
-        elif '.' in key:
-            keys = key.split('.')
-            d = self[keys[0]]
-            for k in keys[1:-1]:
-                d = d[k]
-            d[keys[-1]] = val
+        elif hasattr(self, '_{}__locked'.format(type(self).__name__)):
+            if self.__locked:
+                raise PermissionError('Options\' dictionnary is locked and cannot be changed.')
+            if type(val) == dict:
+                val = OptionsDict(val)
+                OrderedDict.__setitem__(self, key, val)
+            elif '.' in key:
+                keys = key.split('.')
+                d = self[keys[0]]
+                for k in keys[1:-1]:
+                    d = d[k]
+                d[keys[-1]] = val
+            else:
+                OrderedDict.__setitem__(self, key, val)
         else:
-            OrderedDict.__setitem__(self, key, val)
+            raise PermissionError('Tried to access Options\' dictionnary bypassing the lock feature.')
 
     def __getattr__(self, key):
         if key in self:
@@ -79,12 +85,14 @@ class OptionsDict(OrderedDict):
         return self.__locked
 
     def unlock(self):
-        if inspect.stack()[0].filename != inspect.stack()[1].filename or inspect.stack()[0].function != inspect.stack()[1].function:
+        stack_this = inspect.stack()[1]
+        stack_caller = inspect.stack()[2]
+        if stack_this.filename != stack_caller.filename or stack_this.function != stack_caller.function:
             for i in range(10):
                 print('WARNING: Options unlocked by {}[{}]: {}.'.format(
-                    inspect.stack()[1].filename,
-                    inspect.stack()[1].lineno,
-                    inspect.stack()[1].function))
+                    stack_caller.filename,
+                    stack_caller.lineno,
+                    stack_caller.function))
         self.__locked = False
         for key in self.keys():
             if type(key) == OptionsDict:
@@ -102,7 +110,7 @@ class Options(object):
             self.print_help()
             sys.exit(2)
 
-    def __new__(self, path_yaml=None, arguments_callback=None, lock_options=False):
+    def __new__(self, path_yaml=None, arguments_callback=None, lock=False):
         # Options is a singleton, we will only build if it has not been built before
         if not Options.__instance:
             Options.__instance = object.__new__(Options)
@@ -139,8 +147,8 @@ class Options(object):
                         position = position[piece]
                 position[nametree[-1]] = value
 
-        if lock_options:
-            Options.__instance.options.lock()
+        if lock:
+            Options.__instance.lock()
         return Options.__instance
 
 
@@ -171,20 +179,22 @@ class Options(object):
     def get(self, key, default):
         return self.options.get(key, default)
 
+
     def copy(self):
         return self.options.copy()
+
 
     def has_key(self, k):
         return k in self.options
 
-    # def update(self, *args, **kwargs):
-    #     return self.options.update(*args, **kwargs)
 
     def keys(self):
         return self.options.keys()
 
+
     def values(self):
         return self.options.values()
+
 
     def items(self):
         return self.options.items()
@@ -228,7 +238,17 @@ class Options(object):
     def save(self, path_yaml):
         Options.save_yaml_opts(self.options, path_yaml)
 
+
+    def lock(self):
+        Options.__instance.options.lock()
+
+
+    def unlock(self):
+        Options.__instance.options.unlock()
+
+
     # Static methods
+
 
     def load_yaml_opts(path_yaml):
         # TODO: include the parent options when parsed, instead of after having loaded the main options
