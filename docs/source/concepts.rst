@@ -9,7 +9,7 @@ Classes interactions:
 Engine
 ------
 
-The **core** of :mod:`Boostrap is the class :class:`bootstrap.engines.engine.Engine` which contains training and evaluation methods that loops a given number of times over provided dataset, model, optimizer and view.
+The **core** of :mod:`Boostrap` is the class :class:`bootstrap.engines.engine.Engine` which contains training and evaluation methods that loop a given number of times over the provided dataset, model, optimizer and view.
 
 The engine contains hooks calls that can be triggered at any time during the training and evaluation process. Each of the engine components are able to register hook functions.
 
@@ -18,7 +18,7 @@ The engine contains hooks calls that can be triggered at any time during the tra
     engine.register_hook('train_on_update', display_learning_rate)
 
 
-Also, we rely heavily on the design pattern factory during the instantiation of engine to provide optimal customizations:
+Also, we rely heavily on factories during the instantiation of the engine in order to provide optimal customizations:
 
 .. code-block:: python
 
@@ -61,20 +61,20 @@ Model
 
 The model is a torch.nn.Module composed of a network (ex: resnet152), a criterion (ex: nll) and a metric (ex: accuracy top1/top5).
 
-Thus, during the forward pass, the model is in charge of passing the batch to the network, criterion, and metric. Thus, it outputs a loss.
+During the forward pass, the model is in charge of passing the batch to the network, criterion, and metric. It outputs a loss value.
 
 .. code-block:: python
 
     out = model(batch)
     out['loss'].backward()
 
-To be adapted to complex workflow, its criterion and metric can vary along the training process with respect to the mode (train or eval) or to the dataset split (train, val, test). 
+To be flexible and support complex workflows, the criterions and metrics can vary during the training process depending on the mode (train or eval) or on the dataset split (train, val, test). 
 
 
 Options
 -------
 
-The options of an experiment are stored in a yaml file which is parsed to create default command line arguments.
+The options class is one of the central components of Boostrap. It manages all of the (hyper) parameters of an experiment, and keeps them stored in a yaml file which is parsed to create default command line arguments.
 
 .. code-block:: bash
 
@@ -82,7 +82,7 @@ The options of an experiment are stored in a yaml file which is parsed to create
            -o mnist/options/sgd.yaml
            -h
 
-Thus, the options can be easily overwritten by the command line to ensure easy hyper parameters search.
+Options can be easily overwritten by command line arguments, facilitating hyper parameters search.
 
 .. code-block:: bash
 
@@ -91,7 +91,7 @@ Thus, the options can be easily overwritten by the command line to ensure easy h
             --exp.dir logs/example
             --model.metric.topk 1 2 3
 
-Here is an example of an original options file:
+For example, for an options file that look like this:
 
 .. code-block:: yaml
 
@@ -129,7 +129,7 @@ Here is an example of an original options file:
       - logs:train_epoch.loss
       - logs:eval_epoch.acctop1
 
-Every options are accessible in the global :class:`bootstrap.lib.options.Options` class.
+You can access every parameter with the singleton :class:`bootstrap.lib.options.Options` class.
 
 .. code-block:: python
 
@@ -137,7 +137,7 @@ Every options are accessible in the global :class:`bootstrap.lib.options.Options
     print(opt['engine'])      # of type dict
     print(opt['engine.name']) # of type str
 
-Once loaded and potentially overwritten, the options are stored in the experiment directory as a yaml file. Thus, the experiment are easy to reproduce and resume.
+Once loaded and potentially overwritten, the options are stored in the experiment directory as a yaml file, making the experiment easily reproducible and resumable.
 
 .. code-block:: bash
 
@@ -165,7 +165,7 @@ Everything related to an experiment is stored in the same directory (logs, check
       options.yaml
       view.html
 
-The global :class:`bootstrap.lib.logger.Logger` class can log any variables using a simple key-value interface.
+The singleton class :class:`bootstrap.lib.logger.Logger` can log any variable using a simple key-value interface.
 
 .. code-block:: python
 
@@ -174,7 +174,7 @@ The global :class:`bootstrap.lib.logger.Logger` class can log any variables usin
     Logger().log_value('train_epoch.mean_acctop1', mean_acctop1)
     Logger().flush() # write the logs.json
 
-It can also be used to replace the print function in order to write anything in a text file with useful information.
+It can also be used to replace the print function. Messages are displayed on the screen and also recorded in a text file, easily accesible during and after the execution of the codep.
 
 .. code-block:: python
 
@@ -185,7 +185,7 @@ It can also be used to replace the print function in order to write anything in 
 View
 ----
 
-At the end of each training and evaluation epochs, the :class:`bootstrap.views.view.View` class loads the data from logs.json and generate visualizations. By default, bootstrap.pytorch relies on the plotly library (used by vizdom) to create dynamic plots in javascript inside a view.html file. We will provide support for tensorboard as well.
+At the end of each training and evaluation epochs, the :class:`bootstrap.views.view.View` class loads the data from logs.json and generate visualizations. By default, bootstrap.pytorch relies on the plotly library (used by vizdom) to create dynamic plots in javascript inside a view.html file, but `tensorboard <https://github.com/tensorflow/tensorboard>`_ files can also be generated.
 
 `Example of view.html <https://rawgit.com/Cadene/bootstrap.pytorch/master/logs/mnist/sgd/view.html>`_
 
