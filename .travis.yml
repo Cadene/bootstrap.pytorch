@@ -25,7 +25,7 @@ install:
   # Test contrib dependencies
   # - pip install scikit-learn
   # Examples dependencies
-  - pip install -r requirements
+  - pip install -r requirements.txt
   #visdom torchvision tensorboardX
   #- pip install gym
   #- pip install tqdm
