@@ -176,10 +176,10 @@ class ToCuda(object):
             return {key: self.to_cuda(value) for key,value in batch.items()}
         elif torch.is_tensor(batch):
             # TODO: verify async usage
-            return batch.cuda(async=True)
+            return batch.cuda(non_blocking=True)
         elif type(batch).__name__ == 'Variable':
             # TODO: Really hacky
-            return Variable(batch.data.cuda(async=True))
+            return Variable(batch.data.cuda(non_blocking=True))
         elif isinstance(batch, collections.Sequence) and torch.is_tensor(batch[0]):
             return [self.to_cuda(value) for value in batch]
         else:
