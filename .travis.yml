@@ -3,7 +3,7 @@ python:
   - "3.6"
 
 stages:
-#  - lint_check
+  - lint_check
   - test
 #  - docs
 
@@ -66,13 +66,13 @@ after_success:
   # be published.
   - codecov || echo "codecov upload failed"
 
-# jobs:
-#   include:
-#     - stage: lint_check
-#       python: "3.6"
-#       install: pip install flake8
-#       script: flake8
-#       after_success: # Nothing to do
+jobs:
+  include:
+    - stage: lint_check
+      python: "3.6"
+      install: pip install flake8
+      script: flake8
+      after_success: # Nothing to do
 
 
 #     # GitHub Pages Deployment: https://docs.travis-ci.com/user/deployment/pages/
