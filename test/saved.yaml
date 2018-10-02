@@ -1,7 +1,0 @@
-!!python/object/apply:bootstrap.lib.options.OptionsDict
-dictitems:
-  message: sgd
-  nested: !!python/object/apply:bootstrap.lib.options.OptionsDict
-    dictitems:
-      message: save
-  sgd: true

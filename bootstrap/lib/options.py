@@ -57,8 +57,8 @@ class OptionsDict(OrderedDict):
         else:
             OrderedDict.__getattr__(self, key)
 
-    def __setattr__(self, key, value):
-        self[key] = value
+    # def __setattr__(self, key, value):
+    #     self[key] = value
 
     def __repr__(self):
         dictrepr = dict.__repr__(self)
