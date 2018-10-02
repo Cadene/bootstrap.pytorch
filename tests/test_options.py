@@ -1,10 +1,10 @@
 import os
 import sys
 import yaml
-import pytest
 from bootstrap.lib.options import Options
 from bootstrap.lib.options import OptionsDict
 from bootstrap.lib.utils import merge_dictionaries
+
 
 def reset_options_instance():
     Options._Options__instance = None
