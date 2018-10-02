@@ -1,6 +1,4 @@
-# bootstrap.pytorch
-
-![Bootstrap Logo](https://github.com/Cadene/bootstrap.pytorch/blob/master/docs/source/_static/img/bootstrap-logo-dark.png)
+<a href="http://remicadene.com/bootstrap"><img src="https://github.com/Cadene/bootstrap.pytorch/blob/master/docs/source/_static/img/bootstrap-logo-dark.png" width="50%"/></a>
 
 --------------------------------------------------------------------------------
 
