@@ -1,10 +1,25 @@
 Examples
 ========
 
-We advise you to use `tmux <https://github.com/tmux/tmux/wiki>`_ or `screen <https://www.gnu.org/software/screen/manual/screen.html>`_ to run experiments.
+Existing modules
+----------------
+
+- Mnist Example in `mnist.bootstrap.pytorch <https://github.com/Cadene/mnist.bootstrap.pytorch>`_
+- Image Classification in `imclassif.bootstrap.pytorch <https://github.com/Cadene/imclassif.bootstrap.pytorch>`_
+- Image To Recipe Convertor in `recipe1m.bootstrap.pytorch <https://github.com/Cadene/recipe1m.bootstrap.pytorch>`_
+
+To come:
+
+- Visual Question Answering in `vqa.bootstrap.pytorch <https://github.com/Cadene/vqa.bootstrap.pytorch>`_
+- Visual Relationship Detection in `rel.bootstrap.pytorch <https://github.com/Cadene/rel.bootstrap.pytorch>`_
+- Neural Architecture Search in `nas.bootstrap.pytorch <https://github.com/Cadene/nas.bootstrap.pytorch>`_
+- Metric Learning in `retrieval.bootstrap.pytorch <https://github.com/Cadene/retrieval.bootstrap.pytorch>`_
+- Object Detection in `detection.bootstrap.pytorch <https://github.com/Cadene/detection.bootstrap.pytorch>`_
 
 Running multiple experiments
 ----------------------------
+
+We advise you to use `tmux <https://github.com/tmux/tmux/wiki>`_ or `screen <https://www.gnu.org/software/screen/manual/screen.html>`_ to run experiments.
 
 .. code-block:: bash
 
