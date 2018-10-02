@@ -1,5 +1,9 @@
 # bootstrap.pytorch
 
+![Bootstrap Logo](https://github.com/Cadene/bootstrap.pytorch/blob/master/docs/source/_static/img/bootstrap-logo-dark.png)
+
+--------------------------------------------------------------------------------
+
 <a href="https://travis-ci.org/Cadene/bootstrap.pytorch"><img src="https://api.travis-ci.org/Cadene/bootstrap.pytorch.svg?branch=master"/></a>
 
 `Bootstrap` is a high-level framework for starting deep learning projects.
