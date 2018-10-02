@@ -6,3 +6,4 @@ plotly
 seaborn
 click
 ipdb
+tabulate

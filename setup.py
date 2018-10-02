@@ -131,7 +131,8 @@ setup(
         'plotly',
         'seaborn',
         'click',
-        'ipdb'
+        'ipdb',
+        'tabulate'
     ],
 
     # List additional groups of dependencies here (e.g. development
