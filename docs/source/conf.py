@@ -21,8 +21,8 @@ import sphinx_rtd_theme
 # -- Project information -----------------------------------------------------
 
 project = 'bootstrap'
-copyright = '2018, Bootstrap Contributors'
-author = 'Bootstrap Contributors'
+copyright = '2018 - Remi Cadene, Micael Carvalho, Hedi Ben-Younes, and Thomas Robert'
+author = 'Remi Cadene, Micael Carvalho, Hedi Ben-Younes, and Thomas Robert'
 
 # The short X.Y version
 version = 'master (' + bootstrap.__version__ + ' )'
