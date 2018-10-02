@@ -2,6 +2,7 @@ import torch.utils.data as data
 import itertools
 from . import transforms as bootstrap_tf
 
+
 class Dataset(data.Dataset):
 
     def __init__(self, dir_data,

@@ -2,6 +2,7 @@ import collections
 import torch
 from torch.autograd import Variable
 
+
 class Compose(object):
     """Composes several collate together.
 

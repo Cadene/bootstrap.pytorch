@@ -5,6 +5,7 @@ from .networks.factory import factory as net_factory
 from .criterions.factory import factory as cri_factory
 from .metrics.factory import factory as met_factory
 
+
 class Model(nn.Module):
     """ Model contains a network, two criterions (train, eval) and two metrics.
     """

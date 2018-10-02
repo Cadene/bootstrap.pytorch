@@ -17,13 +17,13 @@ from . import views
 def init_experiment_directory(exp_dir, resume=None):
     # create the experiment directory
     if not os.path.isdir(exp_dir):
-        os.system('mkdir -p '+exp_dir)
+        os.system('mkdir -p ' + exp_dir)
     else:
         if resume is None:
             if click.confirm('Exp directory already exists in {}. Erase?'
                     .format(exp_dir, default=False)):
-                os.system('rm -r '+exp_dir)
-                os.system('mkdir -p '+exp_dir)
+                os.system('rm -r ' + exp_dir)
+                os.system('mkdir -p ' + exp_dir)
             else:
                 os._exit(1)
 

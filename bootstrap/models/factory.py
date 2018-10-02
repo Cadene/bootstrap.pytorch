@@ -6,6 +6,7 @@ from ..lib.logger import Logger
 from .model import DefaultModel
 from .model import SimpleModel
 
+
 def factory(engine=None):
 
     Logger()('Creating model...')

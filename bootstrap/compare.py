@@ -4,6 +4,7 @@ import argparse
 from os import path as osp
 from tabulate import tabulate
 
+
 def load_max_logs(dir_logs, metrics, nb_epochs=-1):
     path_logs = osp.join(dir_logs, 'logs.json')
     path_val_oe = osp.join(dir_logs, 'logs_eval_val_oe.json')
@@ -74,7 +75,7 @@ def main():
                 values.append(value)
         if values:
             values_names = sorted(zip(values, names, epochs),reverse=True)
-            values_names = [[i+1, name, value, epoch] for i, (value, name, epoch) in enumerate(values_names)]
+            values_names = [[i + 1, name, value, epoch] for i, (value, name, epoch) in enumerate(values_names)]
             print('\n\n## {}\n'.format(key))
             print(tabulate(values_names, headers=['Place', 'Method', 'Score', 'Epoch']))
 

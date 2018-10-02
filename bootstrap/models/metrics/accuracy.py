@@ -1,5 +1,6 @@
 import torch.nn as nn
 
+
 class Accuracy(nn.Module):
 
     def __init__(self, topk=[1,5]):
@@ -14,6 +15,7 @@ class Accuracy(nn.Module):
         for i, k in enumerate(self.topk):
             out['accuracy_top{}'.format(k)] = acc_out[i]
         return out
+
 
 def accuracy(output, target, topk=[1,5], ignore_index=None):
     """Computes the precision@k for the specified values of k"""

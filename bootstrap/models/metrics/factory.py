@@ -5,6 +5,7 @@ from bootstrap.lib.logger import Logger
 
 from .accuracy import Accuracy
 
+
 def factory(engine=None, mode=None):
 
     if 'metric' not in Options()['model'] or Options()['model']['metric'] is None:
