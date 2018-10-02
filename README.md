@@ -1,5 +1,7 @@
 # bootstrap.pytorch
 
+<a href="https://travis-ci.org/Cadene/bootstrap.pytorch"><img src="https://api.travis-ci.org/Cadene/bootstrap.pytorch.svg?branch=master"/></a>
+
 `Bootstrap` is a high-level framework for starting deep learning projects.
 It aims at accelerating research projects and prototyping by providing a powerful workflow focused on your dataset and model only.
 
