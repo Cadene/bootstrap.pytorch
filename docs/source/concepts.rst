@@ -185,7 +185,7 @@ It can also be used to replace the print function in order to write anything in 
 View
 ----
 
-At the end of each training and evaluation epochs, the :class:`bootstrap.views.view.View` class loads the data from logs.json and generate visualizations. By default, bootstrap.pytorch relies on the plotly library (used by vizdom) to create dynamic plots in javascript inside a view.html file.
+At the end of each training and evaluation epochs, the :class:`bootstrap.views.view.View` class loads the data from logs.json and generate visualizations. By default, bootstrap.pytorch relies on the plotly library (used by vizdom) to create dynamic plots in javascript inside a view.html file. We will provide support for tensorboard as well.
 
 `Example of view.html <https://rawgit.com/Cadene/bootstrap.pytorch/master/logs/mnist/sgd/view.html>`_
 

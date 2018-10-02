@@ -1,7 +1,7 @@
 Examples
 ========
 
-We advise you to use tmux or screen to run experiments.
+We advise you to use `tmux <https://github.com/tmux/tmux/wiki>`_ or `screen <https://www.gnu.org/software/screen/manual/screen.html>`_ to run experiments.
 
 Running multiple experiments
 ----------------------------
@@ -28,21 +28,43 @@ Running multiple experiments
 Comparing experiments
 ---------------------
 
+We provide some utility functions to compare multiple experiments based on their best score for specific metrics.
+
+.. code-block:: bash
+
+    python -m bootstrap.compare -h
+    usage: compare.py [-h] [-n NB_EPOCHS] [-d [DIR_LOGS [DIR_LOGS ...]]]
+                      [-k metric order]
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -n NB_EPOCHS, --nb_epochs NB_EPOCHS
+      -d [DIR_LOGS [DIR_LOGS ...]], --dir_logs [DIR_LOGS [DIR_LOGS ...]]
+      -k metric order, --keys metric order
+
 .. code-block:: bash
 
     python -m bootstrap.compare
            -d logs/mnist/adam
               logs/mnist/sgd
+    > Metric: eval_epoch.accuracy_top1
+
+        Place  Method      Score    Epoch
+      -------  --------  -------  -------
+            1  sgd       98.4773        9
+            2  adam      98.3212        9
 
 
 Plotting logs manually
 ----------------------
 
+The plotting utilities of :mod:`Bootstrap` are included in `bootstrap/views <https://github.com/Cadene/bootstrap.pytorch/tree/master/bootstrap/views>`_. A :class:`bootstrap.views.view.View` is created during the initialization of the :class:`bootstrap.engines.engine.Engine`. It is used to generate automaticaly a `view.html <https://rawgit.com/Cadene/bootstrap.pytorch/master/logs/mnist/sgd/view.html>`_ file after each training or evaluation epoch. Nevertheless, you can call it manually by doing so:
+
 .. code-block:: bash
 
     python -m bootstrap.views.view
            -o logs/mnist/sgd/options.yaml
-    open logs/mnist/adam/view.html
+    open logs/mnist/sgd/view.html
 
 
 Other tricks
