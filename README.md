@@ -67,3 +67,6 @@ It also contains some notes:
 - [Directories](http://remicadene.com/bootstrap/directories.html)
 - [Examples](http://remicadene.com/bootstrap/examples.html)
 
+## Poster
+
+<a href="http://remicadene.com/bootstrap/_static/img/bootstrap_poster.pdf"><img src="http://remicadene.com/bootstrap/_static/img/bootstrap_poster_mini.png" width="20%"/></a>
