@@ -1,4 +1,5 @@
 torch>=0.4
+torchvision
 numpy
 argparse
 pyyaml
