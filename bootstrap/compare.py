@@ -5,46 +5,47 @@ from os import path as osp
 from tabulate import tabulate
 
 
-def load_max_logs(dir_logs, metrics, nb_epochs=-1):
-    path_logs = osp.join(dir_logs, 'logs.json')
-    path_val_oe = osp.join(dir_logs, 'logs_eval_val_oe.json')
-    logs = json.load(open(path_logs))
-    out = {}
-    epochs = logs["eval_epoch.epoch"]
-    for k,v in logs.items():
-        if k in metrics:
-            if metrics[k] == "max":
-                argsup = np.argmax(v[:nb_epochs]) if nb_epochs != -1 else np.argmax(v)
-            elif metrics[k] == "min":
-                argsup = np.argmin(v[:nb_epochs]) if nb_epochs != -1 else np.argmin(v)
-            out[k] = epochs[argsup], v[argsup]
-    if osp.isfile(path_val_oe):
-        val_oe = json.load(open(path_val_oe))
-        for k,v in val_oe.items():
-            if metrics[k] == "max":
-                argsup = np.argmax(v[:nb_epochs]) if nb_epochs != -1 else np.argmax(v)
-            elif metrics[k] == "min":
-                argsup = np.argmin(v[:nb_epochs]) if nb_epochs != -1 else np.argmin(v)
-            out[k] = epochs[argsup], v[argsup]
-    return out
+def load_values(dir_logs, metrics, nb_epochs=-1, best=None):
+    json_files = {}
+    values = {}
 
+    # load argsup of best
+    if best:
+        if best['json'] not in json_files:
+            with open(osp.join(dir_logs, f'{best["json"]}.json')) as f:
+                json_files[best['json']] = json.load(f)
 
-def argmax(list_):
-    return list_.index(max(list_))
+        jfile = json_files[best['json']]
+        vals = jfile[best['name']]
+        end = len(vals) if nb_epochs == -1 else nb_epochs
+        argsup = np.__dict__[f'arg{best["order"]}'](vals[:end])
 
+    # load logs
+    for mkey, metric in metrics.items():
+        # open json_files
+        if metric['json'] not in json_files:
+            with open(osp.join(dir_logs, f'{metric["json"]}.json')) as f:
+                json_files[metric['json']] = json.load(f)
 
-def main():
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument('-n', '--nb_epochs', default=-1, type=int)
-    parser.add_argument('-d', '--dir_logs', default='', type=str, nargs='*')
-    parser.add_argument('-k', '--keys', type=str, action='append', nargs=2,
-                        metavar=('metric', 'order'),
-                        default=[['eval_epoch.epoch', 'max'],
-                                 ['eval_epoch.accuracy_top1', 'max'],
-                                 ['eval_epoch.overall', 'max'],
-                                 ['eval_epoch.map', 'max']])
-    args = parser.parse_args()
+        jfile = json_files[metric['json']]
 
+        if 'train' in metric['name']:
+            epochs = jfile['train_epoch.epoch']
+        else:
+            epochs = jfile['eval_epoch.epoch']
+
+        if not best:
+            vals = jfile[metric['name']]
+            end = len(vals) if nb_epochs == -1 else nb_epochs
+            argsup = np.__dict__[f'arg{metric["order"]}'](vals[:end])
+
+        try:
+            values[metric['name']] = epochs[argsup], vals[argsup]
+        except:
+            values[metric['name']] = epochs[argsup-1], vals[argsup-1]
+    return values
+
+def main(args):
     dir_logs = {}
     for raw in args.dir_logs:
         tmp = raw.split(':')
@@ -57,28 +58,57 @@ def main():
             raise ValueError(raw)
         dir_logs[key] = path
 
-    metrics = {key: min_or_max for key, min_or_max in args.keys}
+    metrics = {}
+    for json, name, order in args.metrics:
+        metrics[f'{json}_{name}'] = {
+            'json': json,
+            'name': name,
+            'order': order
+        }
+
+    if args.best:
+        json, name, order = args.best
+        best = {
+            'json': json,
+            'name': name,
+            'order': order
+        }
+    else:
+        best = None
 
     logs = {}
-    for log_name in dir_logs.keys():
-        logs[log_name] = load_max_logs(dir_logs[log_name], metrics, nb_epochs=args.nb_epochs)
+    for name, dir_log in dir_logs.items():
+        logs[name] = load_values(dir_log, metrics,
+            nb_epochs=args.nb_epochs,
+            best=best)
 
-    for key in metrics:
+    for mkey, metric in metrics.items():
         names = []
         values = []
         epochs = []
-        for name, log_values in logs.items():
-            if key in log_values:
+        for name, vals in logs.items():
+            if metric['name'] in vals:
                 names.append(name)
-                epoch, value = log_values[key]
+                epoch, value = vals[metric['name']]
                 epochs.append(epoch)
                 values.append(value)
         if values:
             values_names = sorted(zip(values, names, epochs),reverse=True)
             values_names = [[i + 1, name, value, epoch] for i, (value, name, epoch) in enumerate(values_names)]
-            print('\n\n## {}\n'.format(key))
+            print('\n\n## {}\n'.format(metric['name']))
             print(tabulate(values_names, headers=['Place', 'Method', 'Score', 'Epoch']))
 
-
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('-n', '--nb_epochs', default=-1, type=int)
+    parser.add_argument('-d', '--dir_logs', default='', type=str, nargs='*')
+    parser.add_argument('-m', '--metrics', type=str, action='append', nargs=3,
+                        metavar=('json', 'name', 'order'),
+                        default=[['logs', 'eval_epoch.accuracy_top1', 'max'],
+                                 ['logs', 'eval_epoch.accuracy_top5', 'max'],
+                                 ['logs', 'eval_epoch.loss', 'min']])
+    parser.add_argument('-b', '--best', type=str, nargs=3,
+                        metavar=('json', 'name', 'order'),
+                        default=['logs', 'eval_epoch.accuracy_top1', 'max'])
+    args = parser.parse_args()
+    main(args)
