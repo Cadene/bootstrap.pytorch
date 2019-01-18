@@ -1,24 +1,51 @@
 import torch
 import torch.nn as nn
 
+def gather(outputs, target_device, dim=0):
+    r"""
+    Gathers tensors from different GPUs on a specified device
+      (-1 means the CPU).
+    """
+    def gather_map(outputs):
+        out = outputs[0]
+        if isinstance(out, Variable):
+            return Gather.apply(target_device, dim, *outputs)
+        if out is None:
+            return None
+        if isinstance(out, dict):
+            if not all((len(out) == len(d) for d in outputs)):
+                raise ValueError('All dicts must have the same number of keys')
+            return type(out)(((k, gather_map([d[k] for d in outputs]))
+                              for k in out))
+        return type(out)(map(gather_map, zip(*outputs)))
+
+    # Recursive function calls like this create reference cycles.
+    # Setting the function to None clears the refcycle.
+    try:
+        return gather_map(outputs)
+    finally:
+        gather_map = None
+
 
 class DataParallel(nn.DataParallel):
 
-    # def forward(self, *inputs, **kwargs):
-    #     if not self.device_ids:
-    #         return self.module(*inputs, **kwargs)
-    #     inputs, kwargs = self.scatter(inputs, kwargs, self.device_ids)
-    #     if len(self.device_ids) == 1:
-    #         return self.module(*inputs[0], **kwargs[0])
-    #     replicas = self.replicate(self.module, self.device_ids[:len(inputs)])
-    #     outputs = self.parallel_apply(replicas, inputs, kwargs)
-    #     return self.gather(outputs, self.output_device)
+    def __getattr__(self, key):
+        try:
+            return super(DataParallel, self).__getattr__(key)
+        except AttributeError:
+            return self.module.__getattribute__(key)
+
+    def gather(self, outputs, output_device):
+        return gather(outputs, output_device, dim=self.dim)
 
     def state_dict(self, *args, **kwgs):
         return self.module.state_dict(*args, **kwgs)
 
     def load_state_dict(self, *args, **kwgs):
         self.module.load_state_dict(*args, **kwgs)
+
+    def process_answers(self, out):
+        return self.module.process_answers(out)
 
 
 class DistributedDataParallel(nn.parallel.DistributedDataParallel):
@@ -28,3 +55,9 @@ class DistributedDataParallel(nn.parallel.DistributedDataParallel):
 
     def load_state_dict(self, *args, **kwgs):
         self.module.load_state_dict(*args, **kwgs)
+
+    def __getattr__(self, key):
+        try:
+            return super(DistributedDataParallel, self).__getattr__(key)
+        except AttributeError:
+            return self.module.__getattribute__(key)
