@@ -3,6 +3,7 @@ logs/*
 data/*
 !.gitkeep
 docs/src
+!logger.py
 
 # Apple
 .DS_Store

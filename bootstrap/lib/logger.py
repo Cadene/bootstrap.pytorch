@@ -224,7 +224,8 @@ class Logger(object):
                         json.dump(self.values, json_file, separators=(',', ':'))
                     else:
                         json.dump(self.values, json_file, indent=4)
-                os.system('rm '+self.path_json)
+                if os.path.isfile(self.path_json):
+                    os.system('rm '+self.path_json)
                 os.system('mv {} {}'.format(self.path_tmp, self.path_json))
             except Exception as e:
                 print(e)
