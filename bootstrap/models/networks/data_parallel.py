@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torch.nn.parallel._functions import Gather
 
 def gather(outputs, target_device, dim=0):
     r"""
@@ -8,7 +9,7 @@ def gather(outputs, target_device, dim=0):
     """
     def gather_map(outputs):
         out = outputs[0]
-        if isinstance(out, Variable):
+        if torch.is_tensor(out):
             return Gather.apply(target_device, dim, *outputs)
         if out is None:
             return None
