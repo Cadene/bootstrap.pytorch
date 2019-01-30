@@ -30,12 +30,17 @@ def load_values(dir_logs, metrics, nb_epochs=-1, best=None):
         jfile = json_files[metric['json']]
 
         if 'train' in metric['name']:
-            epochs = jfile['train_epoch.epoch']
+            epoch_key = 'train_epoch.epoch'
         else:
-            epochs = jfile['eval_epoch.epoch']
+            epoch_key = 'eval_epoch.epoch'
 
+        if epoch_key in jfile:
+            epochs = jfile[epoch_key]
+        else:
+            epochs = jfile['epoch']
+
+        vals = jfile[metric['name']]
         if not best:
-            vals = jfile[metric['name']]
             end = len(vals) if nb_epochs == -1 else nb_epochs
             argsup = np.__dict__[f'arg{metric["order"]}'](vals[:end])
 
