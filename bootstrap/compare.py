@@ -98,7 +98,7 @@ def main(args):
                 epochs.append(epoch)
                 values.append(value)
         if values:
-            values_names = sorted(zip(values, names, epochs),reverse=True)
+            values_names = sorted(zip(values, names, epochs), reverse=metric['order']=='max')
             values_names = [[i + 1, name, value, epoch] for i, (value, name, epoch) in enumerate(values_names)]
             print('\n\n## {}\n'.format(metric['name']))
             print(tabulate(values_names, headers=['Place', 'Method', 'Score', 'Epoch']))
