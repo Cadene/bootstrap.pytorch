@@ -20,7 +20,7 @@ class OptionsDict(OrderedDict):
         super(OptionsDict, self).__init__(*args, **kwargs)
 
     def __getitem__(self, key):
-        if key in self:
+        if OrderedDict.__contains__(self, key):
             val = OrderedDict.__getitem__(self, key)
         elif '.' in key:
             keys = key.split('.')
@@ -28,8 +28,16 @@ class OptionsDict(OrderedDict):
             for k in keys[1:]:
                 val = val[k]
         else:
-            OrderedDict.__getitem__(self, key)
+            return OrderedDict.__getitem__(self, key)
         return val
+
+    def __contains__(self, key):
+        # Cannot use "key in" due to recursion, reusing rules for dotted keys from __getitem__
+        try:
+            self[key]
+            return True
+        except:
+            return False
 
     def __setitem__(self, key, val):
         if key == '_{}__locked'.format(type(self).__name__):
@@ -55,7 +63,7 @@ class OptionsDict(OrderedDict):
         if key in self:
             return self[key]
         else:
-            OrderedDict.__getattr__(self, key)
+            return OrderedDict.__getattr__(self, key)
 
     # def __setattr__(self, key, value):
     #     self[key] = value
@@ -63,6 +71,13 @@ class OptionsDict(OrderedDict):
     def __repr__(self):
         dictrepr = dict.__repr__(self)
         return '{}({})'.format(type(self).__name__, dictrepr)
+
+    def get(self, key, default):
+        if key in self:
+            return self[key]
+        else:
+            return default
+
 
     def update(self, *args, **kwargs):
         for k, v in OrderedDict(*args, **kwargs).items():
