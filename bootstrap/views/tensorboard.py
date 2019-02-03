@@ -18,7 +18,8 @@ class Tensorboard():
         writer = SummaryWriter(log_dir=self.options['exp']['dir'])
         log_names = []
         views_per_figure = []
-        for i, view_raw in enumerate(self.options['view.items']):
+        items = self.options['view.items'] if 'view.items' in self.options else self.options['view']
+        for i, view_raw in enumerate(items):
             views = []
             for view_interim in view_raw.split('+'):
                 log_name, view_name = view_interim.split(':')
@@ -45,7 +46,7 @@ class Tensorboard():
             else:
                 Logger()("Json log file '{}' not found in '{}'".format(log_name, path_json), log_level=Logger.WARNING)
 
-        nb_keys = len(self.options['view.items'])
+        nb_keys = len(items)
         
         for figure_id, views in enumerate(views_per_figure):
             for view in views:

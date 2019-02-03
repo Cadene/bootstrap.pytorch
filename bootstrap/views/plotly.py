@@ -46,7 +46,8 @@ class Plotly():
         # find all the log_names to load
         log_names = []
         views_per_figure = []
-        for i, view_raw in enumerate(self.options['view.items']):
+        items = self.options['view.items'] if 'view.items' in self.options else self.options['view']
+        for i, view_raw in enumerate(items):
             views = []
             for view_interim in view_raw.split('+'):
                 log_name, view_name = view_interim.split(':')
@@ -72,12 +73,12 @@ class Plotly():
             else:
                 Logger()("Json log file '{}' not found in '{}'".format(log_name, path_json), log_level=Logger.WARNING)
 
-        nb_keys = len(self.options['view.items'])
+        nb_keys = len(items)
         nb_rows = math.ceil(nb_keys / 2)
         nb_cols = min(2, nb_keys)
 
         figure = tools.make_subplots(rows=nb_rows, cols=nb_cols,
-            subplot_titles=self.options['view.items'],
+            subplot_titles=items,
             print_grid=False)
 
         colors = {'train_epoch': 'rgb(214, 39, 40)', 'train_batch': 'rgb(214, 39, 40)',
