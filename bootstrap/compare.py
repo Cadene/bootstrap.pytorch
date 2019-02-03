@@ -30,12 +30,17 @@ def load_values(dir_logs, metrics, nb_epochs=-1, best=None):
         jfile = json_files[metric['json']]
 
         if 'train' in metric['name']:
-            epochs = jfile['train_epoch.epoch']
+            epoch_key = 'train_epoch.epoch'
         else:
-            epochs = jfile['eval_epoch.epoch']
+            epoch_key = 'eval_epoch.epoch'
 
+        if epoch_key in jfile:
+            epochs = jfile[epoch_key]
+        else:
+            epochs = jfile['epoch']
+
+        vals = jfile[metric['name']]
         if not best:
-            vals = jfile[metric['name']]
             end = len(vals) if nb_epochs == -1 else nb_epochs
             argsup = np.__dict__[f'arg{metric["order"]}'](vals[:end])
 
@@ -93,7 +98,7 @@ def main(args):
                 epochs.append(epoch)
                 values.append(value)
         if values:
-            values_names = sorted(zip(values, names, epochs),reverse=True)
+            values_names = sorted(zip(values, names, epochs), reverse=metric['order']=='max')
             values_names = [[i + 1, name, value, epoch] for i, (value, name, epoch) in enumerate(values_names)]
             print('\n\n## {}\n'.format(metric['name']))
             print(tabulate(values_names, headers=['Place', 'Method', 'Score', 'Epoch']))

@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torch.nn.parallel._functions import Gather
 
 def gather(outputs, target_device, dim=0):
     r"""
@@ -8,7 +9,7 @@ def gather(outputs, target_device, dim=0):
     """
     def gather_map(outputs):
         out = outputs[0]
-        if isinstance(out, Variable):
+        if torch.is_tensor(out):
             return Gather.apply(target_device, dim, *outputs)
         if out is None:
             return None
@@ -35,29 +36,26 @@ class DataParallel(nn.DataParallel):
         except AttributeError:
             return self.module.__getattribute__(key)
 
+    def state_dict(self, *args, **kwgs):
+        return self.module.state_dict(*args, **kwgs)
+
+    def load_state_dict(self, *args, **kwgs):
+        self.module.load_state_dict(*args, **kwgs)
+
     def gather(self, outputs, output_device):
         return gather(outputs, output_device, dim=self.dim)
 
-    def state_dict(self, *args, **kwgs):
-        return self.module.state_dict(*args, **kwgs)
-
-    def load_state_dict(self, *args, **kwgs):
-        self.module.load_state_dict(*args, **kwgs)
-
-    def process_answers(self, out):
-        return self.module.process_answers(out)
-
 
 class DistributedDataParallel(nn.parallel.DistributedDataParallel):
-
-    def state_dict(self, *args, **kwgs):
-        return self.module.state_dict(*args, **kwgs)
-
-    def load_state_dict(self, *args, **kwgs):
-        self.module.load_state_dict(*args, **kwgs)
 
     def __getattr__(self, key):
         try:
             return super(DistributedDataParallel, self).__getattr__(key)
         except AttributeError:
             return self.module.__getattribute__(key)
+
+    def state_dict(self, *args, **kwgs):
+        return self.module.state_dict(*args, **kwgs)
+
+    def load_state_dict(self, *args, **kwgs):
+        self.module.load_state_dict(*args, **kwgs)
