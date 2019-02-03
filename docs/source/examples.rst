@@ -73,7 +73,7 @@ We provide some utility functions to compare multiple experiments based on their
 Plotting logs manually
 ----------------------
 
-The plotting utilities of :mod:`Bootstrap` are included in `bootstrap/views <https://github.com/Cadene/bootstrap.pytorch/tree/master/bootstrap/views>`_. A :class:`bootstrap.views.view.View` is created during the initialization of the :class:`bootstrap.engines.engine.Engine`. It is used to generate automaticaly a `view.html <https://rawgit.com/Cadene/bootstrap.pytorch/master/logs/mnist/sgd/view.html>`_ file after each training or evaluation epoch. Nevertheless, you can call it manually by doing so:
+The plotting utilities of :mod:`Bootstrap` are included in `bootstrap/views <https://github.com/Cadene/bootstrap.pytorch/tree/master/bootstrap/views>`_. A :class:`bootstrap.views.view.View` is created during the initialization of the :class:`bootstrap.engines.engine.Engine`. It is used to generate automaticaly a `view.html <https://rawgit.com/Cadene/bootstrap.pytorch/master/docs/assets/logs/mnist/sgd/view.html>`_ file after each training or evaluation epoch. Nevertheless, you can call it manually by doing so:
 
 .. code-block:: bash
 

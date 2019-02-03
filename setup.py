@@ -114,7 +114,6 @@ setup(
     packages=find_packages(exclude=[
         'data',
         'logs',
-        'mnist'
     ]),
 
     # This field lists other packages that your project depends on to run.

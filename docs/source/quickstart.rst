@@ -42,10 +42,10 @@ You can also overwrite default options using the command line:
 
 Running an experiment will create 4 files in your experiment directory (logs/mnist/my_sgd):
 
-- `options.yaml <https://github.com/Cadene/bootstrap.pytorch/blob/master/logs/mnist/sgd/options.yaml>`_ contains the options used for the experiment;
-- `logs.txt <https://github.com/Cadene/bootstrap.pytorch/blob/master/logs/mnist/sgd/logs.txt>`_ contains all the information printed by the logger;
-- `logs.json <https://github.com/Cadene/bootstrap.pytorch/blob/master/logs/mnist/sgd/logs.json>`_ contains trainin data logs, such as: train_epoch.loss, train_batch.loss, eval_epoch.accuracy_top1, etc;
-- `view.html <https://rawgit.com/Cadene/bootstrap.pytorch/master/logs/mnist/sgd/view.html>`_ contains training and evaluation curves with javascript utilities (plotly).
+- [options.yaml](https://github.com/Cadene/bootstrap.pytorch/blob/master/docs/assets/logs/mnist/sgd/options.yaml) contains the options used for the experiment,
+- [logs.txt](https://github.com/Cadene/bootstrap.pytorch/blob/master/logs/docs/assets/logs/mnist/sgd/logs.txt) contains all the information given to the logger.
+- [logs.json](https://github.com/Cadene/bootstrap.pytorch/blob/master/logs/docs/assets/logs/mnist/sgd/logs.json) contains the following data: train_epoch.loss, train_batch.loss, eval_epoch.accuracy_top1, etc.
+- <a href="http://htmlpreview.github.io/?https://raw.githubusercontent.com/Cadene/bootstrap.pytorch/master/docs/assets/logs/mnist/sgd/view.html">view.html</a> contains training and evaluation curves with javascript utilities (plotly).
 
 Depending on your options, some checkpoints may also be created:
 
