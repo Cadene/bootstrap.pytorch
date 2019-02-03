@@ -31,7 +31,9 @@ misc:
   cuda: True
   seed: 1337
 view:
-  - logs:train_epoch.loss+logs:eval_epoch.loss
-  - logs:train_batch.loss
-  - logs:train_epoch.accuracy_top1+logs:eval_epoch.accuracy_top1
-  - logs:train_epoch.lr
+  name: plotly
+  items:
+    - logs:train_epoch.loss+logs:eval_epoch.loss
+    - logs:train_batch.loss
+    - logs:train_epoch.accuracy_top1+logs:eval_epoch.accuracy_top1
+    - logs:train_epoch.lr

@@ -22,31 +22,31 @@ def seaborn_color_to_plotly(list_color):
     return n_list_color
 
 
-# class ViewThread(Thread):
+# class PlotlyThread(Thread):
 
 #     def __init__(self, view):
-#         super(View, self).__init__()
+#         super(Plotly, self).__init__()
 #         self.view
 
 #     def run(self):
 #         self.view.generate_view
 
 
-class View():
+class Plotly():
 
     def __init__(self, options):
-        super(View, self).__init__()
+        super(Plotly, self).__init__()
         self.options = options
 
     # def start_thread(self):
-    #     thread = ViewThread(self)
+    #     thread = PlotlyThread(self)
     #     thread.start()
         
     def generate(self):
         # find all the log_names to load
         log_names = []
         views_per_figure = []
-        for i, view_raw in enumerate(self.options['view']):
+        for i, view_raw in enumerate(self.options['view.items']):
             views = []
             for view_interim in view_raw.split('+'):
                 log_name, view_name = view_interim.split(':')
@@ -72,12 +72,12 @@ class View():
             else:
                 Logger()("Json log file '{}' not found in '{}'".format(log_name, path_json), log_level=Logger.WARNING)
 
-        nb_keys = len(self.options['view'])
+        nb_keys = len(self.options['view.items'])
         nb_rows = math.ceil(nb_keys / 2)
         nb_cols = min(2, nb_keys)
 
         figure = tools.make_subplots(rows=nb_rows, cols=nb_cols,
-            subplot_titles=self.options['view'],
+            subplot_titles=self.options['view.items'],
             print_grid=False)
 
         colors = {'train_epoch': 'rgb(214, 39, 40)', 'train_batch': 'rgb(214, 39, 40)',
@@ -132,7 +132,7 @@ class View():
         )
         path_view = os.path.join(self.options['exp']['dir'], 'view.html')
         plot(figure, filename=path_view, auto_open=False)
-        Logger()('View generated in '+path_view)
+        Logger()('Plotly view generated in '+path_view)
 
 
 # def generate_multi_view():
@@ -182,10 +182,10 @@ class View():
 #         height=400*nb_rows
 #     )
 #     plot(figure, filename=path_view, auto_open=False)
-#     print('View generated in '+path_view)
+#     print('Plotly view generated in '+path_view)
 
 def view(path_opts=None):
-    View(Options(path_opts)).generate()
+    Plotly(Options(path_opts)).generate()
 
 if __name__ == '__main__':
     from ..run import main
