@@ -14,10 +14,14 @@ class Tensorboard():
         self.options = options
 
     def generate(self):
-        # find all the log_names to load
+        # erase old log files, currently there is no way to replace it nor append to it
+        for filename in os.listdir(self.options['exp']['dir']):
+            if 'tfevents' in filename:
+                os.remove(os.path.join(self.options['exp']['dir'], filename))
         writer = SummaryWriter(log_dir=self.options['exp']['dir'])
         log_names = []
         views_per_figure = []
+        # find all the log_names to load
         items = self.options['view.items'] if 'view.items' in self.options else self.options['view']
         for i, view_raw in enumerate(items):
             views = []
@@ -37,8 +41,7 @@ class Tensorboard():
 
         data_dict = {}
         for log_name in log_names:
-            path_json = os.path.join(self.options['exp']['dir'],
-                                     '{}.json'.format(log_name))
+            path_json = os.path.join(self.options['exp']['dir'], '{}.json'.format(log_name))
             if os.path.isfile(path_json):
                 with open(path_json, 'r') as handle:
                     data_json = json.load(handle)        
@@ -71,7 +74,8 @@ class Tensorboard():
                     subtype = 'batch'
 
                 for x_val, y_val in zip(x, y):
-                    writer.add_scalars('{}/{}'.format(view['log_type'], subtype), {view['split_name']: y_val}, x_val)
+                    name = '{}/{}/{}'.format(view['log_type'], subtype, view['split_name'])
+                    writer.add_scalar(name, y_val, x_val)
 
         writer.close()
         Logger()('Tensorboard view generated in '+path_json)
