@@ -1,0 +1,47 @@
+exp:
+  dir: logs/mnist/views_plotly_tensorboard
+  resume: # last, best_[...], or empty (from scratch)
+dataset:
+  import: mnist.datasets.factory
+  name: mnist
+  dir: data/mnist
+  train_split: train
+  eval_split: val
+  nb_threads: 4
+  batch_size: 64
+model:
+  name: simple
+  network:
+    import: mnist.models.networks.factory
+    name: net
+  criterion:
+    name: nll
+  metric:
+    name: accuracy
+    topk: [1,5]
+optimizer:
+  name: sgd
+  lr: 0.01
+  momentum: 0.5
+engine:
+  name: default
+  debug: False
+  nb_epochs: 10
+  print_freq: 10
+  saving_criteria:
+  - loss:min          # save when new_best < best
+  - accuracy_top1:max # save when new_best > best
+  - accuracy_top5:max # save when new_best > best
+misc:
+  cuda: True
+  seed: 1337
+views:
+  names:
+  - plotly
+  - tensorboard
+  items_plotly:
+  - logs:train_epoch.loss+logs:eval_epoch.loss
+  - logs:train_epoch.accuracy_top1+logs:eval_epoch.accuracy_top1
+  items_tensorboard:
+  - logs:train_batch.loss+logs:eval_batch.loss
+  - logs:train_batch.accuracy_top1+logs:eval_batch.accuracy_top1

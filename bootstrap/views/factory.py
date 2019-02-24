@@ -1,6 +1,7 @@
 import importlib
 from ..lib.options import Options
 from ..lib.logger import Logger
+from .utils import MultiViews
 
 def factory(engine=None):
     Logger()('Creating views...')
@@ -22,6 +23,13 @@ def factory(engine=None):
 
     exp_dir = Options()['exp.dir']
 
+    if 'names' in opt:
+        view = make_multi_views(opt, exp_dir)
+        return view
+
+    # make single view
+    view = None
+
     if type(opt) == list:
         # default behavior
         view_name = 'plotly'
@@ -33,7 +41,6 @@ def factory(engine=None):
         items = opt.get('items', None)
         fname = opt.get('file_name', 'view.html')
 
-    view = None
     if view_name == 'tensorboard':
         # Lazy import for unused libraries
         from .tensorboard import Tensorboard
@@ -47,4 +54,26 @@ def factory(engine=None):
     else:
         raise ValueError(view_name)
 
+    return view
+
+def make_multi_views(opt, exp_dir):
+    views = []
+
+    if 'tensorboard' in opt['names']:
+        from .tensorboard import Tensorboard
+        items = opt['items_tensorboard']
+        view = Tensorboard(items, exp_dir)
+        views.append(view)
+
+    if 'plotly' in opt['names']:
+        from .plotly import Plotly
+        items = opt['items_plotly']
+        fname = opt.get('file_name', 'view.html')
+        view = Plotly(items, exp_dir, fname)
+        views.append(view)
+
+    if len(views) == 0:
+        ValueError(opt['names'])
+
+    view = MultiViews(views)
     return view
