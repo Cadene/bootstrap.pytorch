@@ -4,25 +4,25 @@ import json
 import math
 from tensorboardX import SummaryWriter
 from ..lib.logger import Logger
-from ..lib.options import Options
 
 
 class Tensorboard():
 
-    def __init__(self, options):
+    def __init__(self, items, exp_dir):
         super(Tensorboard, self).__init__()
-        self.options = options
+        self.items = items
+        self.exp_dir = exp_dir
 
     def generate(self):
         # erase old log files, currently there is no way to replace it nor append to it
-        for filename in os.listdir(self.options['exp']['dir']):
+        for filename in os.listdir(self.exp_dir):
             if 'tfevents' in filename:
-                os.remove(os.path.join(self.options['exp']['dir'], filename))
-        writer = SummaryWriter(log_dir=self.options['exp']['dir'])
+                os.remove(os.path.join(self.exp_dir, filename))
+        writer = SummaryWriter(log_dir=self.exp_dir)
         log_names = []
         views_per_figure = []
         # find all the log_names to load
-        items = self.options['view.items'] if 'view.items' in self.options else self.options['view']
+        items = self.items
         for i, view_raw in enumerate(items):
             views = []
             for view_interim in view_raw.split('+'):
@@ -41,7 +41,7 @@ class Tensorboard():
 
         data_dict = {}
         for log_name in log_names:
-            path_json = os.path.join(self.options['exp']['dir'], '{}.json'.format(log_name))
+            path_json = os.path.join(self.exp_dir, '{}.json'.format(log_name))
             if os.path.isfile(path_json):
                 with open(path_json, 'r') as handle:
                     data_json = json.load(handle)        
@@ -79,10 +79,3 @@ class Tensorboard():
 
         writer.close()
         Logger()('Tensorboard view generated in '+path_json)
-
-def view(path_opts=None):
-    Tensorboard(Options(path_opts)).generate()
-
-if __name__ == '__main__':
-    from ..run import main
-    main(run=view)

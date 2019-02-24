@@ -1,25 +1,50 @@
 import importlib
 from ..lib.options import Options
 from ..lib.logger import Logger
-from .plotly import Plotly
 
 def factory(engine=None):
-    Logger()('Creating view...')
+    Logger()('Creating views...')
 
-    view = Plotly
+    # if views not exist, pick view
+    # to support backward compatibility
     if 'view' in Options():
-	    if 'import' in Options()['view']:
-	        module = importlib.import_module(Options()['engine']['import'])
-	        view = module.factory()
-	    else:
-	    	view_name = Options().get('view.name', 'plotly')
-	    	if view_name == 'tensorboard' or view_name == 'tb':
-	    		# Lazy import for unused libraries
-	    		from .tensorboard import Tensorboard
-	    		view = Tensorboard
-	    	elif view_name != 'plotly':
-	    		Logger.log_message("Unknown view name '{}'. Defaulting to plotly.".format(view_name), Logger.WARNING)
+        opt = Options()['view']
+    elif 'views' in Options():
+        opt = Options()['views']
+    else:
+        Logger()('Not a single view has been created', log_level=Logger.WARNING)
+        return None
 
-    view_result = view(Options())
+    if 'import' in opt:
+        module = importlib.import_module(opt['import'])
+        view = module.factory()
+        return view
 
-    return view_result
+    exp_dir = Options()['exp.dir']
+
+    if type(opt) == list:
+        # default behavior
+        view_name = 'plotly'
+        items = opt
+        fname = 'view.html'
+    else:
+        # to support backward compatibility
+        view_name = opt.get('name', 'plotly')
+        items = opt.get('items', None)
+        fname = opt.get('file_name', 'view.html')
+
+    view = None
+    if view_name == 'tensorboard':
+        # Lazy import for unused libraries
+        from .tensorboard import Tensorboard
+        view = Tensorboard(items, exp_dir)
+
+    elif view_name == 'plotly':
+        # Lazy import for unused libraries
+        from .plotly import Plotly
+        view = Plotly(items, exp_dir, fname)
+
+    else:
+        raise ValueError(view_name)
+
+    return view

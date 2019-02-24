@@ -10,7 +10,6 @@ from plotly import tools
 from plotly.offline import download_plotlyjs, plot
 #from threading import Thread
 from ..lib.logger import Logger
-from ..lib.options import Options
 
 def seaborn_color_to_plotly(list_color):
     n_list_color = []
@@ -34,9 +33,11 @@ def seaborn_color_to_plotly(list_color):
 
 class Plotly():
 
-    def __init__(self, options):
+    def __init__(self, items, exp_dir, fname='view.html'):
         super(Plotly, self).__init__()
-        self.options = options
+        self.items = items
+        self.exp_dir = exp_dir
+        self.fname = fname
 
     # def start_thread(self):
     #     thread = PlotlyThread(self)
@@ -46,7 +47,7 @@ class Plotly():
         # find all the log_names to load
         log_names = []
         views_per_figure = []
-        items = self.options['view.items'] if 'view.items' in self.options else self.options['view']
+        items = self.items
         for i, view_raw in enumerate(items):
             views = []
             for view_interim in view_raw.split('+'):
@@ -64,7 +65,7 @@ class Plotly():
 
         data_dict = {}
         for log_name in log_names:
-            path_json = os.path.join(self.options['exp']['dir'],
+            path_json = os.path.join(self.exp_dir,
                                      '{}.json'.format(log_name))
             if os.path.isfile(path_json):
                 with open(path_json, 'r') as handle:
@@ -131,7 +132,7 @@ class Plotly():
             width=1800,
             height=400*nb_rows
         )
-        path_view = os.path.join(self.options['exp']['dir'], 'view.html')
+        path_view = os.path.join(self.exp_dir, self.fname)
         plot(figure, filename=path_view, auto_open=False)
         Logger()('Plotly view generated in '+path_view)
 
@@ -185,9 +186,3 @@ class Plotly():
 #     plot(figure, filename=path_view, auto_open=False)
 #     print('Plotly view generated in '+path_view)
 
-def view(path_opts=None):
-    Plotly(Options(path_opts)).generate()
-
-if __name__ == '__main__':
-    from ..run import main
-    main(run=view)

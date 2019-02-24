@@ -131,7 +131,8 @@ setup(
         'seaborn',
         'click',
         'ipdb',
-        'tabulate'
+        'tabulate',
+        'tensorboardX'
     ],
 
     # List additional groups of dependencies here (e.g. development

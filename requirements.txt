@@ -4,6 +4,7 @@ numpy
 argparse
 pyyaml
 plotly
+tensorboardX
 seaborn
 click
 ipdb
