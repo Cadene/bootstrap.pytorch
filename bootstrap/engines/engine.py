@@ -80,13 +80,14 @@ class Engine(object):
             self.hooks[name] = []
         self.hooks[name].append(func)
 
-    def resume(self):
+    def resume(self, map_location=None):
         """ Resume a checkpoint using the `bootstrap.lib.options.Options`
         """
         Logger()('Loading {} checkpoint'.format(Options()['exp']['resume']))
         self.load(Options()['exp']['dir'],
                   Options()['exp']['resume'],
-                  self.model, self.optimizer)
+                  self.model, self.optimizer,
+                  map_location=map_location)
         self.epoch += 1
 
     def eval(self):
@@ -372,7 +373,7 @@ class Engine(object):
 
         return False
 
-    def load(self, dir_logs, name, model, optimizer):
+    def load(self, dir_logs, name, model, optimizer, map_location=None):
         """ Load a checkpoint
 
             Args:
@@ -384,20 +385,20 @@ class Engine(object):
         path_template = os.path.join(dir_logs, 'ckpt_{}_{}.pth.tar')
 
         Logger()('Loading model...')
-        model_state = torch.load(path_template.format(name, 'model'))
+        model_state = torch.load(path_template.format(name, 'model'), map_location=map_location)
         model.load_state_dict(model_state)
 
         if Options()['dataset']['train_split'] is not None:
             if os.path.isfile(path_template.format(name, 'optimizer')):
                 Logger()('Loading optimizer...')
-                optimizer_state = torch.load(path_template.format(name, 'optimizer'))
+                optimizer_state = torch.load(path_template.format(name, 'optimizer'), map_location=map_location)
                 optimizer.load_state_dict(optimizer_state)
             else:
                 Logger()('No optimizer checkpoint', log_level=Logger.WARNING)
 
         if os.path.isfile(path_template.format(name, 'engine')):
             Logger()('Loading engine...')
-            engine_state = torch.load(path_template.format(name, 'engine'))
+            engine_state = torch.load(path_template.format(name, 'engine'), map_location=map_location)
             self.load_state_dict(engine_state)
         else:
             Logger()('No engine checkpoint', log_level=Logger.WARNING)
