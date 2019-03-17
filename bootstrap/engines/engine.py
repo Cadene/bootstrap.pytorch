@@ -161,22 +161,25 @@ class Engine(object):
         out_epoch = {}
         batch_loader = dataset.make_batch_loader()
 
-        self.hook('train_on_start_epoch')
+        self.hook(f'{mode}_on_start_epoch')
         for i, batch in enumerate(batch_loader):
             timer['load'] = time.time() - timer['elapsed']
-            self.hook('train_on_start_batch')
+            self.hook(f'{mode}_on_start_batch')
 
             optimizer.zero_grad()
             out = model(batch)
-            self.hook('train_on_forward')
+            self.hook(f'{mode}_on_forward')
 
-            out['loss'].backward()
+            if not torch.isnan(out['loss']):
+                out['loss'].backward()
+            else:
+                Logger()('NaN detected')
             #torch.cuda.synchronize()
-            self.hook('train_on_backward')
+            self.hook(f'{mode}_on_backward')
 
             optimizer.step()
             #torch.cuda.synchronize()
-            self.hook('train_on_update')
+            self.hook(f'{mode}_on_update')
 
             timer['process'] = time.time() - timer['elapsed']
             if i == 0:
@@ -184,10 +187,10 @@ class Engine(object):
             else:
                 timer['run_avg'] = timer['run_avg'] * 0.8 + timer['process'] * 0.2
 
-            Logger().log_value('train_batch.epoch', epoch, should_print=False)
-            Logger().log_value('train_batch.batch', i, should_print=False)
-            Logger().log_value('train_batch.timer.process', timer['process'], should_print=False)
-            Logger().log_value('train_batch.timer.load', timer['load'], should_print=False)
+            Logger().log_value(f'{mode}_batch.epoch', epoch, should_print=False)
+            Logger().log_value(f'{mode}_batch.batch', i, should_print=False)
+            Logger().log_value(f'{mode}_batch.timer.process', timer['process'], should_print=False)
+            Logger().log_value(f'{mode}_batch.timer.load', timer['load'], should_print=False)
 
             for key, value in out.items():
                 if torch.is_tensor(value):
@@ -202,7 +205,7 @@ class Engine(object):
                 if key not in out_epoch:
                     out_epoch[key] = []
                 out_epoch[key].append(value)
-                Logger().log_value('train_batch.'+key, value, should_print=False)
+                Logger().log_value(f'{mode}_batch.'+key, value, should_print=False)
 
             if i % Options()['engine']['print_freq'] == 0:
                 Logger()("{}: epoch {} | batch {}/{}".format(mode, epoch, i, len(batch_loader) - 1))
@@ -211,22 +214,22 @@ class Engine(object):
                     datetime.timedelta(seconds=math.floor(timer['run_avg'] * (len(batch_loader) - 1 - i)))))
                 Logger()("{} process: {:.5f} | load: {:.5f}".format(' '*len(mode), timer['process'], timer['load']))
                 Logger()("{} loss: {:.5f}".format(' '*len(mode), out['loss'].data.item()))
-                self.hook('train_on_print')
+                self.hook(f'{mode}_on_print')
 
             timer['elapsed'] = time.time()
-            self.hook('train_on_end_batch')
+            self.hook(f'{mode}_on_end_batch')
 
             if Options()['engine']['debug']:
                 if i > 2:
                     break
 
-        Logger().log_value('train_epoch.epoch', epoch, should_print=True)
+        Logger().log_value(f'{mode}_epoch.epoch', epoch, should_print=True)
         for key, value in out_epoch.items():
-            Logger().log_value('train_epoch.'+key, sum(value)/len(value), should_print=True)
+            Logger().log_value(f'{mode}_epoch.'+key, sum(value)/len(value), should_print=True)
         
-        self.hook('train_on_end_epoch')
+        self.hook(f'{mode}_on_end_epoch')
         Logger().flush()
-        self.hook('train_on_flush')
+        self.hook(f'{mode}_on_flush')
 
 
     def eval_epoch(self, model, dataset, epoch, mode='eval', logs_json=True):
