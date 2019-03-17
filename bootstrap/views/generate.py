@@ -1,8 +1,9 @@
-from .factory import factory
+from ..lib.options import Options
 from ..run import main
+from .factory import factory
 
 def generate(path_opts=None):
-    Options(path_opts=path_opts)
+    Options(path_yaml=path_opts)
     view = factory()
     view.generate()
 
