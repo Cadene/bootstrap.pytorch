@@ -4,6 +4,7 @@ import time
 import torch
 import datetime
 import threading
+import numpy as np
 from ..lib import utils
 from ..lib.options import Options
 from ..lib.logger import Logger
@@ -225,7 +226,7 @@ class Engine(object):
 
         Logger().log_value(f'{mode}_epoch.epoch', epoch, should_print=True)
         for key, value in out_epoch.items():
-            Logger().log_value(f'{mode}_epoch.'+key, sum(value)/len(value), should_print=True)
+            Logger().log_value(f'{mode}_epoch.'+key, np.asarray(value).mean(), should_print=True)
         
         self.hook(f'{mode}_on_end_epoch')
         Logger().flush()
