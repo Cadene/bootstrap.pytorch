@@ -32,6 +32,7 @@ def factory(engine=None):
     #     model.save = lambda x: x.module.save()
 
     if Options()['misc']['cuda']:
+        Logger()('Enabling CUDA mode...')
         model.cuda()
 
     return model
