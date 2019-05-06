@@ -101,7 +101,7 @@ class Logger(object):
         self.compactjson = is_compact
 
 
-    def log_message(self, *message, log_level=INFO, break_line=True, print_header=True, stack_displacement=1):
+    def log_message(self, *message, log_level=INFO, break_line=True, print_header=True, stack_displacement=1, raise_error=True):
         """
         """
         if log_level < self.log_level:
@@ -145,7 +145,7 @@ class Logger(object):
         
         if self.dir_logs:
             self.file_txt.flush()
-        if log_level==self.ERROR:
+        if log_level==self.ERROR and raise_error:
             raise Exception(message)
 
 
