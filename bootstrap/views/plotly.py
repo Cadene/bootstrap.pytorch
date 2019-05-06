@@ -128,8 +128,8 @@ class Plotly():
                 figure.append_trace(scatter, figure_pos_y, figure_pos_x)
 
         figure['layout'].update(
-            autosize=False,
-            width=1800,
+            autosize=True,
+            width=1024,
             height=400*nb_rows
         )
         path_view = os.path.join(self.exp_dir, self.fname)
