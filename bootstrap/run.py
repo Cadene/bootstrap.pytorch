@@ -1,8 +1,12 @@
 import os
+import sys
 import click
-import traceback
 import torch
+import traceback
 import torch.backends.cudnn as cudnn
+
+# This line is necessary for profiling
+__package__ = 'bootstrap'
 
 from .lib import utils
 from .lib.logger import Logger
@@ -51,13 +55,8 @@ def init_logs_options_files(exp_dir, resume=None):
 
 
 def run(path_opts=None):
-    # first call to Options() load the options yaml file from --path_opts command line argument if path_opts=None
-    Options(path_opts)
     # initialiaze seeds to be able to reproduce experiment on reload
     utils.set_random_seed(Options()['misc']['seed'])
-
-    init_experiment_directory(Options()['exp']['dir'], Options()['exp']['resume'])
-    init_logs_options_files(Options()['exp']['dir'], Options()['exp']['resume'])
 
     Logger().log_dict('options', Options(), should_print=True) # display options
     Logger()(os.uname()) # display server name
@@ -105,17 +104,51 @@ def run(path_opts=None):
 
 
 def main(path_opts=None, run=None):
+    # first call to Options() load the options yaml file from --path_opts command line argument if path_opts=None
+    Options(path_opts)
+    # init options and exp dir for logging
+    init_experiment_directory(Options()['exp']['dir'], Options()['exp']['resume'])
+    init_logs_options_files(Options()['exp']['dir'], Options()['exp']['resume'])
+    # start of profiling options
+    if sys.version_info[0] == 3: #PY3
+        import builtins
+    else:
+        import __builtin__ as builtins
+    if Options()['exp'].get('profile', False):
+        # if profiler is activated, associate line_profiler
+        Logger()('Activating line_profiler...')
+        try:
+            import line_profiler
+        except:
+            Logger()('Failed to import line_profiler.', log_level=Logger.ERROR, raise_error=False)
+            Logger()('Please install it from https://github.com/rkern/line_profiler', log_level=Logger.ERROR, raise_error=False)
+            return
+        prof = line_profiler.LineProfiler()
+        builtins.__dict__['profile'] = prof
+    else:
+        # otherwise, create a blank profiler, to disable profiling code
+        builtins.__dict__['profile'] = lambda func: func
+
     try:
+        # run bootstrap routine
         run(path_opts=path_opts)
-    # to avoid traceback for -h flag in arguments line
     except SystemExit:
+        # to avoid traceback for -h flag in arguments line
         pass
+    except KeyboardInterrupt:
+        Logger()('KeyboardInterrupt signal received. Exiting...', log_level=Logger.ERROR, raise_error=False)
     except:
         # to be able to write the error trace to exp_dir/logs.txt
         try:
-            Logger()(traceback.format_exc(), Logger.ERROR)
+            Logger()(traceback.format_exc(), log_level=Logger.ERROR)
         except:
             pass
+    finally:
+        # write profiling results, if enabled
+        if Options()['exp'].get('profile', False):
+            results_file = os.path.join(Options()['exp']['dir'], 'profile_results.lprof')
+            Logger()('Saving profiler results to {}...'.format(results_file))
+            prof.dump_stats(results_file)
 
 
 if __name__ == '__main__':

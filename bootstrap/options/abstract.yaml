@@ -1,6 +1,7 @@
 exp:
   dir: data/debug
   resume: # last, best_[...], or empty (from scratch)
+  profile: False
 dataset:
   import: __abstract__
   dir: data/abstract
