@@ -66,6 +66,7 @@ class Logger(object):
     name = None
     perf_memory = {}
     values = {}
+    max_lineno_width = 3
 
     # Methods
 
@@ -101,7 +102,7 @@ class Logger(object):
         self.compactjson = is_compact
 
 
-    def log_message(self, *message, log_level=INFO, break_line=True, print_header=True, stack_displacement=1, raise_error=True):
+    def log_message(self, *message, log_level=INFO, break_line=True, print_header=True, stack_displacement=1, raise_error=True, adaptive_width=True):
         """
         """
         if log_level < self.log_level:
@@ -118,9 +119,15 @@ class Logger(object):
             message_header = '[{} {:%Y-%m-%d %H:%M:%S}]'.format(self.indicator[log_level],
                                                                 datetime.datetime.now())
             filename = caller_info.filename
-            if len(filename) > 25:
-                filename = '...{}'.format(filename[-22:])
+            if adaptive_width:
+                lineno_width = len(str(caller_info.lineno))
+                self.max_lineno_width = max(lineno_width, self.max_lineno_width)
+            else:
+                lineno_width = 3
 
+            if len(filename) > 28 - self.max_lineno_width:
+                filename = '...{}'.format(filename[-22-(self.max_lineno_width-lineno_width):])
+           
             message_locate = '{}.{}:'.format(filename, caller_info.lineno)
             message_logger = '{} {} {}'.format(message_header, message_locate, message)
             message_screen = '{}{}{}{} {} {}'.format(self.Colors.BOLD,
