@@ -305,7 +305,11 @@ class Options(object):
                 if type(includes) != list:
                     includes = [includes]
                 for include in includes:
-                    parent = Options.load_yaml_opts('{}/{}'.format(os.path.dirname(path_yaml), include))
+                    filename = '{}/{}'.format(os.path.dirname(path_yaml), include)
+                    if os.path.isfile(filename):
+                        parent = Options.load_yaml_opts(filename)
+                    else:
+                        parent = Options.load_yaml_opts(include)
                     merge_dictionaries(result, parent)
             merge_dictionaries(result, options_yaml) # to be sure the main options overwrite the parent options
         result.pop('__include__', None)
