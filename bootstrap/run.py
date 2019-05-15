@@ -109,6 +109,10 @@ def main(path_opts=None, run=None):
     # init options and exp dir for logging
     init_experiment_directory(Options()['exp']['dir'], Options()['exp']['resume'])
     init_logs_options_files(Options()['exp']['dir'], Options()['exp']['resume'])
+    # activate debugger
+    if Options()['misc'].get('debug', False):
+        Logger().set_level(Logger.DEBUG)
+        Logger()('Debug mode activated.', log_level=Logger.DEBUG)
     # start of profiling options
     if sys.version_info[0] == 3: #PY3
         import builtins

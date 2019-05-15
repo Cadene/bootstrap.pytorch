@@ -22,7 +22,6 @@ optimizer:
   lr: 0.0004
 engine:
   name: default
-  debug: False
   nb_epochs: 1000
   print_freq: 10
   saving_criteria:
@@ -31,6 +30,7 @@ engine:
 misc:
   cuda: True
   seed: 1337
+  debug: False
 view:
   name: plotly
   items:

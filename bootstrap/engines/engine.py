@@ -220,10 +220,6 @@ class Engine(object):
             timer['elapsed'] = time.time()
             self.hook(f'{mode}_on_end_batch')
 
-            if Options()['engine']['debug']:
-                if i > 2:
-                    break
-
         Logger().log_value(f'{mode}_epoch.epoch', epoch, should_print=True)
         for key, value in out_epoch.items():
             Logger().log_value(f'{mode}_epoch.'+key, np.asarray(value).mean(), should_print=True)
@@ -309,10 +305,6 @@ class Engine(object):
             
             timer['elapsed'] = time.time()
             self.hook('{}_on_end_batch'.format(mode))
-
-            if Options()['engine']['debug']:
-                if i > 10:
-                    break
 
         out = {}
         for key, value in out_epoch.items():
