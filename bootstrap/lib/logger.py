@@ -1,4 +1,5 @@
 #################################################################################
+# By Micael Carvalho and Remi Cadene; https://github.com/MicaelCarvalho/logger  #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    #
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      #
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   #
@@ -15,7 +16,6 @@ import inspect
 import datetime
 import collections
 
-# https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
 class Logger(object):
     """ The Logger class is a singleton. It contains all the utilities
         for logging variables in a key-value dictionary.
@@ -32,30 +32,37 @@ class Logger(object):
             > [I 2018-07-23 18:58:31] ...trap/engines/engine.py.80: Launching training procedures
     """
 
-    # Attributs
-
+    DEBUG = -1
     INFO = 0
     SUMMARY = 1
     WARNING = 2
     ERROR = 3
     SYSTEM = 4
     _instance = None
-    indicator = {INFO: 'I', SUMMARY: 'S', WARNING: 'W', ERROR: 'E', SYSTEM: 'S'}
+    indicator = {DEBUG: 'D', INFO: 'I', SUMMARY: 'S', WARNING: 'W', ERROR: 'E', SYSTEM: 'S'}
 
     class Colors:
+        code = lambda value: '\033[{}m'.format(value)
         END = '\033[0m'
         BOLD = '\033[1m'
-        ITALIC = '\033[3m'
         UNDERLINE = '\033[4m'
-        GREY = '\033[90m'
-        RED = '\033[91m'
-        GREEN = '\033[92m'
-        YELLOW = '\033[93m'
-        BLUE = '\033[94m'
-        PURPLE = '\033[95m'
-        SKY = '\033[96m'
-        WHITE = '\033[97m'
-    colorcode = {INFO: Colors.GREY, SUMMARY: Colors.BLUE, WARNING: Colors.YELLOW, ERROR: Colors.RED, SYSTEM: Colors.WHITE}
+        GREY = 30
+        RED = 31
+        GREEN = 32
+        YELLOW = 33
+        BLUE = 34
+        PURPLE = 35
+        SKY = 36
+        WHITE = 37
+        BACKGROUND = 10
+        LIGHT = 60
+        
+    colorcode = { DEBUG: Colors.code(Colors.SKY),
+        INFO: Colors.code(Colors.GREY+Colors.LIGHT),
+        SUMMARY: Colors.code(Colors.BLUE+Colors.LIGHT),
+        WARNING: Colors.code(Colors.YELLOW+Colors.LIGHT),
+        ERROR: Colors.code(Colors.RED+Colors.LIGHT),
+        SYSTEM: Colors.code(Colors.WHITE+Colors.LIGHT)}
 
     compactjson = True
     log_level = None # log level
@@ -68,13 +75,9 @@ class Logger(object):
     values = {}
     max_lineno_width = 3
 
-    # Methods
-
     def __new__(self, dir_logs=None, name='logs'):
         if Logger._instance is None:
-
             Logger._instance = object.__new__(Logger)
-
             Logger._instance.set_level(Logger._instance.INFO)
 
             if dir_logs:
@@ -103,8 +106,6 @@ class Logger(object):
 
 
     def log_message(self, *message, log_level=INFO, break_line=True, print_header=True, stack_displacement=1, raise_error=True, adaptive_width=True):
-        """
-        """
         if log_level < self.log_level:
             return -1
 
@@ -157,8 +158,9 @@ class Logger(object):
 
 
     def log_value(self, name, value, stack_displacement=2, should_print=False, log_level=SUMMARY):
-        """
-        """
+        if log_level < self.log_level:
+            return -1
+
         if name not in self.values:
             self.values[name] = []
         self.values[name].append(value)
@@ -175,8 +177,9 @@ class Logger(object):
 
 
     def log_dict(self, group, dictionary, description='', stack_displacement=2, should_print=False, log_level=SUMMARY):
-        """
-        """
+        if log_level < self.log_level:
+            return -1
+
         if group not in self.perf_memory:
             self.perf_memory[group] = {}
         else:
@@ -198,6 +201,9 @@ class Logger(object):
 
 
     def log_dict_message(self, group, dictionary, description='', stack_displacement=2, log_level=SUMMARY):
+        if log_level < self.log_level:
+            return -1
+
         def print_subitem(prefix, subdictionary, stack_displacement=3):
             for key, value in sorted(subdictionary.items()):
                 message = prefix + key + ':'
@@ -221,8 +227,6 @@ class Logger(object):
 
 
     def flush(self):
-        """
-        """
         if self.dir_logs:
             self.path_tmp = self.path_json + '.tmp'
             try:
