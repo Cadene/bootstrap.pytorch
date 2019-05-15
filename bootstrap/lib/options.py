@@ -98,7 +98,7 @@ class OptionsDict(OrderedDict):
             if type(key) == OptionsDict:
                 self[key].lock()
 
-    def islocked():
+    def islocked(self):
         return self.__locked
 
     def unlock(self):
