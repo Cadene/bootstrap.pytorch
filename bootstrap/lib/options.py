@@ -296,10 +296,9 @@ class Options(object):
     def load_yaml_opts(path_yaml):
         """ Load options dictionary from a yaml file
         """
-        # TODO: include the parent options when parsed, instead of after having loaded the main options
         result = {}
         with open(path_yaml, 'r') as yaml_file:
-            options_yaml = yaml.load(yaml_file)
+            options_yaml = yaml.safe_load(yaml_file)
             includes = options_yaml.get('__include__', False)
             if includes:
                 if type(includes) != list:

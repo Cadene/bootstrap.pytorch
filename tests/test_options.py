@@ -156,7 +156,7 @@ def test_save():
     path_yaml = 'tests/saved.yaml'
     Options().save(path_yaml)
     with open(path_yaml, 'r') as yaml_file:
-        options_yaml = yaml.load(yaml_file)
+        options_yaml = yaml.safe_load(yaml_file)
     assert (OptionsDict(options_yaml) == OptionsDict({
         "message": "sgd",
         "sgd": True,
