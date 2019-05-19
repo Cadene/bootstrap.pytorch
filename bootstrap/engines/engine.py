@@ -31,19 +31,23 @@ class Engine(object):
         """ Generate a view.html via an asynchronous call to `self.view.generate()`
         """
         if self.view is not None:
-            threading.Thread(target=self.view.generate).start()
+            if hasattr(self.view, 'current_thread') and self.view.current_thread.is_alive():
+                Logger()('Skipping view generation: another view is already being generated', log_level=Logger.WARNING)
+                Logger()('Consider removing batch entries from views.items in order to speed it up', log_level=Logger.WARNING)
+            else:
+                # TODO: Redesign this threading system so it wont slow down training
+                # Python threads don't really exist, because of the interpreter lock
+                # we might need multi-proessing or some other way.
+                self.view.current_thread = threading.Thread(target=self.view.generate)
+                self.view.current_thread.start()
         # path_opts = os.path.join(Options()['exp']['dir'], 'options.yaml')
         # os.system('python -m bootstrap.views.view --path_opts {}'.format(path_opts))
 
     def load_state_dict(self, state):
-        """ 
-        """
         self.epoch = state['epoch']
         self.best_out = state['best_out']
 
     def state_dict(self):
-        """ 
-        """
         state = {}
         state['epoch'] = self.epoch
         state['best_out'] = self.best_out
