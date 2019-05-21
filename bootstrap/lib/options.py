@@ -149,12 +149,10 @@ class Options(object):
             self.print_help()
             sys.exit(2)
 
-    def __new__(self, path_yaml=None, arguments_callback=None, lock=False):
+    def __new__(self, path_yaml=None, arguments_callback=None, lock=False, run_parser=True):
         # Options is a singleton, we will only build if it has not been built before
         if not Options.__instance:
             Options.__instance = object.__new__(Options)
-
-            fullopt_parser = Options.HelpParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
             if path_yaml:
                 self.path_yaml = path_yaml
@@ -162,29 +160,34 @@ class Options(object):
                 # Parsing only the path_opts argument to find yaml file
                 optfile_parser = argparse.ArgumentParser(add_help=False)
                 optfile_parser.add_argument('-o', '--path_opts', type=str, required=True)
-                fullopt_parser.add_argument('-o', '--path_opts', type=str, required=True)
                 self.path_yaml = optfile_parser.parse_known_args()[0].path_opts
 
             options_yaml = Options.load_yaml_opts(self.path_yaml)
-            Options.__instance.add_options(fullopt_parser, options_yaml)
 
-            arguments = fullopt_parser.parse_args()
-            if arguments_callback:
-                arguments = arguments_callback(Options.__instance, arguments, options_yaml)
+            if run_parser:
+                fullopt_parser = Options.HelpParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                fullopt_parser.add_argument('-o', '--path_opts', type=str, required=True)
+                Options.__instance.add_options(fullopt_parser, options_yaml)
 
-            Options.__instance.options = OptionsDict()
-            for argname in vars(arguments):
-                nametree = argname.split('.')
-                value = getattr(arguments, argname)
+                arguments = fullopt_parser.parse_args()
+                if arguments_callback:
+                    arguments = arguments_callback(Options.__instance, arguments, options_yaml)
 
-                position = Options.__instance.options
-                for piece in nametree[:-1]:
-                    if piece in position and isinstance(position[piece], collections.Mapping):
-                        position = position[piece]
-                    else:
-                        position[piece] = {}
-                        position = position[piece]
-                position[nametree[-1]] = value
+                Options.__instance.options = OptionsDict()
+                for argname in vars(arguments):
+                    nametree = argname.split('.')
+                    value = getattr(arguments, argname)
+
+                    position = Options.__instance.options
+                    for piece in nametree[:-1]:
+                        if piece in position and isinstance(position[piece], collections.Mapping):
+                            position = position[piece]
+                        else:
+                            position[piece] = {}
+                            position = position[piece]
+                    position[nametree[-1]] = value
+            else:
+                Options.__instance.options = options_yaml
 
         if lock:
             Options.__instance.lock()
