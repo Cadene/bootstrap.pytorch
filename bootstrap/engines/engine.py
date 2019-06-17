@@ -212,7 +212,7 @@ class Engine(object):
                 out_epoch[key].append(value)
                 Logger().log_value(f'{mode}_batch.'+key, value, should_print=False)
 
-            if i % Options()['engine']['print_freq'] == 0:
+            if i % Options()['engine']['print_freq'] == 0 or i == len(batch_loader) - 1:
                 Logger()("{}: epoch {} | batch {}/{}".format(mode, epoch, i, len(batch_loader) - 1))
                 Logger()("{} elapsed: {} | left: {}".format(' '*len(mode),
                     datetime.timedelta(seconds=math.floor(time.time() - timer['begin'])),
