@@ -13,7 +13,7 @@ def factory(engine=None, mode=None):
     if 'criterion' not in Options()['model'] or Options()['model']['criterion'] is None:
         return None
 
-    Logger()('Creating criterion from bootstrap for {} mode...'.format(mode))
+    Logger()('Creating criterion for {} mode...'.format(mode))
 
     if Options()['model']['criterion'].get('import', False):
         module = importlib.import_module(Options()['model']['criterion']['import'])
@@ -32,3 +32,4 @@ def factory(engine=None, mode=None):
         raise ValueError()
 
     return criterion
+

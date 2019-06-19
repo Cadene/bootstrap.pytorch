@@ -11,7 +11,7 @@ def factory(engine=None, mode=None):
     if 'metric' not in Options()['model'] or Options()['model']['metric'] is None:
         return None
 
-    Logger()('Creating metric from bootstrap for {} mode...'.format(mode))
+    Logger()('Creating metric for {} mode...'.format(mode))
 
     if Options()['model']['metric'].get('import', False):
         module = importlib.import_module(Options()['model']['metric']['import'])
@@ -24,3 +24,4 @@ def factory(engine=None, mode=None):
         raise ValueError()
 
     return metric
+
