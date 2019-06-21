@@ -222,7 +222,7 @@ class Logger(object):
             try:
                 with open(self.path_json, 'r') as json_file:
                     self.values = json.load(json_file)
-            except:
+            except FileNotFoundError:
                 self.log_message('json log file can not be open: {}'.format(self.path_json), log_level=self.WARNING)
 
 
@@ -240,3 +240,6 @@ class Logger(object):
                 os.system('mv {} {}'.format(self.path_tmp, self.path_json))
             except Exception as e:
                 print(e)
+                raise e # TODO: Map what exception is this, and replace this "except Exception" for the real exception
+                        # we cannot keep this as is, it will eventually catch things we do not want to catch, like a keyboard interrupt
+

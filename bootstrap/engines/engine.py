@@ -312,10 +312,7 @@ class Engine(object):
 
         out = {}
         for key, value in out_epoch.items():
-            try:
-                out[key] = sum(value)/len(value)
-            except:
-                import ipdb; ipdb.set_trace()
+            out[key] = sum(value)/len(value)
 
         Logger().log_value('{}_epoch.epoch'.format(mode), epoch, should_print=True)
         for key, value in out.items():

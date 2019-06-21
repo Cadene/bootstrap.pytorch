@@ -36,7 +36,7 @@ class OptionsDict(OrderedDict):
         try:
             self[key]
             return True
-        except:
+        except KeyError:
             return False
 
     def __setitem__(self, key, val):

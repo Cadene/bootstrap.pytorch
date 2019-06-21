@@ -123,7 +123,7 @@ def main(path_opts=None, run=None):
         Logger()('Activating line_profiler...')
         try:
             import line_profiler
-        except:
+        except ModuleNotFoundError:
             Logger()('Failed to import line_profiler.', log_level=Logger.ERROR, raise_error=False)
             Logger()('Please install it from https://github.com/rkern/line_profiler', log_level=Logger.ERROR, raise_error=False)
             return
@@ -146,6 +146,8 @@ def main(path_opts=None, run=None):
         try:
             Logger()(traceback.format_exc(), log_level=Logger.ERROR)
         except:
+            print('Failed to call Logger for the following stack trace:')
+            print(traceback.format_exc())
             pass
     finally:
         # write profiling results, if enabled
