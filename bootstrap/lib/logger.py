@@ -121,9 +121,11 @@ class Logger(object):
                                                                 datetime.datetime.now())
             filename = caller_info.filename
             if adaptive_width:
+                # allows the lineno_width to grow when necessary
                 lineno_width = len(str(caller_info.lineno))
                 self.max_lineno_width = max(lineno_width, self.max_lineno_width)
             else:
+                # manually fix it to 3 numbers
                 lineno_width = 3
 
             if len(filename) > 28 - self.max_lineno_width:
@@ -236,8 +238,8 @@ class Logger(object):
                     else:
                         json.dump(self.values, json_file, indent=4)
                 if os.path.isfile(self.path_json):
-                    os.system('rm '+self.path_json)
-                os.system('mv {} {}'.format(self.path_tmp, self.path_json))
+                    os.remove(self.path_json)
+                os.rename(self.path_tmp, self.path_json)
             except Exception as e:
                 print(e)
                 raise e # TODO: Map what exception is this, and replace this "except Exception" for the real exception

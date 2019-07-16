@@ -1,3 +1,4 @@
+import io
 import os
 import sys
 import click
@@ -103,22 +104,18 @@ def run(path_opts=None):
         engine.train()
 
 
-def main(path_opts=None, run=None):
-    # first call to Options() load the options yaml file from --path_opts command line argument if path_opts=None
-    Options(path_opts)
-    # init options and exp dir for logging
-    init_experiment_directory(Options()['exp']['dir'], Options()['exp']['resume'])
-    init_logs_options_files(Options()['exp']['dir'], Options()['exp']['resume'])
-    # activate debugger
+def activate_debugger(): 
     if Options()['misc'].get('debug', False):
         Logger().set_level(Logger.DEBUG)
         Logger()('Debug mode activated.', log_level=Logger.DEBUG)
-    # start of profiling options
+
+
+def activate_profiler():
     if sys.version_info[0] == 3: #PY3
         import builtins
     else:
         import __builtin__ as builtins
-    if Options()['exp'].get('profile', False):
+    if Options()['misc'].get('profile', False):
         # if profiler is activated, associate line_profiler
         Logger()('Activating line_profiler...')
         try:
@@ -132,9 +129,44 @@ def main(path_opts=None, run=None):
     else:
         # otherwise, create a blank profiler, to disable profiling code
         builtins.__dict__['profile'] = lambda func: func
+        prof = None
+    return prof
 
+
+def process_profiler(prof):
+     if Options()['misc'].get('profile', False):
+        # unavoidable lazy import -- only if profiler is enabled
+        from line_profiler import show_text
+        results_file = os.path.join(Options()['exp']['dir'], 'profile_results.lprof')
+        Logger()('Saving profiler results to {}...'.format(results_file))
+        prof.dump_stats(results_file)
+        stats = prof.get_stats()
+        textio = io.StringIO()
+        show_text(stats.timings, stats.unit, stream=textio)
+        lines = textio.getvalue()
+        Logger()('Printing profiling results', log_level=Logger.SYSTEM)
+        for line in lines.splitlines():
+            Logger()(line, log_level=Logger.SYSTEM, print_header=False)
+
+
+def process_debugger():
+    if Options()['misc'].get('debug', False):
+        import pdb
+        pdb.post_mortem()
+
+
+def main(path_opts=None, run=None):
+    # first call to Options() load the options yaml file from --path_opts command line argument if path_opts=None
+    Options(path_opts)
+    # init options and exp dir for logging
+    init_experiment_directory(Options()['exp']['dir'], Options()['exp']['resume'])
+    init_logs_options_files(Options()['exp']['dir'], Options()['exp']['resume'])
+    # activate debugger if enabled
+    activate_debugger()
+    # activate profiler if enabled
+    profiler = activate_profiler()
+    # run bootstrap routine
     try:
-        # run bootstrap routine
         run(path_opts=path_opts)
     except SystemExit:
         # to avoid traceback for -h flag in arguments line
@@ -149,12 +181,10 @@ def main(path_opts=None, run=None):
             print('Failed to call Logger for the following stack trace:')
             print(traceback.format_exc())
             pass
+        process_debugger()
     finally:
         # write profiling results, if enabled
-        if Options()['exp'].get('profile', False):
-            results_file = os.path.join(Options()['exp']['dir'], 'profile_results.lprof')
-            Logger()('Saving profiler results to {}...'.format(results_file))
-            prof.dump_stats(results_file)
+        process_profiler(profiler)
 
 
 if __name__ == '__main__':

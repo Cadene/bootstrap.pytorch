@@ -1,7 +1,6 @@
 exp:
   dir: data/debug
   resume: # last, best_[...], or empty (from scratch)
-  profile: False
 dataset:
   import: __abstract__
   dir: data/abstract
@@ -31,8 +30,10 @@ misc:
   cuda: True
   seed: 1337
   debug: False
+  profile: False
 views:
   name: plotly
+  plot_width: 1024
   items:
     - logs:train_epoch.loss+logs:eval_epoch.loss
     - logs:train_batch.loss

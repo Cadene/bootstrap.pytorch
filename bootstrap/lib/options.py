@@ -122,18 +122,24 @@ class Options(object):
 
         Args:
             path_yaml(str): path to the yaml file
+            arguments_callback(func): function to be called after running argparse,
+                if values need to be preprocessed
+            lock(bool): if True, Options will be locked and no changes to values authorized
+            run_parser(bool): if False, argparse will not be executed, and values from options
+                file will be used as is
 
         Example usage:
             
             .. code-block:: python
 
                 # parse the yaml file and create options
-                Options(path_yaml='bootstrap/options/example.yaml')
+                Options(path_yaml='bootstrap/options/example.yaml', run_parser=False)
                 
                 opt = Options() # get the options dictionary from the singleton
                 print(opt['exp'])     # display a dictionary
                 print(opt['exp.dir']) # display a value
                 print(opt['exp']['dir']) # display the same value
+                # the values cannot be changed by command line because run_parser=False
                 
     """
 
