@@ -10,6 +10,8 @@ from plotly import tools
 from plotly.offline import download_plotlyjs, plot
 #from threading import Thread
 from ..lib.logger import Logger
+from ..lib.options import Options
+
 
 def seaborn_color_to_plotly(list_color):
     n_list_color = []
