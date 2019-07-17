@@ -6,9 +6,6 @@ import torch
 import traceback
 import torch.backends.cudnn as cudnn
 
-# This line is necessary for profiling
-__package__ = 'bootstrap'
-
 from .lib import utils
 from .lib.logger import Logger
 from .lib.options import Options
@@ -19,7 +16,8 @@ from . import optimizers
 from . import views
 
 
-def init_experiment_directory(exp_dir, resume=None):
+def init_experiment_directory(exp_dir, resume=None, bypass=False):
+    if bypass: return
     # create the experiment directory
     if not os.path.isdir(exp_dir):
         os.system('mkdir -p ' + exp_dir)
@@ -33,7 +31,8 @@ def init_experiment_directory(exp_dir, resume=None):
                 os._exit(1)
 
 
-def init_logs_options_files(exp_dir, resume=None):
+def init_logs_options_files(exp_dir, resume=None, bypass=False):
+    if bypass: return
     # get the logs name which is used for the txt, json and yaml files
     # default is `logs.txt`, `logs.json` and `options.yaml`
     if 'logs_name' in Options()['misc'] and Options()['misc']['logs_name'] is not None:
@@ -55,7 +54,14 @@ def init_logs_options_files(exp_dir, resume=None):
     Logger(exp_dir, name=logs_name)
 
 
-def run(path_opts=None):
+def run(path_opts=None, bypass=False):
+    # first call to Options() load the options yaml file from --path_opts command line argument if path_opts=None
+    Options(path_opts)
+
+    # init options and exp dir for logging
+    init_experiment_directory(Options()['exp']['dir'], Options()['exp']['resume'], bypass=bypass)
+    init_logs_options_files(Options()['exp']['dir'], Options()['exp']['resume'], bypass=bypass)
+
     # initialiaze seeds to be able to reproduce experiment on reload
     utils.set_random_seed(Options()['misc']['seed'])
 
@@ -108,6 +114,7 @@ def activate_debugger():
     if Options()['misc'].get('debug', False):
         Logger().set_level(Logger.DEBUG)
         Logger()('Debug mode activated.', log_level=Logger.DEBUG)
+        os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
 
 def activate_profiler():
@@ -167,7 +174,7 @@ def main(path_opts=None, run=None):
     profiler = activate_profiler()
     # run bootstrap routine
     try:
-        run(path_opts=path_opts)
+        run(path_opts=path_opts, bypass=True)
     except SystemExit:
         # to avoid traceback for -h flag in arguments line
         pass
