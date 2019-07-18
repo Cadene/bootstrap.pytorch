@@ -99,7 +99,7 @@ def run(path_opts=None):
 
         # load the model and optimizer from a checkpoint
         if Options()['exp']['resume']:
-            engine.resume()
+            engine.resume(None if Options().get('misc.cuda', False) else 'cpu')
 
         # if no training split, evaluate the model on the evaluation split
         # (example: $ python main.py --dataset.train_split --dataset.eval_split test)
