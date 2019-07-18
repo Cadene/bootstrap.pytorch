@@ -1,4 +1,5 @@
 #################################################################################
+# By Micael Carvalho and Remi Cadene; https://github.com/MicaelCarvalho/logger  #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    #
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      #
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   #
@@ -15,7 +16,6 @@ import inspect
 import datetime
 import collections
 
-# https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
 class Logger(object):
     """ The Logger class is a singleton. It contains all the utilities
         for logging variables in a key-value dictionary.
@@ -32,30 +32,37 @@ class Logger(object):
             > [I 2018-07-23 18:58:31] ...trap/engines/engine.py.80: Launching training procedures
     """
 
-    # Attributs
-
+    DEBUG = -1
     INFO = 0
     SUMMARY = 1
     WARNING = 2
     ERROR = 3
     SYSTEM = 4
     _instance = None
-    indicator = {INFO: 'I', SUMMARY: 'S', WARNING: 'W', ERROR: 'E', SYSTEM: 'S'}
+    indicator = {DEBUG: 'D', INFO: 'I', SUMMARY: 'S', WARNING: 'W', ERROR: 'E', SYSTEM: 'S'}
 
     class Colors:
+        code = lambda value: '\033[{}m'.format(value)
         END = '\033[0m'
         BOLD = '\033[1m'
-        ITALIC = '\033[3m'
         UNDERLINE = '\033[4m'
-        GREY = '\033[90m'
-        RED = '\033[91m'
-        GREEN = '\033[92m'
-        YELLOW = '\033[93m'
-        BLUE = '\033[94m'
-        PURPLE = '\033[95m'
-        SKY = '\033[96m'
-        WHITE = '\033[97m'
-    colorcode = {INFO: Colors.GREY, SUMMARY: Colors.BLUE, WARNING: Colors.YELLOW, ERROR: Colors.RED, SYSTEM: Colors.WHITE}
+        GREY = 30
+        RED = 31
+        GREEN = 32
+        YELLOW = 33
+        BLUE = 34
+        PURPLE = 35
+        SKY = 36
+        WHITE = 37
+        BACKGROUND = 10
+        LIGHT = 60
+        
+    colorcode = { DEBUG: Colors.code(Colors.SKY),
+        INFO: Colors.code(Colors.GREY+Colors.LIGHT),
+        SUMMARY: Colors.code(Colors.BLUE+Colors.LIGHT),
+        WARNING: Colors.code(Colors.YELLOW+Colors.LIGHT),
+        ERROR: Colors.code(Colors.RED+Colors.LIGHT),
+        SYSTEM: Colors.code(Colors.WHITE+Colors.LIGHT)}
 
     compactjson = True
     log_level = None # log level
@@ -66,14 +73,11 @@ class Logger(object):
     name = None
     perf_memory = {}
     values = {}
-
-    # Methods
+    max_lineno_width = 3
 
     def __new__(self, dir_logs=None, name='logs'):
         if Logger._instance is None:
-
             Logger._instance = object.__new__(Logger)
-
             Logger._instance.set_level(Logger._instance.INFO)
 
             if dir_logs:
@@ -101,9 +105,7 @@ class Logger(object):
         self.compactjson = is_compact
 
 
-    def log_message(self, *message, log_level=INFO, break_line=True, print_header=True, stack_displacement=1):
-        """
-        """
+    def log_message(self, *message, log_level=INFO, break_line=True, print_header=True, stack_displacement=1, raise_error=True, adaptive_width=True):
         if log_level < self.log_level:
             return -1
 
@@ -118,9 +120,17 @@ class Logger(object):
             message_header = '[{} {:%Y-%m-%d %H:%M:%S}]'.format(self.indicator[log_level],
                                                                 datetime.datetime.now())
             filename = caller_info.filename
-            if len(filename) > 25:
-                filename = '...{}'.format(filename[-22:])
+            if adaptive_width:
+                # allows the lineno_width to grow when necessary
+                lineno_width = len(str(caller_info.lineno))
+                self.max_lineno_width = max(lineno_width, self.max_lineno_width)
+            else:
+                # manually fix it to 3 numbers
+                lineno_width = 3
 
+            if len(filename) > 28 - self.max_lineno_width:
+                filename = '...{}'.format(filename[-22-(self.max_lineno_width-lineno_width):])
+           
             message_locate = '{}.{}:'.format(filename, caller_info.lineno)
             message_logger = '{} {} {}'.format(message_header, message_locate, message)
             message_screen = '{}{}{}{} {} {}'.format(self.Colors.BOLD,
@@ -145,13 +155,14 @@ class Logger(object):
         
         if self.dir_logs:
             self.file_txt.flush()
-        if log_level==self.ERROR:
+        if log_level==self.ERROR and raise_error:
             raise Exception(message)
 
 
     def log_value(self, name, value, stack_displacement=2, should_print=False, log_level=SUMMARY):
-        """
-        """
+        if log_level < self.log_level:
+            return -1
+
         if name not in self.values:
             self.values[name] = []
         self.values[name].append(value)
@@ -168,8 +179,9 @@ class Logger(object):
 
 
     def log_dict(self, group, dictionary, description='', stack_displacement=2, should_print=False, log_level=SUMMARY):
-        """
-        """
+        if log_level < self.log_level:
+            return -1
+
         if group not in self.perf_memory:
             self.perf_memory[group] = {}
         else:
@@ -191,6 +203,9 @@ class Logger(object):
 
 
     def log_dict_message(self, group, dictionary, description='', stack_displacement=2, log_level=SUMMARY):
+        if log_level < self.log_level:
+            return -1
+
         def print_subitem(prefix, subdictionary, stack_displacement=3):
             for key, value in sorted(subdictionary.items()):
                 message = prefix + key + ':'
@@ -209,13 +224,11 @@ class Logger(object):
             try:
                 with open(self.path_json, 'r') as json_file:
                     self.values = json.load(json_file)
-            except:
+            except FileNotFoundError:
                 self.log_message('json log file can not be open: {}'.format(self.path_json), log_level=self.WARNING)
 
 
     def flush(self):
-        """
-        """
         if self.dir_logs:
             self.path_tmp = self.path_json + '.tmp'
             try:
@@ -225,7 +238,10 @@ class Logger(object):
                     else:
                         json.dump(self.values, json_file, indent=4)
                 if os.path.isfile(self.path_json):
-                    os.system('rm '+self.path_json)
-                os.system('mv {} {}'.format(self.path_tmp, self.path_json))
+                    os.remove(self.path_json)
+                os.rename(self.path_tmp, self.path_json)
             except Exception as e:
                 print(e)
+                raise e # TODO: Map what exception is this, and replace this "except Exception" for the real exception
+                        # we cannot keep this as is, it will eventually catch things we do not want to catch, like a keyboard interrupt
+

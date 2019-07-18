@@ -1,7 +1,9 @@
+import io
 import os
+import sys
 import click
-import traceback
 import torch
+import traceback
 import torch.backends.cudnn as cudnn
 
 from .lib import utils
@@ -53,69 +55,139 @@ def init_logs_options_files(exp_dir, resume=None):
 def run(path_opts=None):
     # first call to Options() load the options yaml file from --path_opts command line argument if path_opts=None
     Options(path_opts)
-    # initialiaze seeds to be able to reproduce experiment on reload
-    utils.set_random_seed(Options()['misc']['seed'])
 
+    # init options and exp dir for logging
     init_experiment_directory(Options()['exp']['dir'], Options()['exp']['resume'])
     init_logs_options_files(Options()['exp']['dir'], Options()['exp']['resume'])
 
-    Logger().log_dict('options', Options(), should_print=True) # display options
-    Logger()(os.uname()) # display server name
+    # activate debugger if enabled
+    activate_debugger()
+    # activate profiler if enabled
+    profiler = activate_profiler()
+     
+    try:
+        # initialiaze seeds to be able to reproduce experiment on reload
+        utils.set_random_seed(Options()['misc']['seed'])
 
-    if torch.cuda.is_available():
-        cudnn.benchmark = True
-        Logger()('Available GPUs: {}'.format(utils.available_gpu_ids()))
+        Logger().log_dict('options', Options(), should_print=True) # display options
+        Logger()(os.uname()) # display server name
 
-    # engine can train, eval, optimize the model
-    # engine can save and load the model and optimizer
-    engine = engines.factory()
+        if torch.cuda.is_available():
+            cudnn.benchmark = True
+            Logger()('Available GPUs: {}'.format(utils.available_gpu_ids()))
 
-    # dataset is a dictionary that contains all the needed datasets indexed by modes
-    # (example: dataset.keys() -> ['train','eval'])
-    engine.dataset = datasets.factory(engine)
+        # engine can train, eval, optimize the model
+        # engine can save and load the model and optimizer
+        engine = engines.factory()
 
-    # model includes a network, a criterion and a metric
-    # model can register engine hooks (begin epoch, end batch, end batch, etc.)
-    # (example: "calculate mAP at the end of the evaluation epoch")
-    # note: model can access to datasets using engine.dataset
-    engine.model = models.factory(engine)
+        # dataset is a dictionary that contains all the needed datasets indexed by modes
+        # (example: dataset.keys() -> ['train','eval'])
+        engine.dataset = datasets.factory(engine)
 
-    # optimizer can register engine hooks
-    engine.optimizer = optimizers.factory(engine.model, engine)
+        # model includes a network, a criterion and a metric
+        # model can register engine hooks (begin epoch, end batch, end batch, etc.)
+        # (example: "calculate mAP at the end of the evaluation epoch")
+        # note: model can access to datasets using engine.dataset
+        engine.model = models.factory(engine)
 
-    # view will save a view.html in the experiment directory
-    # with some nice plots and curves to monitor training
-    engine.view = views.factory(engine)
+        # optimizer can register engine hooks
+        engine.optimizer = optimizers.factory(engine.model, engine)
 
-    # load the model and optimizer from a checkpoint
-    if Options()['exp']['resume']:
-        engine.resume()
+        # view will save a view.html in the experiment directory
+        # with some nice plots and curves to monitor training
+        engine.view = views.factory(engine)
 
-    # if no training split, evaluate the model on the evaluation split
-    # (example: $ python main.py --dataset.train_split --dataset.eval_split test)
-    if not Options()['dataset']['train_split']:
-        engine.eval()
+        # load the model and optimizer from a checkpoint
+        if Options()['exp']['resume']:
+            engine.resume()
 
-    # optimize the model on the training split for several epochs
-    # (example: $ python main.py --dataset.train_split train)
-    # if evaluation split, evaluate the model after each epochs
-    # (example: $ python main.py --dataset.train_split train --dataset.eval_split val)
-    if Options()['dataset']['train_split']:
-        engine.train()
+        # if no training split, evaluate the model on the evaluation split
+        # (example: $ python main.py --dataset.train_split --dataset.eval_split test)
+        if not Options()['dataset']['train_split']:
+            engine.eval()
+
+        # optimize the model on the training split for several epochs
+        # (example: $ python main.py --dataset.train_split train)
+        # if evaluation split, evaluate the model after each epochs
+        # (example: $ python main.py --dataset.train_split train --dataset.eval_split val)
+        if Options()['dataset']['train_split']:
+            engine.train()
+
+    finally:
+        # write profiling results, if enabled
+        process_profiler(profiler)
+
+
+def activate_debugger(): 
+    if Options()['misc'].get('debug', False):
+        Logger().set_level(Logger.DEBUG)
+        Logger()('Debug mode activated.', log_level=Logger.DEBUG)
+        os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+
+
+def activate_profiler():
+    if sys.version_info[0] == 3: #PY3
+        import builtins
+    else:
+        import __builtin__ as builtins
+    if Options()['misc'].get('profile', False):
+        # if profiler is activated, associate line_profiler
+        Logger()('Activating line_profiler...')
+        try:
+            import line_profiler
+        except ModuleNotFoundError:
+            Logger()('Failed to import line_profiler.', log_level=Logger.ERROR, raise_error=False)
+            Logger()('Please install it from https://github.com/rkern/line_profiler', log_level=Logger.ERROR, raise_error=False)
+            return
+        prof = line_profiler.LineProfiler()
+        builtins.__dict__['profile'] = prof
+    else:
+        # otherwise, create a blank profiler, to disable profiling code
+        builtins.__dict__['profile'] = lambda func: func
+        prof = None
+    return prof
+
+
+def process_profiler(prof):
+     if Options()['misc'].get('profile', False):
+        # unavoidable lazy import -- only if profiler is enabled
+        from line_profiler import show_text
+        results_file = os.path.join(Options()['exp']['dir'], 'profile_results.lprof')
+        Logger()('Saving profiler results to {}...'.format(results_file))
+        prof.dump_stats(results_file)
+        stats = prof.get_stats()
+        textio = io.StringIO()
+        show_text(stats.timings, stats.unit, stream=textio)
+        lines = textio.getvalue()
+        Logger()('Printing profiling results', log_level=Logger.SYSTEM)
+        for line in lines.splitlines():
+            Logger()(line, log_level=Logger.SYSTEM, print_header=False)
+
+
+def process_debugger():
+    if Options()['misc'].get('debug', False):
+        import pdb
+        pdb.post_mortem()
 
 
 def main(path_opts=None, run=None):
+    # run bootstrap routine
     try:
         run(path_opts=path_opts)
-    # to avoid traceback for -h flag in arguments line
     except SystemExit:
+        # to avoid traceback for -h flag in arguments line
         pass
+    except KeyboardInterrupt:
+        Logger()('KeyboardInterrupt signal received. Exiting...', log_level=Logger.ERROR, raise_error=False)
     except:
         # to be able to write the error trace to exp_dir/logs.txt
         try:
-            Logger()(traceback.format_exc(), Logger.ERROR)
+            Logger()(traceback.format_exc(), log_level=Logger.ERROR)
         except:
+            print('Failed to call Logger for the following stack trace:')
+            print(traceback.format_exc())
             pass
+        process_debugger()
 
 
 if __name__ == '__main__':

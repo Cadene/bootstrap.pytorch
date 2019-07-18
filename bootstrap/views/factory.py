@@ -6,14 +6,14 @@ from .utils import MultiViews
 def factory(engine=None):
     Logger()('Creating views...')
 
-    # if views not exist, pick view
+    # if views does not exist, pick view
     # to support backward compatibility
-    if 'view' in Options():
-        opt = Options()['view']
-    elif 'views' in Options():
+    if 'views' in Options():
         opt = Options()['views']
+    elif 'view' in Options():
+        opt = Options()['view']
     else:
-        Logger()('Not a single view has been created', log_level=Logger.WARNING)
+        Logger()('No view has been created', log_level=Logger.WARNING)
         return None
 
     if 'import' in opt:

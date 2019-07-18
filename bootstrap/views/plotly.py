@@ -10,6 +10,8 @@ from plotly import tools
 from plotly.offline import download_plotlyjs, plot
 #from threading import Thread
 from ..lib.logger import Logger
+from ..lib.options import Options
+
 
 def seaborn_color_to_plotly(list_color):
     n_list_color = []
@@ -129,7 +131,7 @@ class Plotly():
 
         figure['layout'].update(
             autosize=False,
-            width=1800,
+            width=Options().get('views.plot_width', 1024),
             height=400*nb_rows
         )
         path_view = os.path.join(self.exp_dir, self.fname)

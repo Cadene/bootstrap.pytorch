@@ -111,10 +111,7 @@ class StackTensors(object):
                 numel = sum([x.numel() for x in batch])
                 storage = batch[0].storage()._new_shared(numel)
                 out = batch[0].new(storage)
-            try:
-                return torch.stack(batch, 0, out=out)
-            except:
-                import ipdb; ipdb.set_trace()
+            return torch.stack(batch, 0, out=out)
         else:
             return batch
 
@@ -154,10 +151,7 @@ class CatTensors(object):
                 numel = sum([x.numel() for x in batch])
                 storage = batch[0].storage()._new_shared(numel)
                 out = batch[0].new(storage)
-            try:
-                return torch.cat(batch, 0, out=out)
-            except:
-                import ipdb; ipdb.set_trace()
+            return torch.cat(batch, 0, out=out)
         else:
             return batch
 

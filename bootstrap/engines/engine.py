@@ -31,19 +31,23 @@ class Engine(object):
         """ Generate a view.html via an asynchronous call to `self.view.generate()`
         """
         if self.view is not None:
-            threading.Thread(target=self.view.generate).start()
+            if hasattr(self.view, 'current_thread') and self.view.current_thread.is_alive():
+                Logger()('Skipping view generation: another view is already being generated', log_level=Logger.WARNING)
+                Logger()('Consider removing batch entries from views.items in order to speed it up', log_level=Logger.WARNING)
+            else:
+                # TODO: Redesign this threading system so it wont slow down training
+                # Python threads don't really exist, because of the interpreter lock
+                # we might need multi-proessing or some other way.
+                self.view.current_thread = threading.Thread(target=self.view.generate)
+                self.view.current_thread.start()
         # path_opts = os.path.join(Options()['exp']['dir'], 'options.yaml')
         # os.system('python -m bootstrap.views.view --path_opts {}'.format(path_opts))
 
     def load_state_dict(self, state):
-        """ 
-        """
         self.epoch = state['epoch']
         self.best_out = state['best_out']
 
     def state_dict(self):
-        """ 
-        """
         state = {}
         state['epoch'] = self.epoch
         state['best_out'] = self.best_out
@@ -208,7 +212,7 @@ class Engine(object):
                 out_epoch[key].append(value)
                 Logger().log_value(f'{mode}_batch.'+key, value, should_print=False)
 
-            if i % Options()['engine']['print_freq'] == 0:
+            if i % Options()['engine']['print_freq'] == 0 or i == len(batch_loader) - 1:
                 Logger()("{}: epoch {} | batch {}/{}".format(mode, epoch, i, len(batch_loader) - 1))
                 Logger()("{} elapsed: {} | left: {}".format(' '*len(mode),
                     datetime.timedelta(seconds=math.floor(time.time() - timer['begin'])),
@@ -219,10 +223,6 @@ class Engine(object):
 
             timer['elapsed'] = time.time()
             self.hook(f'{mode}_on_end_batch')
-
-            if Options()['engine']['debug']:
-                if i > 2:
-                    break
 
         Logger().log_value(f'{mode}_epoch.epoch', epoch, should_print=True)
         for key, value in out_epoch.items():
@@ -310,16 +310,9 @@ class Engine(object):
             timer['elapsed'] = time.time()
             self.hook('{}_on_end_batch'.format(mode))
 
-            if Options()['engine']['debug']:
-                if i > 10:
-                    break
-
         out = {}
         for key, value in out_epoch.items():
-            try:
-                out[key] = sum(value)/len(value)
-            except:
-                import ipdb; ipdb.set_trace()
+            out[key] = sum(value)/len(value)
 
         Logger().log_value('{}_epoch.epoch'.format(mode), epoch, should_print=True)
         for key, value in out.items():

@@ -18,7 +18,7 @@ class Tensorboard():
         for filename in os.listdir(self.exp_dir):
             if 'tfevents' in filename:
                 os.remove(os.path.join(self.exp_dir, filename))
-        writer = SummaryWriter(log_dir=self.exp_dir)
+        writer = SummaryWriter(logdir=self.exp_dir)
         log_names = []
         views_per_figure = []
         # find all the log_names to load

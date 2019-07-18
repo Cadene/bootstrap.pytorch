@@ -46,7 +46,7 @@ def load_values(dir_logs, metrics, nb_epochs=-1, best=None):
 
         try:
             values[metric['name']] = epochs[argsup], vals[argsup]
-        except:
+        except IndexError:
             values[metric['name']] = epochs[argsup-1], vals[argsup-1]
     return values
 

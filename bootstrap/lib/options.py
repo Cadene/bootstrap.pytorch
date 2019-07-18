@@ -36,7 +36,7 @@ class OptionsDict(OrderedDict):
         try:
             self[key]
             return True
-        except:
+        except KeyError:
             return False
 
     def __setitem__(self, key, val):
@@ -122,18 +122,24 @@ class Options(object):
 
         Args:
             path_yaml(str): path to the yaml file
+            arguments_callback(func): function to be called after running argparse,
+                if values need to be preprocessed
+            lock(bool): if True, Options will be locked and no changes to values authorized
+            run_parser(bool): if False, argparse will not be executed, and values from options
+                file will be used as is
 
         Example usage:
             
             .. code-block:: python
 
                 # parse the yaml file and create options
-                Options(path_yaml='bootstrap/options/example.yaml')
+                Options(path_yaml='bootstrap/options/example.yaml', run_parser=False)
                 
                 opt = Options() # get the options dictionary from the singleton
                 print(opt['exp'])     # display a dictionary
                 print(opt['exp.dir']) # display a value
                 print(opt['exp']['dir']) # display the same value
+                # the values cannot be changed by command line because run_parser=False
                 
     """
 
@@ -149,12 +155,10 @@ class Options(object):
             self.print_help()
             sys.exit(2)
 
-    def __new__(self, path_yaml=None, arguments_callback=None, lock=False):
+    def __new__(self, path_yaml=None, arguments_callback=None, lock=False, run_parser=True):
         # Options is a singleton, we will only build if it has not been built before
         if not Options.__instance:
             Options.__instance = object.__new__(Options)
-
-            fullopt_parser = Options.HelpParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
             if path_yaml:
                 self.path_yaml = path_yaml
@@ -162,29 +166,34 @@ class Options(object):
                 # Parsing only the path_opts argument to find yaml file
                 optfile_parser = argparse.ArgumentParser(add_help=False)
                 optfile_parser.add_argument('-o', '--path_opts', type=str, required=True)
-                fullopt_parser.add_argument('-o', '--path_opts', type=str, required=True)
                 self.path_yaml = optfile_parser.parse_known_args()[0].path_opts
 
             options_yaml = Options.load_yaml_opts(self.path_yaml)
-            Options.__instance.add_options(fullopt_parser, options_yaml)
 
-            arguments = fullopt_parser.parse_args()
-            if arguments_callback:
-                arguments = arguments_callback(Options.__instance, arguments, options_yaml)
+            if run_parser:
+                fullopt_parser = Options.HelpParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                fullopt_parser.add_argument('-o', '--path_opts', type=str, required=True)
+                Options.__instance.add_options(fullopt_parser, options_yaml)
 
-            Options.__instance.options = OptionsDict()
-            for argname in vars(arguments):
-                nametree = argname.split('.')
-                value = getattr(arguments, argname)
+                arguments = fullopt_parser.parse_args()
+                if arguments_callback:
+                    arguments = arguments_callback(Options.__instance, arguments, options_yaml)
 
-                position = Options.__instance.options
-                for piece in nametree[:-1]:
-                    if piece in position and isinstance(position[piece], collections.Mapping):
-                        position = position[piece]
-                    else:
-                        position[piece] = {}
-                        position = position[piece]
-                position[nametree[-1]] = value
+                Options.__instance.options = OptionsDict()
+                for argname in vars(arguments):
+                    nametree = argname.split('.')
+                    value = getattr(arguments, argname)
+
+                    position = Options.__instance.options
+                    for piece in nametree[:-1]:
+                        if piece in position and isinstance(position[piece], collections.Mapping):
+                            position = position[piece]
+                        else:
+                            position[piece] = {}
+                            position = position[piece]
+                    position[nametree[-1]] = value
+            else:
+                Options.__instance.options = options_yaml
 
         if lock:
             Options.__instance.lock()
@@ -296,16 +305,19 @@ class Options(object):
     def load_yaml_opts(path_yaml):
         """ Load options dictionary from a yaml file
         """
-        # TODO: include the parent options when parsed, instead of after having loaded the main options
         result = {}
         with open(path_yaml, 'r') as yaml_file:
-            options_yaml = yaml.load(yaml_file)
+            options_yaml = yaml.safe_load(yaml_file)
             includes = options_yaml.get('__include__', False)
             if includes:
                 if type(includes) != list:
                     includes = [includes]
                 for include in includes:
-                    parent = Options.load_yaml_opts('{}/{}'.format(os.path.dirname(path_yaml), include))
+                    filename = '{}/{}'.format(os.path.dirname(path_yaml), include)
+                    if os.path.isfile(filename):
+                        parent = Options.load_yaml_opts(filename)
+                    else:
+                        parent = Options.load_yaml_opts(include)
                     merge_dictionaries(result, parent)
             merge_dictionaries(result, options_yaml) # to be sure the main options overwrite the parent options
         result.pop('__include__', None)
