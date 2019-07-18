@@ -16,8 +16,7 @@ from . import optimizers
 from . import views
 
 
-def init_experiment_directory(exp_dir, resume=None, bypass=False):
-    if bypass: return
+def init_experiment_directory(exp_dir, resume=None):
     # create the experiment directory
     if not os.path.isdir(exp_dir):
         os.system('mkdir -p ' + exp_dir)
@@ -31,8 +30,7 @@ def init_experiment_directory(exp_dir, resume=None, bypass=False):
                 os._exit(1)
 
 
-def init_logs_options_files(exp_dir, resume=None, bypass=False):
-    if bypass: return
+def init_logs_options_files(exp_dir, resume=None):
     # get the logs name which is used for the txt, json and yaml files
     # default is `logs.txt`, `logs.json` and `options.yaml`
     if 'logs_name' in Options()['misc'] and Options()['misc']['logs_name'] is not None:
@@ -54,60 +52,70 @@ def init_logs_options_files(exp_dir, resume=None, bypass=False):
     Logger(exp_dir, name=logs_name)
 
 
-def run(path_opts=None, bypass=False):
+def run(path_opts=None):
     # first call to Options() load the options yaml file from --path_opts command line argument if path_opts=None
     Options(path_opts)
 
     # init options and exp dir for logging
-    init_experiment_directory(Options()['exp']['dir'], Options()['exp']['resume'], bypass=bypass)
-    init_logs_options_files(Options()['exp']['dir'], Options()['exp']['resume'], bypass=bypass)
+    init_experiment_directory(Options()['exp']['dir'], Options()['exp']['resume'])
+    init_logs_options_files(Options()['exp']['dir'], Options()['exp']['resume'])
 
-    # initialiaze seeds to be able to reproduce experiment on reload
-    utils.set_random_seed(Options()['misc']['seed'])
+    # activate debugger if enabled
+    activate_debugger()
+    # activate profiler if enabled
+    profiler = activate_profiler()
+     
+    try:
+        # initialiaze seeds to be able to reproduce experiment on reload
+        utils.set_random_seed(Options()['misc']['seed'])
 
-    Logger().log_dict('options', Options(), should_print=True) # display options
-    Logger()(os.uname()) # display server name
+        Logger().log_dict('options', Options(), should_print=True) # display options
+        Logger()(os.uname()) # display server name
 
-    if torch.cuda.is_available():
-        cudnn.benchmark = True
-        Logger()('Available GPUs: {}'.format(utils.available_gpu_ids()))
+        if torch.cuda.is_available():
+            cudnn.benchmark = True
+            Logger()('Available GPUs: {}'.format(utils.available_gpu_ids()))
 
-    # engine can train, eval, optimize the model
-    # engine can save and load the model and optimizer
-    engine = engines.factory()
+        # engine can train, eval, optimize the model
+        # engine can save and load the model and optimizer
+        engine = engines.factory()
 
-    # dataset is a dictionary that contains all the needed datasets indexed by modes
-    # (example: dataset.keys() -> ['train','eval'])
-    engine.dataset = datasets.factory(engine)
+        # dataset is a dictionary that contains all the needed datasets indexed by modes
+        # (example: dataset.keys() -> ['train','eval'])
+        engine.dataset = datasets.factory(engine)
 
-    # model includes a network, a criterion and a metric
-    # model can register engine hooks (begin epoch, end batch, end batch, etc.)
-    # (example: "calculate mAP at the end of the evaluation epoch")
-    # note: model can access to datasets using engine.dataset
-    engine.model = models.factory(engine)
+        # model includes a network, a criterion and a metric
+        # model can register engine hooks (begin epoch, end batch, end batch, etc.)
+        # (example: "calculate mAP at the end of the evaluation epoch")
+        # note: model can access to datasets using engine.dataset
+        engine.model = models.factory(engine)
 
-    # optimizer can register engine hooks
-    engine.optimizer = optimizers.factory(engine.model, engine)
+        # optimizer can register engine hooks
+        engine.optimizer = optimizers.factory(engine.model, engine)
 
-    # view will save a view.html in the experiment directory
-    # with some nice plots and curves to monitor training
-    engine.view = views.factory(engine)
+        # view will save a view.html in the experiment directory
+        # with some nice plots and curves to monitor training
+        engine.view = views.factory(engine)
 
-    # load the model and optimizer from a checkpoint
-    if Options()['exp']['resume']:
-        engine.resume()
+        # load the model and optimizer from a checkpoint
+        if Options()['exp']['resume']:
+            engine.resume()
 
-    # if no training split, evaluate the model on the evaluation split
-    # (example: $ python main.py --dataset.train_split --dataset.eval_split test)
-    if not Options()['dataset']['train_split']:
-        engine.eval()
+        # if no training split, evaluate the model on the evaluation split
+        # (example: $ python main.py --dataset.train_split --dataset.eval_split test)
+        if not Options()['dataset']['train_split']:
+            engine.eval()
 
-    # optimize the model on the training split for several epochs
-    # (example: $ python main.py --dataset.train_split train)
-    # if evaluation split, evaluate the model after each epochs
-    # (example: $ python main.py --dataset.train_split train --dataset.eval_split val)
-    if Options()['dataset']['train_split']:
-        engine.train()
+        # optimize the model on the training split for several epochs
+        # (example: $ python main.py --dataset.train_split train)
+        # if evaluation split, evaluate the model after each epochs
+        # (example: $ python main.py --dataset.train_split train --dataset.eval_split val)
+        if Options()['dataset']['train_split']:
+            engine.train()
+
+    finally:
+        # write profiling results, if enabled
+        process_profiler(profiler)
 
 
 def activate_debugger(): 
@@ -163,18 +171,9 @@ def process_debugger():
 
 
 def main(path_opts=None, run=None):
-    # first call to Options() load the options yaml file from --path_opts command line argument if path_opts=None
-    Options(path_opts)
-    # init options and exp dir for logging
-    init_experiment_directory(Options()['exp']['dir'], Options()['exp']['resume'])
-    init_logs_options_files(Options()['exp']['dir'], Options()['exp']['resume'])
-    # activate debugger if enabled
-    activate_debugger()
-    # activate profiler if enabled
-    profiler = activate_profiler()
     # run bootstrap routine
     try:
-        run(path_opts=path_opts, bypass=True)
+        run(path_opts=path_opts)
     except SystemExit:
         # to avoid traceback for -h flag in arguments line
         pass
@@ -189,9 +188,6 @@ def main(path_opts=None, run=None):
             print(traceback.format_exc())
             pass
         process_debugger()
-    finally:
-        # write profiling results, if enabled
-        process_profiler(profiler)
 
 
 if __name__ == '__main__':
