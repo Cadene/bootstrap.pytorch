@@ -88,7 +88,7 @@ class Logger(object):
                 Logger._instance.path_json = os.path.join(dir_logs, '{}.json'.format(name))
                 Logger._instance.reload_json()
             else:
-                Logger._instance.log_message('No logs files will be created (dir_logs attribut is empty)', log_level=Logger.WARNING)
+                Logger._instance.log_message('No logs files will be created (dir_logs attribute is empty)', log_level=Logger.WARNING)
 
         return Logger._instance
 
@@ -198,8 +198,10 @@ class Logger(object):
             else:
                 self.perf_memory[group][key] = [dictionary[key]]
 
+        self.values[group] = self.perf_memory[group]
         if should_print:
             self.log_dict_message(group, dictionary, description, stack_displacement+1, log_level)
+        self.flush()
 
 
     def log_dict_message(self, group, dictionary, description='', stack_displacement=2, log_level=SUMMARY):
