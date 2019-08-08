@@ -103,11 +103,11 @@ class Model(nn.Module):
         state['network'] = self.network.state_dict(*args, **kwgs)
         state['criterions'] = {}
         for mode, criterion in self.criterions.items():
-            if hasattr(criterion, '__parameters'):
+            if isinstance(criterion, nn.Module):
                 state['criterions'][mode] = criterion.state_dict(*args, **kwgs)
         state['metrics'] = {}
         for mode, metric in self.metrics.items():
-            if hasattr(metric, '__parameters'):
+            if isinstance(metric, nn.Module):
                 state['metrics'][mode] = metric.state_dict(*args, **kwgs)
         return state
 
