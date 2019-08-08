@@ -116,10 +116,10 @@ class Model(nn.Module):
         """
         self.network.load_state_dict(state['network'], *args, **kwgs)
         for mode, criterion in self.criterions.items():
-            if hasattr(criterion, '__parameters'):
+            if isinstance(criterion, nn.Module):
                 criterion.load_state_dict(state['criterions'][mode], *args, **kwgs)
         for mode, metric in self.metrics.items():
-            if hasattr(metric, '__parameters'):
+            if isinstance(metric, nn.Module):
                 metric.load_state_dict(state['metrics'][mode], *args, **kwgs)
 
 
