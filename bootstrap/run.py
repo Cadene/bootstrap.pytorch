@@ -69,6 +69,8 @@ def run(path_opts=None):
         # initialiaze seeds to be able to reproduce experiment on reload
         utils.set_random_seed(Options()['misc']['seed'])
 
+        Logger()('Saving environment info')
+        Logger().log_dict('env_info', utils.env_info())
         Logger().log_dict('options', Options(), should_print=True) # display options
         Logger()(os.uname()) # display server name
 
