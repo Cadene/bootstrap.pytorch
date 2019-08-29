@@ -78,4 +78,4 @@ class Tensorboard():
                     writer.add_scalar(name, y_val, x_val)
 
         writer.close()
-        Logger()('Tensorboard view generated in '+path_json)
+        Logger()('Tensorboard view generated in ' + self.exp_dir)
