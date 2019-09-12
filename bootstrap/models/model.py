@@ -1,9 +1,10 @@
+import torch
 import torch.nn as nn
-from ..lib.logger import Logger
-from ..datasets import transforms
-from .networks.factory import factory as net_factory
+
 from .criterions.factory import factory as cri_factory
 from .metrics.factory import factory as met_factory
+from .networks.factory import factory as net_factory
+from ..datasets import transforms
 
 
 class Model(nn.Module):
@@ -11,12 +12,12 @@ class Model(nn.Module):
     """
 
     def __init__(self,
-            engine=None,
-            cuda_tf=transforms.ToCuda,
-            detach_tf=transforms.ToDetach,
-            network=None,
-            criterions={},
-            metrics={}):
+                 engine=None,
+                 cuda_tf=transforms.ToCuda,
+                 detach_tf=transforms.ToDetach,
+                 network=None,
+                 criterions={},
+                 metrics={}):
         super(Model, self).__init__()
         self.cuda_tf = cuda_tf
         self.detach_tf = detach_tf
@@ -88,12 +89,21 @@ class Model(nn.Module):
         if type(net_out) is dict:
             for key, value in net_out.items():
                 out[key] = value
+        elif isinstance(net_out, torch.Tensor):
+            out['net_out'] = net_out
+
         if type(cri_out) is dict:
             for key, value in cri_out.items():
                 out[key] = value
+        elif isinstance(net_out, torch.Tensor):
+            out['loss'] = cri_out
+
         if type(met_out) is dict:
             for key, value in met_out.items():
                 out[key] = value
+        else:
+            out['met_out'] = met_out
+
         return out
 
     def state_dict(self, *args, **kwgs):
@@ -149,7 +159,7 @@ class DefaultModel(Model):
         """
         # by default all modes have criterions
         if engine:
-            modes = list(engine.dataset.keys()) # [train, val] for mnist
+            modes = list(engine.dataset.keys())  # [train, val] for mnist
         else:
             modes = ['train', 'eval']
 
