@@ -1,23 +1,45 @@
+import torch
 import torch.nn as nn
 
 
 class Accuracy(nn.Module):
 
-    def __init__(self, topk=[1,5]):
+    def __init__(self,
+                 topk=None,
+                 target_field_name='class_id',
+                 input_field_name='net_out',
+                 output_field_name='accuracy_top',
+                 **kwargs):
         super(Accuracy, self).__init__()
+
+        if topk is None:
+            topk = [1, 5]
         self.topk = topk
 
+        self.target_field_name = target_field_name
+        self.input_field_name = input_field_name
+        self.output_field_name = output_field_name
+
     def __call__(self, cri_out, net_out, batch):
-        out = {}
-        acc_out = accuracy(net_out.data.cpu(),
-                           batch['class_id'].data.cpu(),
+
+        if isinstance(net_out, torch.Tensor):
+            x = net_out
+        else:
+            x = net_out[self.input_field_name]
+
+        target = batch[self.target_field_name]
+
+        acc_out = accuracy(x.detach().cpu(),
+                           target.detach().cpu(),
                            topk=self.topk)
+
+        out = {}
         for i, k in enumerate(self.topk):
-            out['accuracy_top{}'.format(k)] = acc_out[i]
+            out[f'{self.output_field_name}{k}'] = acc_out[i]
         return out
 
 
-def accuracy(output, target, topk=[1,5], ignore_index=None):
+def accuracy(output, target, topk, ignore_index=None):
     """Computes the precision@k for the specified values of k"""
 
     if ignore_index is not None:

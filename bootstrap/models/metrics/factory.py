@@ -1,13 +1,11 @@
 import importlib
 
-from bootstrap.lib.options import Options
 from bootstrap.lib.logger import Logger
-
+from bootstrap.lib.options import Options
 from .accuracy import Accuracy
 
 
 def factory(engine=None, mode=None):
-
     if 'metric' not in Options()['model'] or Options()['model']['metric'] is None:
         return None
 
@@ -18,10 +16,9 @@ def factory(engine=None, mode=None):
         metric = module.factory(engine, mode)
 
     elif Options()['model']['metric']['name'] == 'accuracy':
-        metric = Accuracy(topk=Options()['model']['metric']['topk'])
+        metric = Accuracy(**Options()['model']['metric'])
 
     else:
         raise ValueError()
 
     return metric
-
