@@ -10,16 +10,31 @@ if torch.cuda.is_available():
     devices.append('cuda')
 
 
+def test_bce_target_field_name_default():
+    loss = BCEWithLogitsLoss()
+    assert loss.target_field_name == 'class_id'
+
+
 @pytest.mark.parametrize('target_field_name', ['class_id', 'target'])
 def test_bce_target_field_name(target_field_name):
     loss = BCEWithLogitsLoss(target_field_name=target_field_name)
     assert loss.target_field_name == target_field_name
 
 
+def test_bce_input_field_name_default():
+    loss = BCEWithLogitsLoss()
+    assert loss.input_field_name == 'net_out'
+
+
 @pytest.mark.parametrize('input_field_name', ['net_out', 'input_loss'])
 def test_bce_input_field_name(input_field_name):
     loss = BCEWithLogitsLoss(input_field_name=input_field_name)
     assert loss.input_field_name == input_field_name
+
+
+def test_bce_output_field_name_default():
+    loss = BCEWithLogitsLoss()
+    assert loss.output_field_name == 'loss'
 
 
 @pytest.mark.parametrize('output_field_name', ['loss', 'output_loss'])
