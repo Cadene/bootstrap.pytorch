@@ -66,13 +66,13 @@ def test_factory_bce_with_logits_2():
         'name': 'BCEWithLogitsLoss',
         'target_field_name': 'target',
         'input_field_name': 'input',
-        'output_field_name': 'nll_loss',
+        'output_field_name': 'bce_with_logits_loss',
         'useless_option': 123,
     }
     criterion = factory()
     assert isinstance(criterion, BCEWithLogitsLoss)
     assert criterion.input_field_name == 'input'
-    assert criterion.output_field_name == 'nll_loss'
+    assert criterion.output_field_name == 'bce_with_logits_loss'
     assert criterion.target_field_name == 'target'
 
 
@@ -87,11 +87,16 @@ def test_factory_cross_entropy_2():
         'name': 'cross_entropy',
         'target_field_name': 'target',
         'input_field_name': 'input',
-        'output_field_name': 'nll_loss',
+        'output_field_name': 'cross_entropy_loss',
         'useless_option': 123,
     }
     criterion = factory()
     assert isinstance(criterion, CrossEntropyLoss)
     assert criterion.input_field_name == 'input'
-    assert criterion.output_field_name == 'nll_loss'
+    assert criterion.output_field_name == 'cross_entropy_loss'
     assert criterion.target_field_name == 'target'
+
+
+def test_reinitialize_options():
+    options = {}
+    Options(options, run_parser=False)

@@ -108,5 +108,25 @@ def test_cross_entropy_forward_reduction_sum(device):
     assert math.isclose(out['loss'].cpu().item(), gt, abs_tol=1e-6)
 
 
+@pytest.mark.parametrize('device', devices)
+def test_cross_entropy_forward_incorrect_input_1(device):
+    device = torch.device(device)
+    loss = CrossEntropyLoss().to(device=device)
+    net_out = {'input': torch.ones(3, 4).to(device=device)}
+    batch = {'class_id': torch.tensor([0, 1, 2]).to(device=device)}
+    with pytest.raises(KeyError):
+        loss(net_out, batch)
+
+
+@pytest.mark.parametrize('device', devices)
+def test_cross_entropy_forward_incorrect_input_2(device):
+    device = torch.device(device)
+    loss = CrossEntropyLoss().to(device=device)
+    net_out = [torch.ones(3, 4).to(device=device)]
+    batch = {'class_id': torch.tensor([0, 1, 2]).to(device=device)}
+    with pytest.raises(TypeError):
+        loss(net_out, batch)
+
+
 def test_cross_entropy_extra_args():
     CrossEntropyLoss(reduction='sum', name='name', abc=123)

@@ -119,5 +119,25 @@ def test_bce_forward_reduction_sum(device):
     assert math.isclose(out['loss'].cpu().item(), gt, abs_tol=1e-6)
 
 
+@pytest.mark.parametrize('device', devices)
+def test_bce_forward_incorrect_input_1(device):
+    device = torch.device(device)
+    loss = BCEWithLogitsLoss().to(device=device)
+    net_out = {'input': torch.ones(3, 4).to(device=device)}
+    batch = {'class_id': torch.eye(3, 4).to(device=device)}
+    with pytest.raises(KeyError):
+        loss(net_out, batch)
+
+
+@pytest.mark.parametrize('device', devices)
+def test_bce_forward_incorrect_input_2(device):
+    device = torch.device(device)
+    loss = BCEWithLogitsLoss().to(device=device)
+    net_out = [torch.ones(3, 4).to(device=device)]
+    batch = {'class_id': torch.eye(3, 4).to(device=device)}
+    with pytest.raises(TypeError):
+        loss(net_out, batch)
+
+
 def test_bce_extra_args():
     BCEWithLogitsLoss(reduction='sum', name='name', abc=123)
