@@ -176,15 +176,18 @@ def main(path_opts=None, run=None):
     # run bootstrap routine
     try:
         run(path_opts=path_opts)
-    except SystemExit:
-        # to avoid traceback for -h flag in arguments line
+    except SystemExit as e:
+        if e.code != 0:
+            # to avoid traceback for -h flag in arguments line
+            Logger()(traceback.format_exc(), log_level=Logger.ERROR, raise_error=False)
         pass
     except KeyboardInterrupt:
+        Logger()(traceback.format_exc(), log_level=Logger.ERROR, raise_error=False)
         Logger()('KeyboardInterrupt signal received. Exiting...', log_level=Logger.ERROR, raise_error=False)
     except:
         # to be able to write the error trace to exp_dir/logs.txt
         try:
-            Logger()(traceback.format_exc(), log_level=Logger.ERROR)
+            Logger()(traceback.format_exc(), log_level=Logger.ERROR, raise_error=False)
         except:
             print('Failed to call Logger for the following stack trace:')
             print(traceback.format_exc())
