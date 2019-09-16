@@ -77,7 +77,7 @@ The plotting utilities of :mod:`Bootstrap` are included in `bootstrap/views <htt
 
 .. code-block:: bash
 
-    python -m bootstrap.views.view
+    python -m bootstrap.views.generate
            -o logs/mnist/sgd/options.yaml
     open logs/mnist/sgd/view.html
 
