@@ -203,9 +203,7 @@ class Engine(object):
                         value = value.item() # get number from a torch scalar
                     else:
                         continue
-                if type(value) == list:
-                    continue
-                if type(value) == dict:
+                if isinstance(value, (list, dict, tuple)):
                     continue
                 if key not in out_epoch:
                     out_epoch[key] = []
@@ -290,9 +288,7 @@ class Engine(object):
                         value = value.item() # get number from a torch scalar
                     else:
                         continue
-                if type(value) == list:
-                    continue
-                if type(value) == dict:
+                if isinstance(value, (list, dict, tuple)):
                     continue
                 if key not in out_epoch:
                     out_epoch[key] = []
