@@ -29,7 +29,7 @@ We advise you to use `tmux <https://github.com/tmux/tmux/wiki>`_ or `screen <htt
     do
       CUDA_VISIBLE_DEVICES=$gpu python -m bootstrap.run
             -o mnist/options/sgd.yaml
-            --optimizer.lr 
+            --optimizer.lr $lr
             --exp.dir logs/mnist/lr_$lr &
       gpu = $(( $gpu + 1 ))
     done
