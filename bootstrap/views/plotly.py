@@ -4,10 +4,15 @@ import json
 import math
 import argparse
 import seaborn as sns
-import plotly.plotly as py
+try:
+    import plotly.plotly as py
+    from plotly import tools
+    make_subplots = py.tools.make_subplots
+except:
+    import plotly as py
+    make_subplots = py.subplots.make_subplots
 import plotly.graph_objs as go
-from plotly import tools
-from plotly.offline import download_plotlyjs, plot
+from plotly.offline import plot
 #from threading import Thread
 from ..lib.logger import Logger
 from ..lib.options import Options
@@ -80,7 +85,7 @@ class Plotly():
         nb_rows = math.ceil(nb_keys / 2)
         nb_cols = min(2, nb_keys)
 
-        figure = tools.make_subplots(rows=nb_rows, cols=nb_cols,
+        figure = make_subplots(rows=nb_rows, cols=nb_cols,
             subplot_titles=items,
             print_grid=False)
 
@@ -149,7 +154,7 @@ class Plotly():
 #               seaborn_color_to_plotly(sns.hls_palette(nb_exps)),        # medium for val
 #               seaborn_color_to_plotly(sns.hls_palette(nb_exps, l=.70))] # light for test
 
-#     figure = tools.make_subplots(rows=nb_rows, cols=nb_cols,
+#     figure = make_subplots(rows=nb_rows, cols=nb_cols,
 #             subplot_titles=Options()['logs']['views'],
 #             print_grid=False)
 
