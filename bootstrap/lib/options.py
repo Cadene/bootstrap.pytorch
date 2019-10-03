@@ -1,13 +1,15 @@
-import os
-import sys
-import yaml
-import json
-import copy
-import inspect
 import argparse
 import collections
+import copy
+import inspect
+import json
+import os
+import sys
 from collections import OrderedDict
+
+import yaml
 from yaml import Dumper
+
 from bootstrap.lib.utils import merge_dictionaries
 
 
@@ -48,7 +50,7 @@ class OptionsDict(OrderedDict):
             if type(val) == dict:
                 val = OptionsDict(val)
                 OrderedDict.__setitem__(self, key, val)
-            elif '.' in key:
+            elif isinstance(key, str) and '.' in key:
                 keys = key.split('.')
                 d = self[keys[0]]
                 for k in keys[1:-1]:
@@ -78,7 +80,6 @@ class OptionsDict(OrderedDict):
         else:
             return default
 
-
     def update(self, *args, **kwargs):
         for k, v in OrderedDict(*args, **kwargs).items():
             self[k] = v
@@ -94,8 +95,8 @@ class OptionsDict(OrderedDict):
 
     def lock(self):
         self.__locked = True
-        for key in self.keys():
-            if type(key) == OptionsDict:
+        for key, value in self.items():
+            if type(value) == OptionsDict:
                 self[key].lock()
 
     def islocked(self):
@@ -111,9 +112,10 @@ class OptionsDict(OrderedDict):
                     stack_caller.lineno,
                     stack_caller.function))
         self.__locked = False
-        for key in self.keys():
-            if type(key) == OptionsDict:
+        for key, value in self.items():
+            if type(value) == OptionsDict:
                 self[key].unlock()
+
 
 # https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
 class Options(object):
@@ -121,7 +123,7 @@ class Options(object):
         If a path to a yaml file is not provided, it relies on the `-o/--path_opts` command line argument.
 
         Args:
-            path_yaml(str): path to the yaml file
+            source(str|dict): path to the yaml file, or dictionary containing options
             arguments_callback(func): function to be called after running argparse,
                 if values need to be preprocessed
             lock(bool): if True, Options will be locked and no changes to values authorized
@@ -145,8 +147,8 @@ class Options(object):
 
     # Attributs
 
-    __instance = None # singleton instance of this class
-    options = None # dictionnary of the singleton
+    __instance = None  # singleton instance of this class
+    options = None  # dictionnary of the singleton
     path_yaml = None
 
     class HelpParser(argparse.ArgumentParser):
@@ -155,29 +157,29 @@ class Options(object):
             self.print_help()
             sys.exit(2)
 
-    def __new__(self, path_yaml=None, arguments_callback=None, lock=False, run_parser=True):
+    def __new__(self, source=None, arguments_callback=None, lock=False, run_parser=True):
         # Options is a singleton, we will only build if it has not been built before
         if not Options.__instance:
             Options.__instance = object.__new__(Options)
 
-            if path_yaml:
-                self.path_yaml = path_yaml
+            if source:
+                self.source = source
             else:
                 # Parsing only the path_opts argument to find yaml file
                 optfile_parser = argparse.ArgumentParser(add_help=False)
                 optfile_parser.add_argument('-o', '--path_opts', type=str, required=True)
-                self.path_yaml = optfile_parser.parse_known_args()[0].path_opts
+                self.source = optfile_parser.parse_known_args()[0].path_opts
 
-            options_yaml = Options.load_yaml_opts(self.path_yaml)
+            options_dict = Options.load_yaml_opts(self.source)
 
             if run_parser:
                 fullopt_parser = Options.HelpParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
                 fullopt_parser.add_argument('-o', '--path_opts', type=str, required=True)
-                Options.__instance.add_options(fullopt_parser, options_yaml)
+                Options.__instance.add_options(fullopt_parser, options_dict)
 
                 arguments = fullopt_parser.parse_args()
                 if arguments_callback:
-                    arguments = arguments_callback(Options.__instance, arguments, options_yaml)
+                    arguments = arguments_callback(Options.__instance, arguments, options_dict)
 
                 Options.__instance.options = OptionsDict()
                 for argname in vars(arguments):
@@ -193,12 +195,11 @@ class Options(object):
                             position = position[piece]
                     position[nametree[-1]] = value
             else:
-                Options.__instance.options = options_yaml
+                Options.__instance.options = options_dict
 
         if lock:
             Options.__instance.lock()
         return Options.__instance
-
 
     def __getitem__(self, key):
         """
@@ -206,10 +207,8 @@ class Options(object):
         val = self.options[key]
         return val
 
-
     def __setitem__(self, key, val):
         self.options[key] = val
-
 
     def __getattr__(self, key):
         if key in self:
@@ -217,38 +216,26 @@ class Options(object):
         else:
             return object.__getattr__(self, key)
 
-
     def __contains__(self, item):
         return item in self.options
-
 
     def __str__(self):
         return json.dumps(self.options, indent=2)
 
-
     def get(self, key, default):
         return self.options.get(key, default)
-
-
-    def copy(self):
-        return self.options.copy()
-
 
     def has_key(self, k):
         return k in self.options
 
-
     def keys(self):
         return self.options.keys()
-
 
     def values(self):
         return self.options.values()
 
-
     def items(self):
         return self.options.items()
-
 
     def add_options(self, parser, options, prefix=''):
         if prefix:
@@ -273,7 +260,6 @@ class Options(object):
                     datatype = type(value)
                 parser.add_argument(argname, help='Default: %(default)s', default=value, nargs=nargs, type=datatype)
 
-
     def str_to_bool(self, v):
         true_strings = ['yes', 'true']
         false_strings = ['no', 'false']
@@ -282,44 +268,45 @@ class Options(object):
                 return True
             elif v.lower() in false_strings:
                 return False
-        raise argparse.ArgumentTypeError('{} cant be converted to bool ('.format(v)+'|'.join(true_strings+false_strings)+' can be)')
-
+        raise argparse.ArgumentTypeError(
+            '{} cant be converted to bool ('.format(v) + '|'.join(true_strings + false_strings) + ' can be)')
 
     def save(self, path_yaml):
         """ Write options dictionary to a yaml file
         """
         Options.save_yaml_opts(self.options, path_yaml)
 
-
     def lock(self):
         Options.__instance.options.lock()
-
 
     def unlock(self):
         Options.__instance.options.unlock()
 
-
     # Static methods
 
-
-    def load_yaml_opts(path_yaml):
+    def load_yaml_opts(source):
         """ Load options dictionary from a yaml file
         """
         result = {}
-        with open(path_yaml, 'r') as yaml_file:
-            options_yaml = yaml.safe_load(yaml_file)
-            includes = options_yaml.get('__include__', False)
-            if includes:
-                if type(includes) != list:
-                    includes = [includes]
-                for include in includes:
-                    filename = '{}/{}'.format(os.path.dirname(path_yaml), include)
-                    if os.path.isfile(filename):
-                        parent = Options.load_yaml_opts(filename)
-                    else:
-                        parent = Options.load_yaml_opts(include)
-                    merge_dictionaries(result, parent)
-            merge_dictionaries(result, options_yaml) # to be sure the main options overwrite the parent options
+        if isinstance(source, str):
+            with open(source, 'r') as yaml_file:
+                options_dict = yaml.safe_load(yaml_file)
+        elif isinstance(source, dict):
+            options_dict = source
+        else:
+            raise TypeError('Unsupported source type: {}'.format(type(source)))
+        includes = options_dict.get('__include__', False)
+        if includes:
+            if type(includes) != list:
+                includes = [includes]
+            for include in includes:
+                filename = '{}/{}'.format(os.path.dirname(source), include)
+                if os.path.isfile(filename):
+                    parent = Options.load_yaml_opts(filename)
+                else:
+                    parent = Options.load_yaml_opts(include)
+                merge_dictionaries(result, parent)
+        merge_dictionaries(result, options_dict)  # to be sure the main options overwrite the parent options
         result.pop('__include__', None)
         result = OptionsDict(result)
         return result
@@ -333,6 +320,7 @@ class Options(object):
         # https://gist.github.com/oglops/c70fb69eef42d40bed06
         def dict_representer(dumper, data):
             return dumper.represent_dict(data.items())
+
         Dumper.add_representer(OptionsDict, dict_representer)
 
         with open(path_yaml, 'w') as yaml_file:
