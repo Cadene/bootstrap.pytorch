@@ -5,7 +5,7 @@ import inspect
 import json
 import os
 import sys
-from collections import OrderedDict, Iterable
+from collections import OrderedDict
 
 import yaml
 from yaml import Dumper
