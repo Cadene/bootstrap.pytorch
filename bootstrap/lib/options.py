@@ -5,7 +5,7 @@ import inspect
 import json
 import os
 import sys
-from collections import OrderedDict
+from collections import OrderedDict, Iterable
 
 import yaml
 from yaml import Dumper
@@ -50,7 +50,7 @@ class OptionsDict(OrderedDict):
             if type(val) == dict:
                 val = OptionsDict(val)
                 OrderedDict.__setitem__(self, key, val)
-            elif '.' in key:
+            elif isinstance(key, str) and '.' in key:
                 keys = key.split('.')
                 d = self[keys[0]]
                 for k in keys[1:-1]:

@@ -1,6 +1,8 @@
 import argparse
+import json
 import os
 import sys
+from io import StringIO
 
 import pytest
 import yaml
@@ -386,7 +388,7 @@ def test_initialize_lock():
     assert Options().options.islocked()
 
 
-def test_initialize_unlock():
+def test_initialize_not_locked():
     reset_options_instance()
     source = {
         'dataset': 123,
@@ -421,6 +423,33 @@ def test_setitem_2():
     assert Options().options == source
     Options()['model.criterion'] = 'new value'
     assert Options()['model.criterion'] == 'new value'
+
+
+def test_setitem_key_int():
+    reset_options_instance()
+    source = {1: 123}
+    Options(source, run_parser=False)
+    assert Options().options == source
+    Options()[1] = 'new value'
+    assert Options()[1] == 'new value'
+
+
+def test_setitem_key_float():
+    reset_options_instance()
+    source = {1.2: 123}
+    Options(source, run_parser=False)
+    assert Options().options == source
+    Options()[1.2] = 'new value'
+    assert Options()[1.2] == 'new value'
+
+
+def test_setitem_key_bytes():
+    reset_options_instance()
+    source = {bytes(1): 123}
+    Options(source, run_parser=False)
+    assert Options().options == source
+    Options()[bytes(2)] = 'new value'
+    assert Options()[bytes(2)] == 'new value'
 
 
 def test_getattr():
@@ -530,9 +559,22 @@ def test_unlock():
     Options().lock()
     assert Options().options.islocked()
     assert Options().options['model'].islocked()
+
+    old_stdout = sys.stdout
+    result = StringIO()
+    sys.stdout = result
+
     Options().unlock()
+
+    sys.stdout = old_stdout
+
     assert not Options().options.islocked()
     assert not Options().options['model'].islocked()
+
+    result_string = result.getvalue()
+
+    # Should print more than 3 times
+    assert len(result_string.splitlines()) > 3
 
 
 def test_lock_setitem():
@@ -597,10 +639,13 @@ def test_str_to_bool_incorrect():
 
 def test_str():
     reset_options_instance()
-    source = {'abc': 123}
+    source = {'abc': 123, 'key1': 'value1'}
     Options(source, run_parser=False)
     assert Options().options == source
-    assert Options().__str__() == '{\n  "abc": 123\n}'
+    str_representation = Options().__str__()
+    opt_dict = json.loads(str_representation)
+    assert isinstance(str_representation, str)
+    assert opt_dict == source
 
 
 def test_add_options():
