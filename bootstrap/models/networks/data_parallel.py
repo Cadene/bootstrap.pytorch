@@ -2,11 +2,13 @@ import torch
 import torch.nn as nn
 from torch.nn.parallel._functions import Gather
 
+
 def gather(outputs, target_device, dim=0):
     r"""
     Gathers tensors from different GPUs on a specified device
       (-1 means the CPU).
     """
+
     def gather_map(outputs):
         out = outputs[0]
         if torch.is_tensor(out):

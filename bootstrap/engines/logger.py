@@ -1,5 +1,6 @@
-from ..lib.logger import Logger
 from .engine import Engine
+from ..lib.logger import Logger
+
 
 class LoggerEngine(Engine):
     """ LoggerEngine is similar to Engine. The only difference is a more powerful is_best method.
@@ -34,7 +35,7 @@ class LoggerEngine(Engine):
         else:
             error_msg = """'--engine.saving_criteria' named '{}' does not specify order,
             you need to chose between '{}' or '{}' to specify if the criteria needs to be minimize or maximize""".format(
-                saving_criteria, saving_criteria+':min', saving_criteria+':max')
+                saving_criteria, saving_criteria + ':min', saving_criteria + ':max')
             raise ValueError(error_msg)
 
         if name in out:
@@ -53,4 +54,3 @@ class LoggerEngine(Engine):
                 return True
 
         return False
-

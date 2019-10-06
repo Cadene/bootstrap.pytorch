@@ -1,14 +1,12 @@
 import importlib
 
-from ..lib.options import Options
-from ..lib.logger import Logger
-
 from .model import DefaultModel
 from .model import SimpleModel
+from ..lib.logger import Logger
+from ..lib.options import Options
 
 
 def factory(engine=None):
-
     Logger()('Creating model...')
 
     if Options()['model'].get('import', False):

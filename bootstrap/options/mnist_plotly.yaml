@@ -29,16 +29,16 @@ engine:
   nb_epochs: 10
   print_freq: 10
   saving_criteria:
-  - loss:min          # save when new_best < best
-  - accuracy_top1:max # save when new_best > best
-  - accuracy_top5:max # save when new_best > best
+    - loss:min          # save when new_best < best
+    - accuracy_top1:max # save when new_best > best
+    - accuracy_top5:max # save when new_best > best
 misc:
   cuda: True
   seed: 1337
 views:
   name: plotly
   items:
-  - logs:train_epoch.loss+logs:eval_epoch.loss
-  - logs:train_batch.loss
-  - logs:train_epoch.accuracy_top1+logs:eval_epoch.accuracy_top1
-  - logs:train_epoch.accuracy_top5+logs:eval_epoch.accuracy_top5
+    - logs:train_epoch.loss+logs:eval_epoch.loss
+    - logs:train_batch.loss
+    - logs:train_epoch.accuracy_top1+logs:eval_epoch.accuracy_top1
+    - logs:train_epoch.accuracy_top5+logs:eval_epoch.accuracy_top5

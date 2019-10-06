@@ -1,4 +1,5 @@
 import collections
+
 import torch
 from torch.autograd import Variable
 
@@ -40,7 +41,7 @@ class PadTensors(object):
     def __init__(self, value=0, use_keys=[], avoid_keys=[]):
         self.value = value
         self.use_keys = use_keys
-        if len(self.use_keys)>0:
+        if len(self.use_keys) > 0:
             self.avoid_keys = []
         else:
             self.avoid_keys = avoid_keys
@@ -54,7 +55,7 @@ class PadTensors(object):
             out = {}
             for key, value in batch.items():
                 if (key in self.use_keys) or \
-                   (len(self.use_keys) == 0 and key not in self.avoid_keys):
+                        (len(self.use_keys) == 0 and key not in self.avoid_keys):
                     out[key] = self.pad_tensors(value)
                 else:
                     out[key] = value
@@ -70,9 +71,9 @@ class PadTensors(object):
                     if item.dim() == 1:
                         n_item[:item.size(0)] = item
                     elif item.dim() == 2:
-                        n_item[:item.size(0),:item.size(1)] = item
+                        n_item[:item.size(0), :item.size(1)] = item
                     elif item.dim() == 3:
-                        n_item[:item.size(0),:item.size(1),:item.size(2)] = item
+                        n_item[:item.size(0), :item.size(1), :item.size(2)] = item
                     else:
                         raise ValueError
                     n_batch.append(n_item)
@@ -121,7 +122,7 @@ class CatTensors(object):
     def __init__(self, use_shared_memory=False, use_keys=[], avoid_keys=[]):
         self.use_shared_memory = use_shared_memory
         self.use_keys = use_keys
-        if len(self.use_keys)>0:
+        if len(self.use_keys) > 0:
             self.avoid_keys = []
         else:
             self.avoid_keys = avoid_keys
@@ -135,11 +136,11 @@ class CatTensors(object):
             out = {}
             for key, value in batch.items():
                 if (key in self.use_keys) or \
-                   (len(self.use_keys) == 0 and key not in self.avoid_keys):
+                        (len(self.use_keys) == 0 and key not in self.avoid_keys):
                     out[key] = self.cat_tensors(value)
                     if ('batch_id' not in out) and torch.is_tensor(value[0]):
-                        out['batch_id'] = torch.cat([i*torch.ones(x.size(0)) \
-                                                     for i,x in enumerate(value)], 0)
+                        out['batch_id'] = torch.cat([i * torch.ones(x.size(0)) \
+                                                     for i, x in enumerate(value)], 0)
                 else:
                     out[key] = value
             return out
@@ -167,7 +168,7 @@ class ToCuda(object):
 
     def to_cuda(self, batch):
         if isinstance(batch, collections.Mapping):
-            return {key: self.to_cuda(value) for key,value in batch.items()}
+            return {key: self.to_cuda(value) for key, value in batch.items()}
         elif torch.is_tensor(batch):
             # TODO: verify async usage
             return batch.cuda(non_blocking=True)
@@ -191,7 +192,7 @@ class ToCpu(object):
 
     def to_cpu(self, batch):
         if isinstance(batch, collections.Mapping):
-            return {key: self.to_cpu(value) for key,value in batch.items()}
+            return {key: self.to_cpu(value) for key, value in batch.items()}
         elif torch.is_tensor(batch):
             return batch.cpu()
         elif type(batch).__name__ == 'Variable':
@@ -254,7 +255,7 @@ class SortByKey(object):
         self.i = 0
 
     def __call__(self, batch):
-        self.set_sort_keys(batch[self.key]) # must be a list
+        self.set_sort_keys(batch[self.key])  # must be a list
         batch = self.sort_by_key(batch)
         return batch
 
@@ -273,7 +274,7 @@ class SortByKey(object):
     def sort_by_key(self, batch):
         if isinstance(batch, collections.Mapping):
             return {key: self.sort_by_key(value) for key, value in batch.items()}
-        elif type(batch) is list:#isinstance(batch, collections.Sequence):
+        elif type(batch) is list:  # isinstance(batch, collections.Sequence):
             return sorted(batch, key=self.get_key, reverse=self.reverse)
         else:
             return batch

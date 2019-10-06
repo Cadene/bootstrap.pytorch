@@ -1,7 +1,9 @@
 import importlib
-from ..lib.options import Options
-from ..lib.logger import Logger
+
 from .utils import MultiViews
+from ..lib.logger import Logger
+from ..lib.options import Options
+
 
 def factory(engine=None):
     Logger()('Creating views...')
@@ -55,6 +57,7 @@ def factory(engine=None):
         raise ValueError(view_name)
 
     return view
+
 
 def make_multi_views(opt, exp_dir):
     views = []

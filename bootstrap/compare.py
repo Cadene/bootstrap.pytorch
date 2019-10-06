@@ -1,7 +1,8 @@
-import json
-import numpy as np
 import argparse
+import json
 from os import path as osp
+
+import numpy as np
 from tabulate import tabulate
 
 
@@ -47,8 +48,9 @@ def load_values(dir_logs, metrics, nb_epochs=-1, best=None):
         try:
             values[metric['name']] = epochs[argsup], vals[argsup]
         except IndexError:
-            values[metric['name']] = epochs[argsup-1], vals[argsup-1]
+            values[metric['name']] = epochs[argsup - 1], vals[argsup - 1]
     return values
+
 
 def main(args):
     dir_logs = {}
@@ -84,8 +86,8 @@ def main(args):
     logs = {}
     for name, dir_log in dir_logs.items():
         logs[name] = load_values(dir_log, metrics,
-            nb_epochs=args.nb_epochs,
-            best=best)
+                                 nb_epochs=args.nb_epochs,
+                                 best=best)
 
     for mkey, metric in metrics.items():
         names = []
@@ -98,10 +100,11 @@ def main(args):
                 epochs.append(epoch)
                 values.append(value)
         if values:
-            values_names = sorted(zip(values, names, epochs), reverse=metric['order']=='max')
+            values_names = sorted(zip(values, names, epochs), reverse=metric['order'] == 'max')
             values_names = [[i + 1, name, value, epoch] for i, (value, name, epoch) in enumerate(values_names)]
             print('\n\n## {}\n'.format(metric['name']))
             print(tabulate(values_names, headers=['Place', 'Method', 'Score', 'Epoch']))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')

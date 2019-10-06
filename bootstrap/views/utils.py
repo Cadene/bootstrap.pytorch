@@ -1,5 +1,3 @@
-
-
 class MultiViews():
 
     def __init__(self, views):

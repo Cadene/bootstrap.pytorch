@@ -1,8 +1,10 @@
 import importlib
-from ..lib.options import Options
-from ..lib.logger import Logger
+
 from .engine import Engine
 from .logger import LoggerEngine
+from ..lib.logger import Logger
+from ..lib.options import Options
+
 
 def factory():
     Logger()('Creating engine...')

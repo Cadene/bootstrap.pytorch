@@ -1,29 +1,30 @@
 import io
 import os
 import sys
+import traceback
+
 import click
 import torch
-import traceback
 import torch.backends.cudnn as cudnn
 
-from .lib import utils
-from .lib.logger import Logger
-from .lib.options import Options
-from . import engines
 from . import datasets
+from . import engines
 from . import models
 from . import optimizers
 from . import views
+from .lib import utils
+from .lib.logger import Logger
+from .lib.options import Options
 
 
 def init_experiment_directory(exp_dir, resume=None):
-    # create the experiment directory
+    #  create the experiment directory
     if not os.path.isdir(exp_dir):
         os.system('mkdir -p ' + exp_dir)
     else:
         if resume is None:
             if click.confirm('Exp directory already exists in {}. Erase?'
-                    .format(exp_dir, default=False)):
+                                     .format(exp_dir, default=False)):
                 os.system('rm -r ' + exp_dir)
                 os.system('mkdir -p ' + exp_dir)
             else:
@@ -44,7 +45,7 @@ def init_logs_options_files(exp_dir, resume=None):
         path_yaml = os.path.join(exp_dir, 'options.yaml')
         logs_name = 'logs'
 
-    # create the options.yaml file
+    #  create the options.yaml file
     if not os.path.isfile(path_yaml):
         Options().save(path_yaml)
 
@@ -64,21 +65,21 @@ def run(path_opts=None):
     activate_debugger()
     # activate profiler if enabled
     profiler = activate_profiler()
-     
+
     try:
         # initialiaze seeds to be able to reproduce experiment on reload
         utils.set_random_seed(Options()['misc']['seed'])
 
         Logger()('Saving environment info')
         Logger().log_dict('env_info', utils.env_info())
-        Logger().log_dict('options', Options(), should_print=True) # display options
-        Logger()(os.uname()) # display server name
+        Logger().log_dict('options', Options(), should_print=True)  # display options
+        Logger()(os.uname())  # display server name
 
         if torch.cuda.is_available():
             cudnn.benchmark = True
             Logger()('Available GPUs: {}'.format(utils.available_gpu_ids()))
 
-        # engine can train, eval, optimize the model
+        #  engine can train, eval, optimize the model
         # engine can save and load the model and optimizer
         engine = engines.factory()
 
@@ -92,7 +93,7 @@ def run(path_opts=None):
         # note: model can access to datasets using engine.dataset
         engine.model = models.factory(engine)
 
-        # optimizer can register engine hooks
+        #  optimizer can register engine hooks
         engine.optimizer = optimizers.factory(engine.model, engine)
 
         # view will save a view.html in the experiment directory
@@ -120,7 +121,7 @@ def run(path_opts=None):
         process_profiler(profiler)
 
 
-def activate_debugger(): 
+def activate_debugger():
     if Options()['misc'].get('debug', False):
         Logger().set_level(Logger.DEBUG)
         Logger()('Debug mode activated.', log_level=Logger.DEBUG)
@@ -128,7 +129,7 @@ def activate_debugger():
 
 
 def activate_profiler():
-    if sys.version_info[0] == 3: #PY3
+    if sys.version_info[0] == 3:  # PY3
         import builtins
     else:
         import __builtin__ as builtins
@@ -139,7 +140,8 @@ def activate_profiler():
             import line_profiler
         except ModuleNotFoundError:
             Logger()('Failed to import line_profiler.', log_level=Logger.ERROR, raise_error=False)
-            Logger()('Please install it from https://github.com/rkern/line_profiler', log_level=Logger.ERROR, raise_error=False)
+            Logger()('Please install it from https://github.com/rkern/line_profiler', log_level=Logger.ERROR,
+                     raise_error=False)
             return
         prof = line_profiler.LineProfiler()
         builtins.__dict__['profile'] = prof
@@ -151,7 +153,7 @@ def activate_profiler():
 
 
 def process_profiler(prof):
-     if Options()['misc'].get('profile', False):
+    if Options()['misc'].get('profile', False):
         # unavoidable lazy import -- only if profiler is enabled
         from line_profiler import show_text
         results_file = os.path.join(Options()['exp']['dir'], 'profile_results.lprof')
@@ -197,4 +199,3 @@ def main(path_opts=None, run=None):
 
 if __name__ == '__main__':
     main(run=run)
-

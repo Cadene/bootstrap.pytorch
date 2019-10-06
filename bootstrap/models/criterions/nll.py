@@ -1,5 +1,6 @@
 import torch.nn as nn
 
+
 class NLLLoss(nn.Module):
 
     def __init__(self):

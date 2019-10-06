@@ -1,11 +1,13 @@
 import copy
-import torch
 import importlib
-from ..lib.options import Options
-from ..lib.logger import Logger
+
+import torch
 
 from . import lr_scheduler
 from .grad_clipper import GradClipper
+from ..lib.logger import Logger
+from ..lib.options import Options
+
 
 def factory(model, engine=None):
     if not 'optimizer' in Options():
@@ -35,7 +37,7 @@ def factory_optimizer(model):
     if Options()['optimizer']['name'] == 'adam':
         optimizer = torch.optim.Adam(
             # optimize only when parameters have requires_grad=True
-            # useful to avoid optimizing nn.Embedding in a NLP setup
+            #  useful to avoid optimizing nn.Embedding in a NLP setup
             filter(lambda p: p.requires_grad, model.network.parameters()),
             Options()['optimizer']['lr'],
             weight_decay=weight_decay)
@@ -64,9 +66,5 @@ def factory_grad_clip(optimizer):
     Logger()('Creating grad_clipper {}...'.format(Options()['optimizer']['grad_clip']))
     if Options()['optimizer']['grad_clip'] > 0:
         optimizer = GradClipper(optimizer,
-            grad_clip=Options()['optimizer']['grad_clip'])
+                                grad_clip=Options()['optimizer']['grad_clip'])
     return optimizer
-
-
-
-

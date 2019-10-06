@@ -1,13 +1,14 @@
 import torch.optim.lr_scheduler
+
 from bootstrap.lib.logger import Logger
-from torch.optim.lr_scheduler import _LRScheduler
+
 
 class LearningRateScheduler():
 
     def __init__(self, optimizer, engine=None):
         self.optimizer = optimizer
         self.scheduler = None
-        self.param_groups = self.optimizer.param_groups # to keep compatibility with GradClipper
+        self.param_groups = self.optimizer.param_groups  # to keep compatibility with GradClipper
         if engine:
             engine.register_hook('train_on_start_epoch', self.step_scheduler)
 

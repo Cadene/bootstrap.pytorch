@@ -3,7 +3,7 @@ import torch.nn as nn
 
 class Accuracy(nn.Module):
 
-    def __init__(self, topk=[1,5]):
+    def __init__(self, topk=[1, 5]):
         super(Accuracy, self).__init__()
         self.topk = topk
 
@@ -17,7 +17,7 @@ class Accuracy(nn.Module):
         return out
 
 
-def accuracy(output, target, topk=[1,5], ignore_index=None):
+def accuracy(output, target, topk=[1, 5], ignore_index=None):
     """Computes the precision@k for the specified values of k"""
 
     if ignore_index is not None:
