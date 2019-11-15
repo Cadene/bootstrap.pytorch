@@ -359,6 +359,7 @@ class Engine(object):
 
         if name not in self.best_out:
             self.best_out[name] = out[name]
+            return True
         else:
             if eval('{} {} {}'.format(out[name], order, self.best_out[name])):
                 self.best_out[name] = out[name]
