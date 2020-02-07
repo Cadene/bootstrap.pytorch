@@ -3,7 +3,7 @@ torchvision
 numpy
 argparse
 pyyaml
-plotly
+chart-studio
 tensorboardX
 seaborn
 click

@@ -4,14 +4,9 @@ import json
 import math
 import argparse
 import seaborn as sns
-try:
-    import plotly.plotly as py
-    from plotly import tools
-    make_subplots = py.tools.make_subplots
-except:
-    import plotly as py
-    make_subplots = py.subplots.make_subplots
-import plotly.graph_objs as go
+
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from plotly.offline import plot
 #from threading import Thread
 from ..lib.logger import Logger
@@ -135,9 +130,9 @@ class Plotly():
                 figure.append_trace(scatter, figure_pos_y, figure_pos_x)
 
         figure['layout'].update(
-            autosize=False,
-            width=Options().get('views.plot_width', 1024),
-            height=400*nb_rows
+            autosize=True,
+            # width=Options().get('views.plot_width', 1024),
+            # height=400*nb_rows
         )
         path_view = os.path.join(self.exp_dir, self.fname)
         plot(figure, filename=path_view, auto_open=False)
