@@ -51,11 +51,10 @@ class OptionsDict(OrderedDict):
                 val = OptionsDict(val)
                 OrderedDict.__setitem__(self, key, val)
             elif isinstance(key, str) and '.' in key:
-                keys = key.split('.')
-                d = self[keys[0]]
-                for k in keys[1:-1]:
-                    d = d[k]
-                d[keys[-1]] = val
+                first_key, other_keys = key.split('.', maxsplit=1)
+                if first_key not in self:
+                    self[first_key] = OptionsDict({})
+                self[first_key][other_keys] = val
             else:
                 OrderedDict.__setitem__(self, key, val)
         else:
@@ -188,7 +187,7 @@ class Options(object):
 
                     position = Options.__instance.options
                     for piece in nametree[:-1]:
-                        if piece in position and isinstance(position[piece], collections.Mapping):
+                        if piece in position and isinstance(position[piece], collections.abc.Mapping):
                             position = position[piece]
                         else:
                             position[piece] = {}
