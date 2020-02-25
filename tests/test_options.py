@@ -425,6 +425,46 @@ def test_setitem_2():
     assert Options()['model.criterion'] == 'new value'
 
 
+def test_setitem_3():
+    reset_options_instance()
+    source = {'dataset': 123}
+    Options(source, run_parser=False)
+    Options()['model.criterion'] = 'I am a criterion'
+    Options()['model.network'] = 'I am a network'
+    assert Options().options == {
+        'dataset': 123,
+        'model': {
+            'criterion': 'I am a criterion',
+            'network': 'I am a network',
+        },
+    }
+    assert Options()['model.criterion'] == 'I am a criterion'
+    assert Options()['model.network'] == 'I am a network'
+
+
+def test_setitem_4():
+    reset_options_instance()
+    source = {
+        'model.name': 'model',
+    }
+    Options(source, run_parser=False)
+    Options()['model.topk'] = [1, 2]
+    Options()['model.network.input_size'] = 12
+    Options()['model.network.output_size'] = 4
+    Options()['dataset.dataloader.batch_size'] = 8
+    assert Options().options == {
+        'dataset': {'dataloader': {'batch_size': 8}},
+        'model': {
+            'name': 'model',
+            'topk': [1, 2],
+            'network': {
+                'input_size': 12,
+                'output_size': 4
+            }
+        },
+    }
+
+
 def test_setitem_key_int():
     reset_options_instance()
     source = {1: 123}
