@@ -1,64 +1,88 @@
+import os
 from pathlib import Path
 from argparse import ArgumentParser
 
 
+file_dir = Path(__file__).parent
+
+
 parser = ArgumentParser()
-parser.add_argument("project_path", action="store", type=str, help="Path to new project")
-parser.add_argument("project_name", type=str, help="Project name")
+parser.add_argument("--project_name", type=str, help="Project name")
+
+
+def get_template_file(filename, project_name):
+    parts = list(filename.parts)
+    project_index = parts.index(project_name.lower())
+    if parts[-1] not in ["__init__.py", "factory.py"]:
+        parts[-1] = "template_" + parts[-1][2:]  # remove "my"
+    template_path = "/".join(parts[project_index + 1:])
+    template_path = file_dir / Path("template") / template_path
+
+    return template_path
+
+
+def get_file_content(filename, project_name):
+    template = get_template_file(filename, project_name)
+
+    content = Path(template).read_text()
+    content = content.replace("{PROJECT_NAME}", project_name)
+    content = content.replace("{PROJECT_NAME_LOWER}", project_name.lower())
+    content = content.replace("{PROJECT_NAME_UPPER}", project_name.upper())
+
+    return content
+
+
+def write_files(files, project_name):
+    for f in files:
+        content = get_file_content(f, project_name)
+        f.write_text(content)
+
+
+def get_files(directory):
+    dir_name = directory.stem
+    if dir_name == "options":
+        return [directory / "abstract.yaml"]
+
+    to_ret = []
+    if dir_name != "models":
+        to_ret.append(directory / "__init__.py")
+
+    to_ret.append(directory / "factory.py")
+    custom_file = f"my{dir_name[:-1]}.py"
+    to_ret.append(directory / custom_file)
+
+    return to_ret
 
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    path = Path(args.project_path)
+    project_name = args.project_name
 
+    path = Path(f"{project_name.lower()}.bootstrap.pytorch")
     path.mkdir()
-    path = path / args.project_name
+    os.mkdir(path / "logs")
+    path = Path(f"{project_name.lower()}.bootstrap.pytorch/{project_name.lower()}")
     path.mkdir()
 
+    print(f"Creating logs directory")
+
+    print("Creating models directory and __init__ file")
     Path(path / "models").mkdir()
     Path(path / "models/__init__.py").touch()
-    Path(path / "models/networks").mkdir()
-    Path(path / "models/networks/__init__.py").touch()
-    Path(path / "models/networks/factory.py").touch()
-    Path(path / "models/networks/mynetwork.py").touch()
 
-    with open(path / "models/networks/factory.py", "w") as f:
-        f.write(r"""from bootstrap.lib.options import Options
-from bootstrap.lib.logger import Logger
-from bootstrap.models.networks.data_parallel import DataParallel
+    directories = [
+        "datasets",
+        "models/networks",
+        "models/criterions",
+        "models/metrics",
+    ]
 
-from .mynetwork import MyNetwork
+    for directory in directories:
+        print(f"Creating {directory} folder and associated files")
+        new_dir = path / directory
+        if directory != "models":
+            new_dir.mkdir()
+        files = get_files(new_dir)
+        write_files(files, project_name)
 
-
-def factory(engine):
-    logger = Logger()
-    net_opt = Options()["model"]["network"]
-    logger("Creating Network")
-    if net_opt["name"] == "mynetwork":
-        # You can use any param to create your network
-        # You just have to write them in your option file from options/ folder
-        net = MyNetwork(net_opt["param1"], net_opt["param2"])
-    else:
-        raise ValueError(opt["name"])
-    logger("Network was created")
-
-    if torch.cuda.device_count() > 1:
-        net = DataParallel(net)
-
-    return net
-""")
-
-    with open(path / "models/networks/mynetwork.py", "w") as f:
-        f.write(r"""import torch.nn as nn
-
-
-class MyNetwork(nn.Module):
-    def __init__(self, *args, **kwargs):
-        super(MyNetwork, self).__init__()
-        # Assign args
-
-    def forward(self, x):
-        # x is a dictionnary given by Dataset class
-        pred = self.net(x)
-        return pred  # This is a tensor (or several tensors)
-""")
+    print("Project is ready !")
