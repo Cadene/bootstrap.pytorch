@@ -60,11 +60,14 @@ if __name__ == "__main__":
 
     path = Path(f"{project_name.lower()}.bootstrap.pytorch")
     path.mkdir()
-    os.mkdir(path / "logs")
-    path = Path(f"{project_name.lower()}.bootstrap.pytorch/{project_name.lower()}")
-    path.mkdir()
 
     print(f"Creating logs directory")
+    os.mkdir(path / "logs")
+
+    print(f"Creating project directory and __init__.py file")
+    path = Path(f"{project_name.lower()}.bootstrap.pytorch/{project_name.lower()}")
+    path.mkdir()
+    Path(path / "__init__.py").touch()
 
     print("Creating models directory and __init__ file")
     Path(path / "models").mkdir()
