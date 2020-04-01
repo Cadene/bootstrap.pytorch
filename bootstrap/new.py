@@ -14,9 +14,9 @@ def get_template_file(filename, project_name):
     parts = list(filename.parts)
     project_index = parts.index(project_name.lower())
     if parts[-1] not in ["__init__.py", "factory.py"]:
-        parts[-1] = "template_" + parts[-1][2:]  # remove "my"
+        parts[-1] = parts[-1].replace("my", "")
     template_path = "/".join(parts[project_index + 1:])
-    template_path = file_dir / Path("template") / template_path
+    template_path = file_dir / Path("templates/default/project") / template_path
 
     return template_path
 
