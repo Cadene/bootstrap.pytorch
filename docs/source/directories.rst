@@ -35,8 +35,8 @@ Core bootstrap architecture
     |   |   ├── lr_scheduler.py
     |   |   └── factory.py
     |   ├── options
-    |   |   ├── abstract.py   # example of default options
-    |   |   └── example.py
+    |   |   ├── abstract.yaml   # example of default options
+    |   |   └── example.yaml
     |   ├── views             # plotting utilities
     |   |   ├── view.py
     |   |   └── factory.py
