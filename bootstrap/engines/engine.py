@@ -145,7 +145,7 @@ class Engine(object):
             - train_on_start_epoch: before the training procedure for an epoch
             - train_on_start_batch: before the training precedure for a batch
             - train_on_forward: after the forward of the model
-            - train_on_bachward: after the backward of the loss
+            - train_on_backward: after the backward of the loss
             - train_on_update: after the optimization step
             - train_on_print: after the print to the terminal
             - train_on_end_batch: end of the training procedure for a batch
