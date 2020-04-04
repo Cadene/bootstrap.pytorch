@@ -165,8 +165,11 @@ class Options(object):
                 self.source = source
             else:
                 # Parsing only the path_opts argument to find yaml file
-                optfile_parser = argparse.ArgumentParser(add_help=False)
+                optfile_parser = argparse.ArgumentParser(add_help=True)
                 optfile_parser.add_argument('-o', '--path_opts', type=str, required=True)
+                if len(sys.argv) == 1:
+                    optfile_parser.print_help(sys.stderr)
+                    os._exit(1)
                 self.source = optfile_parser.parse_known_args()[0].path_opts
 
             options_dict = Options.load_yaml_opts(self.source)
