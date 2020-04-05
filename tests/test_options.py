@@ -11,13 +11,12 @@ from bootstrap.lib.options import Options
 from bootstrap.lib.options import OptionsDict
 from bootstrap.lib.utils import merge_dictionaries
 
-
 def reset_options_instance():
     Options._Options__instance = None
     sys.argv = [sys.argv[0]]  # reset command line args
 
 
-def test_empty_path():
+def test_empty_path(monkeypatch):
     """ Test empty path
   
         Expected behavior:
@@ -28,6 +27,9 @@ def test_empty_path():
                 test_options.py: error: the following arguments are required: -o/--path_opts
     """
     reset_options_instance()
+
+    monkeypatch.setattr(os, '_exit', sys.exit)
+
     try:
         Options()
         assert False
