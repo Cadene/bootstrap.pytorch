@@ -1,8 +1,9 @@
 import torch.nn as nn
+
 from ..datasets import transforms
-from .networks.factory import factory as net_factory
 from .criterions.factory import factory as cri_factory
 from .metrics.factory import factory as met_factory
+from .networks.factory import factory as net_factory
 
 
 class Model(nn.Module):
