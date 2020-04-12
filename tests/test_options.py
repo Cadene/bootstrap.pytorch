@@ -17,7 +17,7 @@ def reset_options_instance():
     sys.argv = [sys.argv[0]]  # reset command line args
 
 
-def test_empty_path(monkeypatch):
+def test_empty_path():
     """ Test empty path
 
         Expected behavior:
@@ -28,8 +28,6 @@ def test_empty_path(monkeypatch):
                 test_options.py: error: the following arguments are required: -o/--path_opts
     """
     reset_options_instance()
-
-    monkeypatch.setattr(os, '_exit', sys.exit)
 
     with pytest.raises(Options.MissingOptionsException):
         Options()
