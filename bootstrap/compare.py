@@ -1,7 +1,10 @@
-import json
-import numpy as np
 import argparse
+import json
+
 from os import path as osp
+
+import numpy as np
+
 from tabulate import tabulate
 
 

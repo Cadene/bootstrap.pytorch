@@ -1,20 +1,18 @@
 import io
 import os
-import sys
 import shutil
-import click
-import torch
+import sys
 import traceback
+
+import torch
 import torch.backends.cudnn as cudnn
 
+import click
+
+from . import datasets, engines, models, optimizers, views
 from .lib import utils
 from .lib.logger import Logger
 from .lib.options import Options
-from . import engines
-from . import datasets
-from . import models
-from . import optimizers
-from . import views
 
 
 def init_experiment_directory(exp_dir, resume=None):
