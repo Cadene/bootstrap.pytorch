@@ -1,6 +1,9 @@
-import torch.utils.data as data
 import itertools
+
 import numpy as np
+
+import torch.utils.data as data
+
 from . import transforms as bootstrap_tf
 
 
