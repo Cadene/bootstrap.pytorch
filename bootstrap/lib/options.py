@@ -4,10 +4,13 @@ import copy
 import inspect
 import json
 import os
+
 from collections import OrderedDict
+
 import yaml
-from yaml import Dumper
+
 from bootstrap.lib.utils import merge_dictionaries
+from yaml import Dumper
 
 
 class OptionsDict(OrderedDict):

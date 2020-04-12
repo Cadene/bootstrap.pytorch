@@ -1,10 +1,12 @@
 import os
-import sys
-import time
-import torch
-import numpy
 import random
 import subprocess
+import sys
+import time
+
+import numpy
+
+import torch
 
 
 def merge_dictionaries(dict1, dict2):
