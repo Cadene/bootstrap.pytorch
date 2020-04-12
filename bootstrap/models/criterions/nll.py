@@ -1,7 +1,7 @@
 import torch.nn as nn
 
-class NLLLoss(nn.Module):
 
+class NLLLoss(nn.Module):
     def __init__(self):
         super(NLLLoss, self).__init__()
         self.loss = nn.NLLLoss()

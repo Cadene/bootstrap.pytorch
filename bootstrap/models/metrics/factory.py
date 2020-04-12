@@ -1,8 +1,6 @@
 import importlib
-
 from bootstrap.lib.options import Options
 from bootstrap.lib.logger import Logger
-
 from .accuracy import Accuracy
 
 
@@ -24,4 +22,3 @@ def factory(engine=None, mode=None):
         raise ValueError()
 
     return metric
-
