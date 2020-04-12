@@ -9,3 +9,4 @@ repos:
     rev: 4.3.21  # pick the isort version you'd like to use from https://github.com/timothycrosley/isort/releases
     hooks:
     -   id: isort
+        exclude: ^docs/*
