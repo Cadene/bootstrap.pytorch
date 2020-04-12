@@ -4,12 +4,9 @@ import copy
 import inspect
 import json
 import os
-import sys
 from collections import OrderedDict
-
 import yaml
 from yaml import Dumper
-
 from bootstrap.lib.utils import merge_dictionaries
 
 
@@ -150,11 +147,19 @@ class Options(object):
     options = None  # dictionnary of the singleton
     path_yaml = None
 
+    class MissingOptionsException(Exception):
+        pass
+
     class HelpParser(argparse.ArgumentParser):
         def error(self, message):
             print('\nError: %s\n' % message)
             self.print_help()
-            sys.exit(2)
+            self.exit()
+
+        def exit(self, status=0, message=None):
+            if status == 0:
+                raise Options.MissingOptionsException()
+            super().exit(status, message)
 
     def __new__(cls, source=None, arguments_callback=None, lock=False, run_parser=True):
         # Options is a singleton, we will only build if it has not been built before
@@ -165,11 +170,8 @@ class Options(object):
                 cls.source = source
             else:
                 # Parsing only the path_opts argument to find yaml file
-                optfile_parser = argparse.ArgumentParser(add_help=True)
+                optfile_parser = Options.HelpParser(add_help=True)
                 optfile_parser.add_argument('-o', '--path_opts', type=str, required=True)
-                if len(sys.argv) == 1:
-                    optfile_parser.print_help(sys.stderr)
-                    os._exit(1)
                 cls.source = optfile_parser.parse_known_args()[0].path_opts
 
             options_dict = Options.load_yaml_opts(cls.source)

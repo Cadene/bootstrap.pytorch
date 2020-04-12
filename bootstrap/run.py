@@ -185,6 +185,8 @@ def main(path_opts=None, run=None):
     except KeyboardInterrupt:
         Logger()(traceback.format_exc(), log_level=Logger.ERROR, raise_error=False)
         Logger()('KeyboardInterrupt signal received. Exiting...', log_level=Logger.ERROR, raise_error=False)
+    except Options.MissingOptionsException:
+        pass
     except Exception:
         # to be able to write the error trace to exp_dir/logs.txt
         try:

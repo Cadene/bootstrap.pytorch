@@ -31,11 +31,8 @@ def test_empty_path(monkeypatch):
 
     monkeypatch.setattr(os, '_exit', sys.exit)
 
-    try:
+    with pytest.raises(Options.MissingOptionsException):
         Options()
-        assert False  # noqa: B011
-    except SystemExit:
-        assert True
 
 
 def test_o():
@@ -88,11 +85,8 @@ def test_path_opts_h():
     """
     reset_options_instance()
     sys.argv += ['-o', 'tests/default.yaml', '-h']
-    try:
+    with pytest.raises(Options.MissingOptionsException):
         Options()
-        assert False  # noqa: F401
-    except SystemExit:
-        assert True
 
 
 def test_include():
@@ -330,7 +324,7 @@ def test_initialize_options_source_dict_4():
             'network': 'I am a network',
         },
     }
-    with pytest.raises(SystemExit):
+    with pytest.raises(Options.MissingOptionsException):
         Options(source, run_parser=True)
 
 
