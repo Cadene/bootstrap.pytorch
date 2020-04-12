@@ -2,13 +2,13 @@ import argparse
 import json
 import os
 import sys
+
 from io import StringIO
 
 import pytest
 import yaml
 
-from bootstrap.lib.options import Options
-from bootstrap.lib.options import OptionsDict
+from bootstrap.lib.options import Options, OptionsDict
 from bootstrap.lib.utils import merge_dictionaries
 
 
