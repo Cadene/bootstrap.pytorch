@@ -1,9 +1,10 @@
 import copy
-import torch
 import importlib
-from ..lib.options import Options
-from ..lib.logger import Logger
 
+import torch
+
+from ..lib.logger import Logger
+from ..lib.options import Options
 from . import lr_scheduler
 from .grad_clipper import GradClipper
 
