@@ -105,7 +105,7 @@ class OptionsDict(OrderedDict):
         stack_this = inspect.stack()[1]
         stack_caller = inspect.stack()[2]
         if stack_this.filename != stack_caller.filename or stack_this.function != stack_caller.function:
-            for i in range(10):
+            for _i in range(10):
                 print('WARNING: Options unlocked by {}[{}]: {}.'.format(
                     stack_caller.filename,
                     stack_caller.lineno,
@@ -130,18 +130,18 @@ class Options(object):
                 file will be used as is
 
         Example usage:
-            
+
             .. code-block:: python
 
                 # parse the yaml file and create options
                 Options(path_yaml='bootstrap/options/example.yaml', run_parser=False)
-                
+
                 opt = Options() # get the options dictionary from the singleton
                 print(opt['exp'])     # display a dictionary
                 print(opt['exp.dir']) # display a value
                 print(opt['exp']['dir']) # display the same value
                 # the values cannot be changed by command line because run_parser=False
-                
+
     """
 
     # Attributs
@@ -156,13 +156,13 @@ class Options(object):
             self.print_help()
             sys.exit(2)
 
-    def __new__(self, source=None, arguments_callback=None, lock=False, run_parser=True):
+    def __new__(cls, source=None, arguments_callback=None, lock=False, run_parser=True):
         # Options is a singleton, we will only build if it has not been built before
         if not Options.__instance:
             Options.__instance = object.__new__(Options)
 
             if source:
-                self.source = source
+                cls.source = source
             else:
                 # Parsing only the path_opts argument to find yaml file
                 optfile_parser = argparse.ArgumentParser(add_help=True)
@@ -170,9 +170,9 @@ class Options(object):
                 if len(sys.argv) == 1:
                     optfile_parser.print_help(sys.stderr)
                     os._exit(1)
-                self.source = optfile_parser.parse_known_args()[0].path_opts
+                cls.source = optfile_parser.parse_known_args()[0].path_opts
 
-            options_dict = Options.load_yaml_opts(self.source)
+            options_dict = Options.load_yaml_opts(cls.source)
 
             if run_parser:
                 fullopt_parser = Options.HelpParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -285,7 +285,7 @@ class Options(object):
         Options.__instance.options.unlock()
 
     # Static methods
-
+    @staticmethod
     def load_yaml_opts(source):
         """ Load options dictionary from a yaml file
         """
@@ -313,6 +313,7 @@ class Options(object):
         result = OptionsDict(result)
         return result
 
+    @staticmethod
     def save_yaml_opts(opts, path_yaml):
         # Warning: copy is not nested
         options = copy.copy(opts)
