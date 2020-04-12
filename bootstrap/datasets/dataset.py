@@ -1,5 +1,6 @@
 import torch.utils.data as data
 import itertools
+import numpy as np
 from . import transforms as bootstrap_tf
 
 
@@ -73,9 +74,10 @@ class ListDatasets(data.Dataset):
     def make_bootstrapping(self):
         nb_items = sum(self.lengths)
         rnd = np.random.RandomState(seed=self.seed)
-        indices = rnd.choice(nb_items,
-                             size=int(nb_items*0.95),
-                             replace=False)
+        indices = rnd.choice(
+            nb_items,
+            size=int(nb_items * 0.95),
+            replace=False)
         if self.split != 'train':
             indices = np.array(list(set(np.arange(nb_items)) - set(indices)))
         return indices
