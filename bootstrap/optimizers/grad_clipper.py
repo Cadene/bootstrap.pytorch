@@ -1,7 +1,7 @@
 from torch.nn.utils.clip_grad import clip_grad_norm
 
-class GradClipper():
 
+class GradClipper():
     def __init__(self, optimizer, grad_clip=2.):
         self.optimizer = optimizer
         self.grad_clip = grad_clip

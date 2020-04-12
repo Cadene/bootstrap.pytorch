@@ -1,7 +1,5 @@
 import os
-import re
 import json
-import math
 from tensorboardX import SummaryWriter
 from ..lib.logger import Logger
 
@@ -23,35 +21,33 @@ class Tensorboard():
         views_per_figure = []
         # find all the log_names to load
         items = self.items
-        for i, view_raw in enumerate(items):
+        for _, view_raw in enumerate(items):
             views = []
             for view_interim in view_raw.split('+'):
                 log_name, view_name = view_interim.split(':')
                 views.append({
-                    'view_interim': view_interim,          # logs:train_epoch.loss
-                    'log_name': log_name,                  # logs
-                    'view_name': view_name,                # train_epoch.loss
-                    'split_name': view_name.split('.')[0], # train_epoch
-                    'log_type': view_name.split('.')[1]    # loss
+                    'view_interim': view_interim,           # logs:train_epoch.loss
+                    'log_name': log_name,                   # logs
+                    'view_name': view_name,                 # train_epoch.loss
+                    'split_name': view_name.split('.')[0],  # train_epoch
+                    'log_type': view_name.split('.')[1]     # loss
                 })
                 log_names.append(log_name)
             views_per_figure.append(views)
 
-        log_names = list(set(log_names)) # unique
+        log_names = list(set(log_names))  # unique
 
         data_dict = {}
         for log_name in log_names:
             path_json = os.path.join(self.exp_dir, '{}.json'.format(log_name))
             if os.path.isfile(path_json):
                 with open(path_json, 'r') as handle:
-                    data_json = json.load(handle)        
+                    data_json = json.load(handle)
                 data_dict[log_name] = data_json
             else:
                 Logger()("Json log file '{}' not found in '{}'".format(log_name, path_json), log_level=Logger.WARNING)
 
-        nb_keys = len(items)
-        
-        for figure_id, views in enumerate(views_per_figure):
+        for _, views in enumerate(views_per_figure):
             for view in views:
                 if view['log_name'] not in data_dict:
                     continue
@@ -64,7 +60,7 @@ class Tensorboard():
 
                 if 'epoch' in view['split_name']:
                     # example: data_dict['logs_last']['test_epoch.epoch']
-                    key = view['split_name']+'.epoch' # TODO: ugly fix, to be remove
+                    key = view['split_name'] + '.epoch'  # TODO: ugly fix, to be remove
                     if key not in data_dict[view['log_name']]:
                         key = 'eval_epoch.epoch'
                     x = data_dict[view['log_name']][key]

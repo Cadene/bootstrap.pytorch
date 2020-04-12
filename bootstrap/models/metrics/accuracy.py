@@ -2,10 +2,9 @@ import torch.nn as nn
 
 
 class Accuracy(nn.Module):
-
-    def __init__(self, topk=[1,5]):
+    def __init__(self, topk=None):
         super(Accuracy, self).__init__()
-        self.topk = topk
+        self.topk = topk or [1, 5]
 
     def __call__(self, cri_out, net_out, batch):
         out = {}
@@ -17,8 +16,9 @@ class Accuracy(nn.Module):
         return out
 
 
-def accuracy(output, target, topk=[1,5], ignore_index=None):
+def accuracy(output, target, topk=None, ignore_index=None):
     """Computes the precision@k for the specified values of k"""
+    topk = topk or [1, 5]
 
     if ignore_index is not None:
         target_mask = (target != ignore_index)

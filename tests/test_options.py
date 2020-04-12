@@ -11,6 +11,7 @@ from bootstrap.lib.options import Options
 from bootstrap.lib.options import OptionsDict
 from bootstrap.lib.utils import merge_dictionaries
 
+
 def reset_options_instance():
     Options._Options__instance = None
     sys.argv = [sys.argv[0]]  # reset command line args
@@ -18,7 +19,7 @@ def reset_options_instance():
 
 def test_empty_path(monkeypatch):
     """ Test empty path
-  
+
         Expected behavior:
 
             .. code-block:: bash
@@ -30,11 +31,8 @@ def test_empty_path(monkeypatch):
 
     monkeypatch.setattr(os, '_exit', sys.exit)
 
-    try:
+    with pytest.raises(Options.MissingOptionsException):
         Options()
-        assert False
-    except SystemExit as e:
-        assert True
 
 
 def test_o():
@@ -77,7 +75,7 @@ def test_path_opts_h():
         Expected behavior:
 
             .. code-block:: bash
-                $ python tests/test_options.py -o test/default.yaml -h                
+                $ python tests/test_options.py -o test/default.yaml -h
                 usage: tests/test_options.py [-h] -o PATH_OPTS [--message [MESSAGE]]
 
                 optional arguments:
@@ -87,11 +85,8 @@ def test_path_opts_h():
     """
     reset_options_instance()
     sys.argv += ['-o', 'tests/default.yaml', '-h']
-    try:
+    with pytest.raises(Options.MissingOptionsException):
         Options()
-        assert False
-    except SystemExit as e:
-        assert True
 
 
 def test_include():
@@ -100,7 +95,7 @@ def test_include():
         Expected behavior:
 
             .. code-block:: bash
-                $ python tests/test_options.py -o tests/sgd.yaml               
+                $ python tests/test_options.py -o tests/sgd.yaml
                 {
                   "path_opts": "test/sgd.yaml",
                   "message": "sgd",
@@ -329,7 +324,7 @@ def test_initialize_options_source_dict_4():
             'network': 'I am a network',
         },
     }
-    with pytest.raises(SystemExit):
+    with pytest.raises(Options.MissingOptionsException):
         Options(source, run_parser=True)
 
 
@@ -525,7 +520,7 @@ def test_has_key_true():
     source = {'abc': 123}
     Options(source, run_parser=False)
     assert Options().options == source
-    assert Options().has_key('abc')
+    assert 'abc' in Options()
 
 
 def test_has_key_false():
@@ -533,7 +528,7 @@ def test_has_key_false():
     source = {'abc': 123}
     Options(source, run_parser=False)
     assert Options().options == source
-    assert not Options().has_key('cba')
+    assert 'cba' not in Options()
 
 
 def test_keys():

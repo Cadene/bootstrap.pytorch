@@ -37,13 +37,10 @@ class ListDictsToDictLists(object):
 
 class PadTensors(object):
 
-    def __init__(self, value=0, use_keys=[], avoid_keys=[]):
+    def __init__(self, value=0, use_keys=None, avoid_keys=None):
         self.value = value
-        self.use_keys = use_keys
-        if len(self.use_keys)>0:
-            self.avoid_keys = []
-        else:
-            self.avoid_keys = avoid_keys
+        self.use_keys = use_keys or []
+        self.avoid_keys = avoid_keys or []
 
     def __call__(self, batch):
         batch = self.pad_tensors(batch)
@@ -60,7 +57,7 @@ class PadTensors(object):
                     out[key] = value
             return out
         elif isinstance(batch, collections.Sequence) and torch.is_tensor(batch[0]):
-            max_size = [max([item.size(i) for item in batch]) for i in range(batch[0].dim())]
+            max_size = [max(item.size(i) for item in batch) for i in range(batch[0].dim())]
             max_size = torch.Size(max_size)
             n_batch = []
             for item in batch:
@@ -70,9 +67,9 @@ class PadTensors(object):
                     if item.dim() == 1:
                         n_item[:item.size(0)] = item
                     elif item.dim() == 2:
-                        n_item[:item.size(0),:item.size(1)] = item
+                        n_item[:item.size(0), :item.size(1)] = item
                     elif item.dim() == 3:
-                        n_item[:item.size(0),:item.size(1),:item.size(2)] = item
+                        n_item[:item.size(0), :item.size(1), :item.size(2)] = item
                     else:
                         raise ValueError
                     n_batch.append(n_item)
@@ -85,9 +82,9 @@ class PadTensors(object):
 
 class StackTensors(object):
 
-    def __init__(self, use_shared_memory=False, avoid_keys=[]):
+    def __init__(self, use_shared_memory=False, avoid_keys=None):
         self.use_shared_memory = use_shared_memory
-        self.avoid_keys = avoid_keys
+        self.avoid_keys = avoid_keys or []
 
     def __call__(self, batch):
         batch = self.stack_tensors(batch)
@@ -108,7 +105,7 @@ class StackTensors(object):
             if self.use_shared_memory:
                 # If we're in a background process, concatenate directly into a
                 # shared memory tensor to avoid an extra copy
-                numel = sum([x.numel() for x in batch])
+                numel = sum(x.numel() for x in batch)
                 storage = batch[0].storage()._new_shared(numel)
                 out = batch[0].new(storage)
             return torch.stack(batch, 0, out=out)
@@ -118,13 +115,10 @@ class StackTensors(object):
 
 class CatTensors(object):
 
-    def __init__(self, use_shared_memory=False, use_keys=[], avoid_keys=[]):
+    def __init__(self, use_shared_memory=False, use_keys=None, avoid_keys=None):
         self.use_shared_memory = use_shared_memory
-        self.use_keys = use_keys
-        if len(self.use_keys)>0:
-            self.avoid_keys = []
-        else:
-            self.avoid_keys = avoid_keys
+        self.use_keys = use_keys or []
+        self.avoid_keys = avoid_keys or []
 
     def __call__(self, batch):
         batch = self.cat_tensors(batch)
@@ -138,8 +132,8 @@ class CatTensors(object):
                    (len(self.use_keys) == 0 and key not in self.avoid_keys):
                     out[key] = self.cat_tensors(value)
                     if ('batch_id' not in out) and torch.is_tensor(value[0]):
-                        out['batch_id'] = torch.cat([i*torch.ones(x.size(0)) \
-                                                     for i,x in enumerate(value)], 0)
+                        out['batch_id'] = torch.cat(
+                            [i * torch.ones(x.size(0)) for i, x in enumerate(value)], 0)
                 else:
                     out[key] = value
             return out
@@ -148,7 +142,7 @@ class CatTensors(object):
             if self.use_shared_memory:
                 # If we're in a background process, concatenate directly into a
                 # shared memory tensor to avoid an extra copy
-                numel = sum([x.numel() for x in batch])
+                numel = sum(x.numel() for x in batch)
                 storage = batch[0].storage()._new_shared(numel)
                 out = batch[0].new(storage)
             return torch.cat(batch, 0, out=out)
@@ -167,7 +161,7 @@ class ToCuda(object):
 
     def to_cuda(self, batch):
         if isinstance(batch, collections.Mapping):
-            return {key: self.to_cuda(value) for key,value in batch.items()}
+            return {key: self.to_cuda(value) for key, value in batch.items()}
         elif torch.is_tensor(batch):
             # TODO: verify async usage
             return batch.cuda(non_blocking=True)
@@ -191,7 +185,7 @@ class ToCpu(object):
 
     def to_cpu(self, batch):
         if isinstance(batch, collections.Mapping):
-            return {key: self.to_cpu(value) for key,value in batch.items()}
+            return {key: self.to_cpu(value) for key, value in batch.items()}
         elif torch.is_tensor(batch):
             return batch.cpu()
         elif type(batch).__name__ == 'Variable':
@@ -254,7 +248,7 @@ class SortByKey(object):
         self.i = 0
 
     def __call__(self, batch):
-        self.set_sort_keys(batch[self.key]) # must be a list
+        self.set_sort_keys(batch[self.key])  # must be a list
         batch = self.sort_by_key(batch)
         return batch
 
@@ -273,7 +267,7 @@ class SortByKey(object):
     def sort_by_key(self, batch):
         if isinstance(batch, collections.Mapping):
             return {key: self.sort_by_key(value) for key, value in batch.items()}
-        elif type(batch) is list:#isinstance(batch, collections.Sequence):
+        elif type(batch) is list:  # isinstance(batch, collections.Sequence):
             return sorted(batch, key=self.get_key, reverse=self.reverse)
         else:
             return batch

@@ -34,9 +34,14 @@ install:
   #- pip install tqdm
   - git clone https://github.com/Cadene/mnist.bootstrap.pytorch ../mnist.bootstrap.pytorch
   - ln -s ../mnist.bootstrap.pytorch/mnist mnist
+  - pre-commit install
 
 script:
   - python -m pytest -s tests ../mnist.bootstrap.pytorch/tests --cov bootstrap --cov-report term-missing
+  # Test the entire repository. We could replace by
+  # pre-commit run --from-ref <from_commit_hash> --to-ref <to_commit_hash>
+  # But this will require us to know the hash from the first unmerged commit, until the last one
+  - pre-commit run --all
 
   # Smoke tests for the examples
   # Mnist

@@ -15,8 +15,8 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
-import bootstrap
-import sphinx_rtd_theme
+import bootstrap  # noqa: F402
+import sphinx_rtd_theme  # noqa: F402
 
 # -- Project information -----------------------------------------------------
 

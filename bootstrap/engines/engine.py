@@ -9,6 +9,7 @@ from ..lib import utils
 from ..lib.options import Options
 from ..lib.logger import Logger
 
+
 class Engine(object):
     """Contains training and evaluation procedures
     """
@@ -73,7 +74,7 @@ class Engine(object):
                 func: the callback function (no argument)
 
             Example usage:
-            
+
             .. code-block:: python
 
                 def func():
@@ -103,7 +104,7 @@ class Engine(object):
         if Options()['dataset']['eval_split']:
             # self.epoch-1 to be equal to the same resumed epoch
             # or to be equal to -1 when not resumed
-            self.eval_epoch(self.model, self.dataset['eval'], self.epoch-1, logs_json=True)
+            self.eval_epoch(self.model, self.dataset['eval'], self.epoch - 1, logs_json=True)
 
         Logger()('Ending evaluation procedures')
 
@@ -111,7 +112,7 @@ class Engine(object):
         """ Launch training procedures
 
             List of the hooks:
-            
+
             - train_on_start: before the full training procedure
 
         """
@@ -152,7 +153,7 @@ class Engine(object):
             - train_on_end_epoch: before saving the logs in logs.json
             - train_on_flush: end of the training procedure for an epoch
         """
-        utils.set_random_seed(Options()['misc']['seed'] + epoch) # to be able to reproduce exps on reload
+        utils.set_random_seed(Options()['misc']['seed'] + epoch)  # to be able to reproduce exps on reload
         Logger()('Training model on {}set for epoch {}'.format(dataset.split, epoch))
         model.train()
 
@@ -179,11 +180,11 @@ class Engine(object):
                 out['loss'].backward()
             else:
                 Logger()('NaN detected')
-            #torch.cuda.synchronize()
+            # torch.cuda.synchronize()
             self.hook(f'{mode}_on_backward')
 
             optimizer.step()
-            #torch.cuda.synchronize()
+            # torch.cuda.synchronize()
             self.hook(f'{mode}_on_update')
 
             timer['process'] = time.time() - timer['elapsed']
@@ -200,7 +201,7 @@ class Engine(object):
             for key, value in out.items():
                 if torch.is_tensor(value):
                     if value.dim() <= 1:
-                        value = value.item() # get number from a torch scalar
+                        value = value.item()  # get number from a torch scalar
                     else:
                         continue
                 if isinstance(value, (list, dict, tuple)):
@@ -208,15 +209,16 @@ class Engine(object):
                 if key not in out_epoch:
                     out_epoch[key] = []
                 out_epoch[key].append(value)
-                Logger().log_value(f'{mode}_batch.'+key, value, should_print=False)
+                Logger().log_value(f'{mode}_batch.' + key, value, should_print=False)
 
             if i % Options()['engine']['print_freq'] == 0 or i == len(batch_loader) - 1:
                 Logger()("{}: epoch {} | batch {}/{}".format(mode, epoch, i, len(batch_loader) - 1))
-                Logger()("{} elapsed: {} | left: {}".format(' '*len(mode),
+                Logger()("{} elapsed: {} | left: {}".format(
+                    ' ' * len(mode),
                     datetime.timedelta(seconds=math.floor(time.time() - timer['begin'])),
                     datetime.timedelta(seconds=math.floor(timer['run_avg'] * (len(batch_loader) - 1 - i)))))
-                Logger()("{} process: {:.5f} | load: {:.5f}".format(' '*len(mode), timer['process'], timer['load']))
-                Logger()("{} loss: {:.5f}".format(' '*len(mode), out['loss'].data.item()))
+                Logger()("{} process: {:.5f} | load: {:.5f}".format(' ' * len(mode), timer['process'], timer['load']))
+                Logger()("{} loss: {:.5f}".format(' ' * len(mode), out['loss'].data.item()))
                 self.hook(f'{mode}_on_print')
 
             timer['elapsed'] = time.time()
@@ -224,12 +226,11 @@ class Engine(object):
 
         Logger().log_value(f'{mode}_epoch.epoch', epoch, should_print=True)
         for key, value in out_epoch.items():
-            Logger().log_value(f'{mode}_epoch.'+key, np.asarray(value).mean(), should_print=True)
-        
+            Logger().log_value(f'{mode}_epoch.' + key, np.asarray(value).mean(), should_print=True)
+
         self.hook(f'{mode}_on_end_epoch')
         Logger().flush()
         self.hook(f'{mode}_on_flush')
-
 
     def eval_epoch(self, model, dataset, epoch, mode='eval', logs_json=True):
         """ Launch evaluation procedures for one epoch
@@ -247,7 +248,7 @@ class Engine(object):
             Returns:
                 out(dict): mean of all the scalar outputs of the model, indexed by output name, for this epoch
         """
-        utils.set_random_seed(Options()['misc']['seed'] + epoch) # to be able to reproduce exps on reload
+        utils.set_random_seed(Options()['misc']['seed'] + epoch)  # to be able to reproduce exps on reload
         Logger()('Evaluating model on {}set for epoch {}'.format(dataset.split, epoch))
         model.eval()
 
@@ -268,7 +269,7 @@ class Engine(object):
 
             with torch.no_grad():
                 out = model(batch)
-            #torch.cuda.synchronize()
+            # torch.cuda.synchronize()
             self.hook('{}_on_forward'.format(mode))
 
             timer['process'] = time.time() - timer['elapsed']
@@ -285,7 +286,7 @@ class Engine(object):
             for key, value in out.items():
                 if torch.is_tensor(value):
                     if value.dim() <= 1:
-                        value = value.item() # get number from a torch scalar
+                        value = value.item()  # get number from a torch scalar
                     else:
                         continue
                 if isinstance(value, (list, dict, tuple)):
@@ -297,18 +298,19 @@ class Engine(object):
 
             if i % Options()['engine']['print_freq'] == 0:
                 Logger()("{}: epoch {} | batch {}/{}".format(mode, epoch, i, len(batch_loader) - 1))
-                Logger()("{}  elapsed: {} | left: {}".format(' '*len(mode), 
+                Logger()("{}  elapsed: {} | left: {}".format(
+                    ' ' * len(mode),
                     datetime.timedelta(seconds=math.floor(time.time() - timer['begin'])),
                     datetime.timedelta(seconds=math.floor(timer['run_avg'] * (len(batch_loader) - 1 - i)))))
-                Logger()("{}  process: {:.5f} | load: {:.5f}".format(' '*len(mode), timer['process'], timer['load']))
+                Logger()("{}  process: {:.5f} | load: {:.5f}".format(' ' * len(mode), timer['process'], timer['load']))
                 self.hook('{}_on_print'.format(mode))
-            
+
             timer['elapsed'] = time.time()
             self.hook('{}_on_end_batch'.format(mode))
 
         out = {}
         for key, value in out_epoch.items():
-            out[key] = sum(value)/len(value)
+            out[key] = sum(value) / len(value)
 
         Logger().log_value('{}_epoch.epoch'.format(mode), epoch, should_print=True)
         for key, value in out.items():
@@ -332,7 +334,7 @@ class Engine(object):
                 is_best(bool)
 
             Example usage:
-            
+
             .. code-block:: python
 
                 out = {
@@ -351,9 +353,9 @@ class Engine(object):
         else:
             error_msg = """'--engine.saving_criteria' named '{}' does not specify order,
             you need to chose between '{}' or '{}' to specify if the criteria needs to be minimize or maximize""".format(
-                saving_criteria, saving_criteria+':min', saving_criteria+':max')
+                saving_criteria, saving_criteria + ':min', saving_criteria + ':max')
             raise ValueError(error_msg)
-        
+
         if name not in out:
             raise KeyError("'--engine.saving_criteria' named '{}' not in outputs '{}'".format(name, list(out.keys())))
 
@@ -419,4 +421,3 @@ class Engine(object):
         Logger()('Saving engine...')
         engine_state = self.state_dict()
         torch.save(engine_state, path_template.format(name, 'engine'))
-

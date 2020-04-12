@@ -1,4 +1,5 @@
 torch>=0.4
+pre-commit
 torchvision
 numpy
 argparse

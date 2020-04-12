@@ -3,8 +3,8 @@ import importlib
 from bootstrap.lib.options import Options
 from bootstrap.lib.logger import Logger
 
-def factory(engine=None):
 
+def factory(engine=None):
     Logger()('Creating network...')
 
     if 'import' in Options()['model']['network']:
