@@ -85,4 +85,6 @@ Contributions to this repository are welcome and encouraged. We also have a <a h
 We use flake8 to perform early semantic checking of submitted code. After installing all the requirements in requirements.txt, please run the following to activate the pre-commit hooks for flake8:
 `pre-commit install`
 
+To manually trigger the pre-commit checks for a file without creating a commit, you can run the following command: `pre-commit run --files <your_files.py>`
+
 `bootstrap.pytorch` was conceived and is maintained by <a href="http://remicadene.com">Rémi Cadène</a> and <a href="http://micaelcarvalho.com">Micael Carvalho</a>, with helpful discussions and insights from <a href="http://www.thomas-robert.fr/en/">Thomas Robert</a> and <a href="https://twitter.com/labegne">Hedi Ben-Younes</a>. We chose to adopt the [very permissive] BSD-3 license, which allows for commercial and private use, making it compatible with both academy and industry standards.
