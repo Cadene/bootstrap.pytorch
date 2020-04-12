@@ -1,5 +1,4 @@
 import torch.nn as nn
-from ..lib.logger import Logger
 from ..datasets import transforms
 from .networks.factory import factory as net_factory
 from .criterions.factory import factory as cri_factory
@@ -11,18 +10,18 @@ class Model(nn.Module):
     """
 
     def __init__(self,
-            engine=None,
-            cuda_tf=transforms.ToCuda,
-            detach_tf=transforms.ToDetach,
-            network=None,
-            criterions={},
-            metrics={}):
+                 engine=None,
+                 cuda_tf=transforms.ToCuda,
+                 detach_tf=transforms.ToDetach,
+                 network=None,
+                 criterions=None,
+                 metrics=None):
         super(Model, self).__init__()
         self.cuda_tf = cuda_tf
         self.detach_tf = detach_tf
         self.network = network
-        self.criterions = criterions
-        self.metrics = metrics
+        self.criterions = criterions or {}
+        self.metrics = metrics or {}
         self.is_cuda = False
         self.eval()
 
@@ -149,7 +148,7 @@ class DefaultModel(Model):
         """
         # by default all modes have criterions
         if engine:
-            modes = list(engine.dataset.keys()) # [train, val] for mnist
+            modes = list(engine.dataset.keys())  # [train, val] for mnist
         else:
             modes = ['train', 'eval']
 
