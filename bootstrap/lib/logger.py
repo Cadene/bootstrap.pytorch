@@ -56,9 +56,10 @@ class Logger(object):
         WHITE = 37
         BACKGROUND = 10
         LIGHT = 60
+
         @staticmethod
         def code(value):
-            '\033[{}m'.format(value)
+            return '\033[{}m'.format(value)
 
     colorcode = {
         DEBUG: Colors.code(Colors.SKY),
