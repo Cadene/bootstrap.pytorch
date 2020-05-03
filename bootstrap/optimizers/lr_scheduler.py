@@ -1,5 +1,4 @@
 import torch.optim.lr_scheduler
-from bootstrap.lib.logger import Logger
 
 
 class LearningRateScheduler():
@@ -29,7 +28,8 @@ class LearningRateScheduler():
 
     def step_scheduler(self):
         self.scheduler.step()
-        Logger().log_value('train_epoch.lr', self.optimizer.param_groups[0]['lr'])
+        log_dict = {'lr': self.optimizer.param_groups[0]['lr']}
+        return log_dict
 
 
 class StepLR(LearningRateScheduler):
