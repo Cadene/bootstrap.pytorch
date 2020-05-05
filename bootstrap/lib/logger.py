@@ -9,12 +9,13 @@
 # SOFTWARE.                                                                     #
 #################################################################################
 
-import os
-import sys
-import inspect
-import sqlite3
-import datetime
 import collections
+import datetime
+import inspect
+import numbers
+import os
+import sqlite3
+import sys
 
 
 class Logger(object):
@@ -176,7 +177,7 @@ class Logger(object):
     def _execute(self, statement, parameters=None, commit=True):
         parameters = parameters or ()
         if not isinstance(parameters, tuple):
-            parameters = (parameters)
+            parameters = (parameters,)
         return_value = self.sqlite_cur.execute(statement, parameters)
         if commit:
             self.sqlite_conn.commit()
@@ -208,25 +209,28 @@ class Logger(object):
         query = "SELECT name FROM PRAGMA_TABLE_INFO(?)"
         qry_cur = self._run_query(query, (table_name,))
         columns = [res[0] for res in qry_cur]
+        # remove __id and __timestamp columns
+        columns = [c for c in columns if not c.startswith('__')]
         return columns
 
     @staticmethod
     def _get_data_type(value):
-        # Only text and numeric are supported for now
         if isinstance(value, str):
             return 'TEXT'
-        else:
+        if isinstance(value, numbers.Number):
             return 'NUMERIC'
+        raise ValueError('Only text and numeric are supported for now')
 
     def _add_column(self, table_name, column_name, value_sample=None):
         table_name = self._get_internal_table_name(table_name)
-        statement = "ALTER TABLE ? ADD ? {}".format(self._get_data_type(value_sample))
-        return self._execute(statement, (table_name, column_name))
+        value_type = self._get_data_type(value_sample)
+        statement = f'ALTER TABLE {table_name} ADD COLUMN {column_name} {value_type}'
+        return self._execute(statement)
 
     def _flatten_dict(self, dictionary, flatten_dict=None, prefix=''):
         flatten_dict = flatten_dict or {}
         for key, value in dictionary.items():
-            local_prefix = f'{prefix}.{key}'
+            local_prefix = f'{prefix}.{key}' if prefix else key
             if isinstance(value, dict):
                 self._flatten_dict(value, flatten_dict, prefix=local_prefix)
             else:
@@ -239,7 +243,7 @@ class Logger(object):
         table_name = self._get_internal_table_name(table_name)
         column_string = ', '.join(columns)
         value_placeholder = ', '.join(['?'] * len(columns))
-        statement = f'INSERT INTO ?({column_string}) VALUES({value_placeholder})'
+        statement = f'INSERT INTO {table_name} ({column_string}) VALUES({value_placeholder})'
         parameters = tuple(val for val in flat_dictionary.values())
         return self._execute(statement, parameters)
 
@@ -248,20 +252,21 @@ class Logger(object):
             return -1
 
         flat_dictionary = self._flatten_dict(dictionary)
-        if self._check_table_exists(group):
+        if self._check_table_exists(group).fetchone():
             columns = self._list_columns(group)
-            for key in flat_dictionary.keys():
+            for key in flat_dictionary:
                 if key not in columns:
                     self.log_message('Key "{}" is unknown. New keys are not allowed'.format(key), log_level=self.ERROR)
             for column_name in columns:
                 if column_name not in flat_dictionary:
-                    self.log_message('Key "{}" not in the dictionary to be logged'.format(key), log_level=self.ERROR)
+                    self.log_message('Key "{}" not in the dictionary to be logged'.format(column_name), log_level=self.ERROR)
         else:
             self._create_table(group)
-            for key, value in flat_dictionary.keys():
+            for key, value in flat_dictionary.items():
                 self._add_column(group, key, value)
 
         self._insert_row(group, flat_dictionary)
+
         if should_print:
             self.log_dict_message(group, dictionary, description, stack_displacement + 1, log_level)
 
