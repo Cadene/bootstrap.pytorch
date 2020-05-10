@@ -1,91 +1,54 @@
-import os
 from pathlib import Path
 from argparse import ArgumentParser
 
-
-file_dir = Path(__file__).parent
-
-
-parser = ArgumentParser()
-parser.add_argument("--project_name", type=str, help="Project name")
-
-
-def get_template_file(filename, project_name):
-    parts = list(filename.parts)
-    project_index = parts.index(project_name.lower())
-    if parts[-1] not in ["__init__.py", "factory.py"]:
-        parts[-1] = parts[-1].replace("my", "")
-    template_path = "/".join(parts[project_index + 1:])
-    template_path = file_dir / Path("templates/default/project") / template_path
-
-    return template_path
-
-
-def get_file_content(filename, project_name):
-    template = get_template_file(filename, project_name)
-
-    content = Path(template).read_text()
-    content = content.replace("{PROJECT_NAME}", project_name)
-    content = content.replace("{PROJECT_NAME_LOWER}", project_name.lower())
-    content = content.replace("{PROJECT_NAME_UPPER}", project_name.upper())
-
+def replace_content(file_path, prj_name):
+    content = file_path.read_text()
+    content = content.replace('{PROJECT_NAME}', prj_name)
+    content = content.replace('{PROJECT_NAME_LOWER}', prj_name.lower())
+    #content = content.replace('{PROJECT_NAME_UPPER}', pname.upper())
     return content
 
+def new_project(prj_name, prj_dir):
+    # will be rename into project_name.lower() + suffix
+    # ex: dataset.py -> myproject.py
+    files_to_rename = ['dataset.py', 'criterion.py', 'metric.py', 'network.py', 'options.yaml']
 
-def write_files(files, project_name):
-    for f in files:
-        content = get_file_content(f, project_name)
-        f.write_text(content)
+    # will be rename into project_name.lower()
+    # ex: project/datasets -> myproject/datasets
+    dirs_to_rename = ['project']
 
+    path = Path(prj_dir)
+    path = path / f'{prj_name.lower()}.bootstrap.pytorch'
+    path.mkdir()
+    tpl_path = Path(__file__).parent / 'templates' / 'default'
 
-def get_files(directory):
-    dir_name = directory.stem
-    if dir_name == "options":
-        return [directory / "abstract.yaml"]
+    print(f'Creating project {prj_name.lower()} in {path}')
 
-    to_ret = []
-    if dir_name != "models":
-        to_ret.append(directory / "__init__.py")
+    # recursive iteration over directories and files
+    for p in tpl_path.rglob('*'):
 
-    to_ret.append(directory / "factory.py")
-    custom_file = f"my{dir_name[:-1]}.py"
-    to_ret.append(directory / custom_file)
+        # absolute path to local path
+        # ex: bootstrap.pytorch/templates/default/project -> project
+        tpl_local_path = p.relative_to(tpl_path)
 
-    return to_ret
+        # replace name of directories
+        local_path = p.relative_to(tpl_path)
+        for dir_name in dirs_to_rename:
+            local_path = Path(str(local_path).replace(dir_name, prj_name.lower()))
 
+        if p.is_dir():
+            Path(path / local_path).mkdir()
 
-if __name__ == "__main__":
+        if p.is_file():
+            content = replace_content(tpl_path / tpl_local_path, prj_name)
+            if p.name in files_to_rename:
+                local_path = Path(local_path.parent / f'{prj_name.lower()}{p.suffix}')
+            print(local_path)
+            Path(path / local_path).write_text(content)
+
+if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument('--project_name', type=str, default='MyProject')
+    parser.add_argument('--project_dir', type=str, default='.')
     args = parser.parse_args()
-    project_name = args.project_name
-
-    path = Path(f"{project_name.lower()}.bootstrap.pytorch")
-    path.mkdir()
-
-    print(f"Creating logs directory")
-    os.mkdir(path / "logs")
-
-    print(f"Creating project directory and __init__.py file")
-    path = Path(f"{project_name.lower()}.bootstrap.pytorch/{project_name.lower()}")
-    path.mkdir()
-    Path(path / "__init__.py").touch()
-
-    print("Creating models directory and __init__ file")
-    Path(path / "models").mkdir()
-    Path(path / "models/__init__.py").touch()
-
-    directories = [
-        "datasets",
-        "models/networks",
-        "models/criterions",
-        "models/metrics",
-    ]
-
-    for directory in directories:
-        print(f"Creating {directory} folder and associated files")
-        new_dir = path / directory
-        if directory != "models":
-            new_dir.mkdir()
-        files = get_files(new_dir)
-        write_files(files, project_name)
-
-    print("Project is ready !")
+    new_project(args.project_name, args.project_dir)

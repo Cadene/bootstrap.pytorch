@@ -1,12 +1,15 @@
 import torch.nn as nn
 
-
 class {PROJECT_NAME}Network(nn.Module):
-    def __init__(self, *args, **kwargs):
-        super(MyNetwork, self).__init__()
-        # Assign args
 
-    def forward(self, x):
-        # x is a dictionnary given by Dataset class
-        pred = self.net(x)
-        return pred  # This is a tensor (or several tensors)
+    def __init__(self, *args, **kwargs):
+        super({PROJECT_NAME}Network, self).__init__()
+        self.net = nn.Sequential(
+            nn.Linear(kwargs['dim_in'], kwargs['dim_out']),
+            nn.Sigmoid())
+
+    def forward(self, batch):
+        x = batch['data']
+        y = self.net(x)
+        out = {'pred': y}
+        return out

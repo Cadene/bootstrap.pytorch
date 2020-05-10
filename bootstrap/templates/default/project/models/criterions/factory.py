@@ -1,16 +1,12 @@
 from bootstrap.lib.options import Options
-from bootstrap.lib.logger import Logger
-
-from .mycriterion import {PROJECT_NAME}Criterion
-
+from .{PROJECT_NAME_LOWER} import {PROJECT_NAME}Criterion
 
 def factory(engine=None, mode=None):
-    logger = Logger()
-    logger('Creating criterion for {} mode...'.format(mode))
+    opt = Options()['model.criterion']
 
-    if Options()['model']['criterion'].get('import', False):
-        criterion = {PROJECT_NAME}Criterion()
+    if opt['name'] == '{PROJECT_NAME_LOWER}':
+        criterion = {PROJECT_NAME}Criterion(**opt)
     else:
-        raise ValueError()
+        raise ValueError(opt['name'])
 
     return criterion
