@@ -12,8 +12,7 @@ def test_logger_init(tmpdir):
     assert os.path.isfile(Logger()._instance.sqlite_file)
 
     # check default _bootstrap table is empty
-    statement = "SELECT * FROM _bootstrap"
-    rows = Logger()._execute(statement).fetchall()
+    rows = Logger().select('bootstrap').fetchall()
     assert rows == []
 
 
@@ -71,8 +70,10 @@ def test_read(tmpdir):
     for batch_dict in dicts:
         Logger().log_dict('batch', batch_dict)
 
-    statement = "SELECT loss,metric FROM _batch"
-    rows = Logger()._execute(statement).fetchall()
+    rows = Logger().select('batch', ['loss', 'metric']).fetchall()
     for (row, batch_dict) in zip(rows, dicts):
         assert row[0] == batch_dict['loss']
         assert row[1] == batch_dict['metric']
+
+    with pytest.raises(Exception):
+        rows = Logger().select('batch', ['los', 'metric']).fetchall()

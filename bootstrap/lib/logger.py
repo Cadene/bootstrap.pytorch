@@ -271,6 +271,19 @@ class Logger(object):
         if should_print:
             self.log_dict_message(group, dictionary, description, stack_displacement + 1, log_level)
 
+    def select(self, group, columns=None):
+        table_name = self._get_internal_table_name(group)
+        table_columns = self._list_columns(group)
+        if columns is None:
+            column_string = '*'
+        else:
+            for c in columns:
+                if c not in table_columns:
+                    self.log_message(f'Unknown column "{c}"', log_level=self.ERROR)
+            column_string = ', '.join([f'"{c}"' for c in columns])
+        statement = f'SELECT {column_string} FROM {table_name}'
+        return self._execute(statement)
+
     def init_sqlite(self):
         pre_existing = os.path.isfile(self.sqlite_file)
         self.sqlite_conn = sqlite3.connect(self.sqlite_file)
