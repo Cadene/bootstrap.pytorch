@@ -257,10 +257,10 @@ class Logger(object):
             columns = self._list_columns(group)
             for key in flat_dictionary:
                 if key not in columns:
-                    self.log_message('Key "{}" is unknown. New keys are not allowed'.format(key), log_level=self.ERROR)
+                    self.log_message(f'Key "{key}" is unknown. New keys are not allowed', log_level=self.ERROR)
             for column_name in columns:
                 if column_name not in flat_dictionary:
-                    self.log_message('Key "{}" not in the dictionary to be logged'.format(column_name), log_level=self.ERROR)
+                    self.log_message(f'Key "{column_name}" not in the dictionary to be logged', log_level=self.ERROR)
         else:
             self._create_table(group)
             for key, value in flat_dictionary.items():
