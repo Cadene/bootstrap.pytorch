@@ -1,6 +1,5 @@
 import os
 import pytest
-import random
 
 from bootstrap.lib.logger import Logger
 
@@ -8,7 +7,7 @@ from bootstrap.lib.logger import Logger
 def test_logger_init(tmpdir):
     Logger._instance = None
     Logger(dir_logs=tmpdir)
-    
+
     assert os.path.isfile(Logger()._instance.sqlite_file)
 
     # check default _bootstrap table is empty
