@@ -228,7 +228,7 @@ class Logger(object):
         return self._execute(statement)
 
     def _flatten_dict(self, dictionary, flatten_dict=None, prefix=''):
-        flatten_dict = flatten_dict or {}
+        flatten_dict = flatten_dict if flatten_dict is not None else {}
         for key, value in dictionary.items():
             local_prefix = f'{prefix}.{key}' if prefix else key
             if isinstance(value, dict):
