@@ -208,7 +208,7 @@ class Logger(object):
         table_name = self._get_internal_table_name(table_name)
         query = "SELECT name FROM PRAGMA_TABLE_INFO(?)"
         qry_cur = self._run_query(query, (table_name,))
-        columns = [res[0] for res in qry_cur]
+        columns = (res[0] for res in qry_cur)
         # remove __id and __timestamp columns
         columns = [c for c in columns if not c.startswith('__')]
         return columns
@@ -224,7 +224,7 @@ class Logger(object):
     def _add_column(self, table_name, column_name, value_sample=None):
         table_name = self._get_internal_table_name(table_name)
         value_type = self._get_data_type(value_sample)
-        statement = f'ALTER TABLE {table_name} ADD COLUMN {column_name} {value_type}'
+        statement = f'ALTER TABLE {table_name} ADD COLUMN "{column_name}" {value_type}'
         return self._execute(statement)
 
     def _flatten_dict(self, dictionary, flatten_dict=None, prefix=''):
@@ -233,13 +233,14 @@ class Logger(object):
             local_prefix = f'{prefix}.{key}' if prefix else key
             if isinstance(value, dict):
                 self._flatten_dict(value, flatten_dict, prefix=local_prefix)
+            elif not isinstance(value, (float, int)):
+                raise TypeError(f'Invalid value type {type(value)} for {local_prefix}')
             else:
-                assert isinstance(value, (float, int)), f'Invalid value type {type(value)} for {local_prefix}'
                 flatten_dict[local_prefix] = value
         return flatten_dict
 
     def _insert_row(self, table_name, flat_dictionary):
-        columns = self._list_columns(table_name)
+        columns = [f'"{c}"' for c in self._list_columns(table_name)]
         table_name = self._get_internal_table_name(table_name)
         column_string = ', '.join(columns)
         value_placeholder = ', '.join(['?'] * len(columns))
