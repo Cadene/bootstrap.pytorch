@@ -42,7 +42,7 @@ setup(
     # For a discussion on single-sourcing the version across setup.py and the
     # project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version=__version__,  # Required
+    version=__version__,  # noqa: F821  # Required
 
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
@@ -63,7 +63,7 @@ setup(
     #
     # This field corresponds to the "Home-Page" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#home-page-optional
-    url='https://github.com/{PROJECT_NAME}/{PROJECT_NAME_LOWER}.bootstrap.pytorch',  # Optional
+    url='https://github.com/{PROJECT_NAME}/{PROJECT_NAME_LOWER}.bootstrap.pytorch',  # noqa: E501  # Optional
 
     # This should be your name or the name of the organization which owns the
     # project.
@@ -100,7 +100,7 @@ setup(
     # project page. What does your project relate to?
     #
     # Note that this is a string of words separated by whitespace, not a list.
-    keywords='pytorch framework bootstrap deep learning scaffolding',  # Optional
+    keywords='pytorch framework bootstrap deep learning scaffolding',  # noqa: E501  # Optional
 
     # You can just specify package directories manually here if your project is
     # simple. Or you can use find_packages().

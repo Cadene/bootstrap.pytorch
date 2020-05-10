@@ -1,9 +1,10 @@
 import torch.nn as nn
 
-class {PROJECT_NAME}Metric(nn.Module):
+
+class {PROJECT_NAME}Metric(nn.Module):  # noqa: E999
 
     def __init__(self, *args, **kwargs):
-        super({PROJECT_NAME}Metric, self).__init__()
+        super({PROJECT_NAME}Metric, self).__init__()  # noqa: E999
         self.thresh = kwargs['thresh']
 
     def forward(self, cri_out, net_out, batch):

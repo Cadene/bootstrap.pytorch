@@ -1,6 +1,6 @@
 from bootstrap.lib.options import Options
 from bootstrap.lib.logger import Logger
-from .{PROJECT_NAME_LOWER} import {PROJECT_NAME}Dataset
+from .{PROJECT_NAME_LOWER} import {PROJECT_NAME}Dataset  # noqa: E999
 
 
 def factory(engine=None):
@@ -28,7 +28,7 @@ def factory_split(split):
     dict_opt.pop('dir', None)
     dict_opt.pop('batch_size', None)
     dict_opt.pop('nb_threads', None)
-    dataset = {PROJECT_NAME}Dataset(
+    dataset = {PROJECT_NAME}Dataset(  # noqa: E999
         dir_data=opt['dir'],
         split=split,
         batch_size=opt['batch_size'],

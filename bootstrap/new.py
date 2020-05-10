@@ -1,12 +1,14 @@
 from pathlib import Path
 from argparse import ArgumentParser
 
+
 def replace_content(file_path, prj_name):
     content = file_path.read_text()
     content = content.replace('{PROJECT_NAME}', prj_name)
     content = content.replace('{PROJECT_NAME_LOWER}', prj_name.lower())
-    #content = content.replace('{PROJECT_NAME_UPPER}', pname.upper())
+    content = content.replace('  # noqa: E999', '')
     return content
+
 
 def new_project(prj_name, prj_dir):
     # will be rename into project_name.lower() + suffix
@@ -45,6 +47,7 @@ def new_project(prj_name, prj_dir):
                 local_path = Path(local_path.parent / f'{prj_name.lower()}{p.suffix}')
             print(local_path)
             Path(path / local_path).write_text(content)
+
 
 if __name__ == '__main__':
     parser = ArgumentParser()

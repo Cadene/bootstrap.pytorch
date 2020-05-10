@@ -3,9 +3,10 @@ import torch.utils.data as tdata
 from bootstrap.datasets import transforms as btf
 
 
-class {PROJECT_NAME}Dataset(tdata.Dataset):
+class {PROJECT_NAME}Dataset(tdata.Dataset):  # noqa: E999
 
-    def __init__(self,
+    def __init__(
+            self,
             dir_data,
             split='train',
             batch_size=4,
@@ -31,7 +32,6 @@ class {PROJECT_NAME}Dataset(tdata.Dataset):
         self.data = torch.randn(self.nb_items, 10)
         self.target = torch.zeros(self.nb_items)
         self.target[:int(self.nb_items / 2)].fill_(1)
-        #self.target[int(self.nb_items / 2):, 0].fill_(1)
 
     def make_batch_loader(self, batch_size=None, shuffle=None):
         batch_loader = tdata.DataLoader(
