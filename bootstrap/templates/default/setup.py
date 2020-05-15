@@ -21,7 +21,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 # Fields marked as "Optional" may be commented out.
 
 # https://stackoverflow.com/questions/458550/standard-way-to-embed-version-into-python-package/16084844#16084844
-exec(open(path.join(here, 'bootstrap', '__version__.py')).read())
+exec(open(path.join(here, '{PROJECT_NAME_LOWER}', '__version__.py')).read())
 setup(
     # This is the name of your project. The first time you publish this
     # package, this name will be registered for you. It will determine how
@@ -34,7 +34,7 @@ setup(
     # There are some restrictions on what makes a valid project name
     # specification here:
     # https://packaging.python.org/specifications/core-metadata/#name
-    name='bootstrap.pytorch',  # Required
+    name='{PROJECT_NAME_LOWER}.bootstrap.pytorch',  # Required
 
     # Versions should comply with PEP 440:
     # https://www.python.org/dev/peps/pep-0440/
@@ -47,7 +47,7 @@ setup(
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#summary
-    description='High level framework for starting Deep Learning projects',  # Required
+    description='{PROJECT_NAME}',  # Required
 
     # This is an optional longer description of your project that represents
     # the body of text which users will see when they visit PyPI.
@@ -63,15 +63,15 @@ setup(
     #
     # This field corresponds to the "Home-Page" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#home-page-optional
-    url='https://github.com/cadene/bootstrap.pytorch',  # Optional
+    url='https://github.com/{PROJECT_NAME}/{PROJECT_NAME_LOWER}.bootstrap.pytorch',  # noqa: E501  # Optional
 
     # This should be your name or the name of the organization which owns the
     # project.
-    author='Remi Cadene',  # Optional
+    author='{PROJECT_NAME}',  # Optional
 
     # This should be a valid email address corresponding to the author listed
     # above.
-    author_email='remi.cadene@icloud.com',  # Optional
+    author_email='contact@{PROJECT_NAME_LOWER}.com',  # Optional
 
     # Classifiers help users find your project by categorizing it.
     #
@@ -100,7 +100,7 @@ setup(
     # project page. What does your project relate to?
     #
     # Note that this is a string of words separated by whitespace, not a list.
-    keywords='pytorch framework bootstrap deep learning scaffolding',  # Optional
+    keywords='pytorch framework bootstrap deep learning scaffolding',  # noqa: E501  # Optional
 
     # You can just specify package directories manually here if your project is
     # simple. Or you can use find_packages().
@@ -123,16 +123,7 @@ setup(
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        'torch',
-        'numpy',
-        'argparse',
-        'pyyaml',
-        'plotly',
-        'seaborn',
-        'click',
-        'ipdb',
-        'tabulate',
-        'tensorboardX'
+        'bootstrap.pytorch'
     ],
 
     # List additional groups of dependencies here (e.g. development
@@ -157,24 +148,4 @@ setup(
     #     'sample': ['package_data.dat'],
     # },
     include_package_data=True,
-
-    # Although 'package_data' is the preferred approach, in some case you may
-    # need to place data files outside of your packages. See:
-    # http://docs.python.org/3.4/distutils/setupscript.html#installing-additional-files
-    #
-    # In this case, 'data_file' will be installed into '<sys.prefix>/my_data'
-    # data_files=[('my_data', ['data/data_file'])],  # Optional
-
-    # To provide executable scripts, use entry points in preference to the
-    # "scripts" keyword. Entry points provide cross-platform support and allow
-    # `pip` to create the appropriate form of executable for the target
-    # platform.
-    #
-    # For example, the following would provide a command called `sample` which
-    # executes the function `main` from this package when invoked:
-    # entry_points={  # Optional
-    #     'console_scripts': [
-    #         'sample=sample:main',
-    #     ],
-    # },
 )
