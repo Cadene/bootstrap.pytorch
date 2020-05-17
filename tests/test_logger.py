@@ -54,7 +54,20 @@ def test_missing_key(tmpdir):
 def test_str_and_none_values(tmpdir):
     Logger._instance = None
     Logger(dir_logs=tmpdir)
+    Logger().log_dict('batch', {'loss': 1, 'metric': '0.232'})
     Logger().log_dict('batch', {'loss': None, 'metric': '0.232'})
+    Logger().log_dict('batch', {'loss': 'ewewew', 'metric': '0.232'})
+
+
+def test_mixed_nested_dict(tmpdir):
+    Logger._instance = None
+    Logger(dir_logs=tmpdir)
+    Logger().log_dict('batch',
+                      {'loss': [1, 'toto', None, {
+                          'list': ['a', 'b'],
+                          'tuple': ('foo', 'bar'),
+                          'str_': None,
+                      }]})
 
 
 def test_read(tmpdir):

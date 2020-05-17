@@ -231,7 +231,7 @@ class Logger(object):
             local_prefix = f'{prefix}.{key}' if prefix else key
             if isinstance(value, dict):
                 self._flatten_dict(value, flatten_dict, prefix=local_prefix)
-            elif isinstance(value, list):
+            elif isinstance(value, (tuple, list)):
                 dict_list = {idx: val for idx, val in enumerate(value)}
                 self._flatten_dict(dict_list, flatten_dict, prefix=local_prefix)
             elif not isinstance(value, (float, int, str, type(None))):
