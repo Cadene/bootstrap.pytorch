@@ -1,19 +1,27 @@
-import os
+from os import path as osp
 import sys
+from bootstrap.lib.options import Options
 from bootstrap.new import new_project
 from bootstrap.run import run
 from tests.test_options import reset_options_instance
 
 
+def reset_options_instance():
+    Options._Options__instance = None
+    sys.argv = [sys.argv[0]]  # reset command line args
+
+
 def test_new(tmpdir):
     new_project('MyProject', tmpdir)
-    base_dir = os.path.join(tmpdir, 'myproject.bootstrap.pytorch')
-    test_dir = os.path.join(base_dir, 'myproject')
-    options_file = os.path.join(test_dir, 'options/myproject.yaml')
-    sys.path.insert(0, base_dir)
+    code_dir = osp.join(tmpdir, 'myproject.bootstrap.pytorch')
+
+    # path needed to change import
+    # https://stackoverflow.com/questions/23619595/pythons-os-chdir-function-isnt-working
+    sys.path.insert(0, code_dir)
+
     reset_options_instance()
-    sys.argv += ['--path_opts', options_file]
-    sys.argv += ['--exp.dir', 'logs/myproject/1_exp']
+    sys.argv += ['--path_opts', osp.join(code_dir, 'myproject/options/myproject.yaml')]
+    sys.argv += ['--exp.dir', osp.join(code_dir, 'logs/myproject/1_exp')]
     sys.argv += ['--misc.cuda', 'False']
     sys.argv += ['--engine.nb_epochs', '10']
     run()
@@ -35,5 +43,5 @@ def test_new(tmpdir):
     ]
 
     for fname in fnames:
-        file_path = f'logs/myproject/1_exp/{fname}'
-        assert os.path.isfile(file_path)
+        file_path = osp.join(code_dir, f'logs/myproject/1_exp/{fname}')
+        assert osp.isfile(file_path)

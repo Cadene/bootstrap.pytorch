@@ -29,6 +29,10 @@ def new_project(prj_name, prj_dir):
     # recursive iteration over directories and files
     for p in tpl_path.rglob('*'):
 
+        # to uncomment if bug with utf-8 when pytest
+        # if '__pycache__' in str(p):
+        #     continue
+
         # absolute path to local path
         # ex: bootstrap.pytorch/templates/default/project -> project
         tpl_local_path = p.relative_to(tpl_path)
