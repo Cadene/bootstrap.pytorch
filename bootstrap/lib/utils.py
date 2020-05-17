@@ -53,15 +53,15 @@ def env_info():
         info['pip_modules'] = subprocess.check_output(['pip', 'freeze'], stderr=devnull)
         try:
             git_branch_cmd = ['git', 'rev-parse', '--abbrev-ref', 'HEAD']
-            git_local_commit_cmd = ['git', 'rev-parse', 'HEAD']
-            git_status_cmd = ['git', 'status']
+            info['git_branch'] = subprocess.check_output(git_branch_cmd, stderr=devnull).strip().decode('UTF-8')
             git_origin_commit_cmd = ['git', 'rev-parse', 'origin/{}'.format(info['git_branch'])]
             git_diff_origin_commit_cmd = ['git', 'diff', 'origin/{}'.format(info['git_branch'])]
+            git_local_commit_cmd = ['git', 'rev-parse', 'HEAD']
+            git_status_cmd = ['git', 'status']
+            info['git_origin_commit'] = subprocess.check_output(git_origin_commit_cmd, stderr=devnull)
             git_log_since_origin_cmd = ['git', 'log', '--pretty=oneline', '{}..HEAD'.format(info['git_origin_commit'])]
-            info['git_branch'] = subprocess.check_output(git_branch_cmd, stderr=devnull).strip().decode('UTF-8')
             info['git_local_commit'] = subprocess.check_output(git_local_commit_cmd, stderr=devnull)
             info['git_status'] = subprocess.check_output(git_status_cmd, stderr=devnull)
-            info['git_origin_commit'] = subprocess.check_output(git_origin_commit_cmd, stderr=devnull)
             info['git_diff_origin_commit'] = subprocess.check_output(git_diff_origin_commit_cmd, stderr=devnull)
             info['git_log_since_origin'] = subprocess.check_output(git_log_since_origin_cmd, stderr=devnull)
         except subprocess.CalledProcessError:

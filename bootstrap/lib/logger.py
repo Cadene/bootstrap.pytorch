@@ -9,12 +9,12 @@
 # SOFTWARE.                                                                     #
 #################################################################################
 
-import os
-import sys
-import json
-import inspect
-import datetime
 import collections
+import datetime
+import inspect
+import os
+import sqlite3
+import sys
 
 
 class Logger(object):
@@ -27,9 +27,9 @@ class Logger(object):
             Logger(dir_logs='logs/mnist')
             Logger().log_value('train_epoch.epoch', epoch)
             Logger().log_value('train_epoch.mean_acctop1', mean_acctop1)
-            Logger().flush() # write the logs.json
+            Logger().flush() # write the logs.sqlite
 
-            Logger()("Launching training procedures") # written to logs.txt
+            Logger()("Launching training procedures")  # written to logs.txt
             > [I 2018-07-23 18:58:31] ...trap/engines/engine.py.80: Launching training procedures
     """
 
@@ -70,15 +70,14 @@ class Logger(object):
         SYSTEM: Colors.code(Colors.WHITE + Colors.LIGHT)
     }
 
-    compactjson = True
     log_level = None  # log level
     dir_logs = None
-    path_json = None
+    sqlite_cur = None
+    sqlite_file = None
+    sqlite_conn = None
     path_txt = None
     file_txt = None
     name = None
-    perf_memory = {}
-    values = {}
     max_lineno_width = 3
 
     def __new__(cls, dir_logs=None, name='logs'):
@@ -91,8 +90,8 @@ class Logger(object):
                 Logger._instance.dir_logs = dir_logs
                 Logger._instance.path_txt = os.path.join(dir_logs, '{}.txt'.format(name))
                 Logger._instance.file_txt = open(os.path.join(dir_logs, '{}.txt'.format(name)), 'a+')
-                Logger._instance.path_json = os.path.join(dir_logs, '{}.json'.format(name))
-                Logger._instance.reload_json()
+                Logger._instance.sqlite_file = os.path.join(dir_logs, '{}.sqlite'.format(name))
+                Logger._instance.init_sqlite()
             else:
                 Logger._instance.log_message('No logs files will be created (dir_logs attribute is empty)',
                                              log_level=Logger.WARNING)
@@ -104,9 +103,6 @@ class Logger(object):
 
     def set_level(self, log_level):
         self.log_level = log_level
-
-    def set_json_compact(self, is_compact):
-        self.compactjson = is_compact
 
     def log_message(self, *message, log_level=INFO, break_line=True, print_header=True, stack_displacement=1,
                     raise_error=True, adaptive_width=True):
@@ -162,49 +158,6 @@ class Logger(object):
         if log_level == self.ERROR and raise_error:
             raise Exception(message)
 
-    def log_value(self, name, value, stack_displacement=2, should_print=False, log_level=SUMMARY):
-        if log_level < self.log_level:
-            return -1
-
-        if name not in self.values:
-            self.values[name] = []
-        self.values[name].append(value)
-
-        if should_print:
-            if type(value) == float:
-                if int(value) == 0:
-                    message = '{}: {:.6f}'.format(name, value)
-                else:
-                    message = '{}: {:.2f}'.format(name, value)
-            else:
-                message = '{}: {}'.format(name, value)
-            self.log_message(message, log_level=log_level, stack_displacement=stack_displacement + 1)
-
-    def log_dict(self, group, dictionary, description='', stack_displacement=2, should_print=False, log_level=SUMMARY):
-        if log_level < self.log_level:
-            return -1
-
-        if group not in self.perf_memory:
-            self.perf_memory[group] = {}
-        else:
-            for key in self.perf_memory[group].keys():
-                if key not in dictionary.keys():
-                    self.log_message('Key "{}" not in the dictionary to be logged'.format(key), log_level=self.ERROR)
-            for key in dictionary.keys():
-                if key not in self.perf_memory[group].keys():
-                    self.log_message('Key "{}" is unknown. New keys are not allowed'.format(key), log_level=self.ERROR)
-
-        for key in dictionary.keys():
-            if key in self.perf_memory[group]:
-                self.perf_memory[group][key].extend([dictionary[key]])
-            else:
-                self.perf_memory[group][key] = [dictionary[key]]
-
-        self.values[group] = self.perf_memory[group]
-        if should_print:
-            self.log_dict_message(group, dictionary, description, stack_displacement + 1, log_level)
-        self.flush()
-
     def log_dict_message(self, group, dictionary, description='', stack_displacement=2, log_level=SUMMARY):
         if log_level < self.log_level:
             return -1
@@ -221,28 +174,125 @@ class Logger(object):
         self.log_message('{}: {}'.format(group, description), log_level=log_level, stack_displacement=stack_displacement)
         print_subitem('  ', dictionary, stack_displacement=stack_displacement + 1)
 
-    def reload_json(self):
-        if os.path.isfile(self.path_json):
-            try:
-                with open(self.path_json, 'r') as json_file:
-                    self.values = json.load(json_file)
-            except FileNotFoundError:
-                self.log_message('json log file can not be open: {}'.format(self.path_json), log_level=self.WARNING)
+    def _execute(self, statement, parameters=None, commit=True):
+        assert parameters is None or isinstance(parameters, tuple)
+        parameters = parameters or ()
+        return_value = self.sqlite_cur.execute(statement, parameters)
+        if commit:
+            self.sqlite_conn.commit()
+        return return_value
+
+    def _run_query(self, query, parameters=None):
+        return self._execute(query, parameters, commit=False)
+
+    def _get_internal_table_name(self, table_name):
+        return f'_{table_name}'
+
+    def _check_table_exists(self, table_name):
+        table_name = self._get_internal_table_name(table_name)
+        query = "SELECT name FROM sqlite_master WHERE type='table' AND name=?"
+        return self._run_query(query, (table_name,))
+
+    def _create_table(self, table_name):
+        table_name = self._get_internal_table_name(table_name)
+        statement = f"""
+            CREATE TABLE {table_name} (
+                "__id" INTEGER PRIMARY KEY AUTOINCREMENT, -- rowid
+                "__timestamp" DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+        """
+        self._execute(statement)
+
+    def _list_columns(self, table_name):
+        table_name = self._get_internal_table_name(table_name)
+        query = "SELECT name FROM PRAGMA_TABLE_INFO(?)"
+        qry_cur = self._run_query(query, (table_name,))
+        columns = (res[0] for res in qry_cur)
+        # remove __id and __timestamp columns
+        columns = [c for c in columns if not c.startswith('__')]
+        return columns
+
+    @staticmethod
+    def _get_data_type(value):
+        if isinstance(value, str):
+            return 'TEXT'
+        if isinstance(value, (float, int, type(None))):
+            return 'NUMERIC'
+        raise ValueError(f'Only text and numeric are supported for now, found {type(value)}')
+
+    def _add_column(self, table_name, column_name, value_sample=None):
+        table_name = self._get_internal_table_name(table_name)
+        value_type = self._get_data_type(value_sample)
+        statement = f'ALTER TABLE {table_name} ADD COLUMN "{column_name}" {value_type}'
+        return self._execute(statement)
+
+    def _flatten_dict(self, dictionary, flatten_dict=None, prefix=''):
+        flatten_dict = flatten_dict if flatten_dict is not None else {}
+        for key, value in dictionary.items():
+            local_prefix = f'{prefix}.{key}' if prefix else key
+            if isinstance(value, dict):
+                self._flatten_dict(value, flatten_dict, prefix=local_prefix)
+            elif isinstance(value, (tuple, list)):
+                dict_list = {idx: val for idx, val in enumerate(value)}
+                self._flatten_dict(dict_list, flatten_dict, prefix=local_prefix)
+            elif not isinstance(value, (float, int, str, type(None))):
+                raise TypeError(f'Invalid value type {type(value)} for {local_prefix}')
+            else:
+                flatten_dict[local_prefix] = value
+        return flatten_dict
+
+    def _insert_row(self, table_name, flat_dictionary):
+        columns = [f'"{c}"' for c in self._list_columns(table_name)]
+        table_name = self._get_internal_table_name(table_name)
+        column_string = ', '.join(columns)
+        value_placeholder = ', '.join(['?'] * len(columns))
+        statement = f'INSERT INTO {table_name} ({column_string}) VALUES({value_placeholder})'
+        parameters = tuple(val for val in flat_dictionary.values())
+        return self._execute(statement, parameters)
+
+    def log_dict(self, group, dictionary, description='', stack_displacement=2, should_print=False, log_level=SUMMARY):
+        if log_level < self.log_level:
+            return -1
+
+        flat_dictionary = self._flatten_dict(dictionary)
+        if self._check_table_exists(group).fetchone():
+            columns = self._list_columns(group)
+            for key in flat_dictionary:
+                if key not in columns:
+                    self.log_message(f'Key "{key}" is unknown. New keys are not allowed', log_level=self.ERROR)
+            for column_name in columns:
+                if column_name not in flat_dictionary:
+                    self.log_message(f'Key "{column_name}" not in the dictionary to be logged', log_level=self.ERROR)
+        else:
+            self._create_table(group)
+            for key, value in flat_dictionary.items():
+                self._add_column(group, key, value)
+
+        self._insert_row(group, flat_dictionary)
+
+        if should_print:
+            self.log_dict_message(group, dictionary, description, stack_displacement + 1, log_level)
+
+    def select(self, group, columns=None):
+        table_name = self._get_internal_table_name(group)
+        table_columns = self._list_columns(group)
+        if columns is None:
+            column_string = '*'
+        else:
+            for c in columns:
+                if c not in table_columns:
+                    self.log_message(f'Unknown column "{c}"', log_level=self.ERROR)
+            column_string = ', '.join([f'"{c}"' for c in columns])
+        statement = f'SELECT {column_string} FROM {table_name}'
+        return self._execute(statement)
+
+    def init_sqlite(self):
+        pre_existing = os.path.isfile(self.sqlite_file)
+        self.sqlite_conn = sqlite3.connect(self.sqlite_file)
+        self.sqlite_cur = self.sqlite_conn.cursor()
+        if not pre_existing:
+            self._create_table('bootstrap')
 
     def flush(self):
         if self.dir_logs:
-            self.path_tmp = self.path_json + '.tmp'
-            try:
-                with open(self.path_tmp, 'w') as json_file:
-                    if self.compactjson:
-                        json.dump(self.values, json_file, separators=(',', ':'))
-                    else:
-                        json.dump(self.values, json_file, indent=4)
-                if os.path.isfile(self.path_json):
-                    os.remove(self.path_json)
-                os.rename(self.path_tmp, self.path_json)
-            except Exception as e:
-                print(e)
-                # TODO: Map what exception is this, and replace this "except Exception" for the real exception
-                # we cannot keep this as is, it will eventually catch things we do not want to catch, like a keyboard interrupt
-                raise e
+            self.sqlite_conn.commit()

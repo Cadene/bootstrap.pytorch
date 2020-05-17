@@ -61,9 +61,13 @@ class Engine(object):
             Args:
                 name: the name of the hook
         """
+        return_dict = {}
         if name in self.hooks:
             for func in self.hooks[name]:
-                func()
+                return_func = func()
+                if return_func:
+                    return_dict.update(return_func)
+        return return_dict
 
     def register_hook(self, name, func):
         """ Register a callback function to be triggered when the hook
@@ -164,28 +168,29 @@ class Engine(object):
             'load': None,
             'run_avg': 0
         }
-        out_epoch = {}
+        epoch_dict = {}
         batch_loader = dataset.make_batch_loader()
 
-        self.hook(f'{mode}_on_start_epoch')
+        epoch_dict.update(self.hook(f'{mode}_on_start_epoch'))
         for i, batch in enumerate(batch_loader):
+            batch_dict = {}
             timer['load'] = time.time() - timer['elapsed']
-            self.hook(f'{mode}_on_start_batch')
+            batch_dict.update(self.hook(f'{mode}_on_start_batch'))
 
             optimizer.zero_grad()
             out = model(batch)
-            self.hook(f'{mode}_on_forward')
+            batch_dict.update(self.hook(f'{mode}_on_forward'))
 
             if not torch.isnan(out['loss']):
                 out['loss'].backward()
             else:
                 Logger()('NaN detected')
             # torch.cuda.synchronize()
-            self.hook(f'{mode}_on_backward')
+            batch_dict.update(self.hook(f'{mode}_on_backward'))
 
             optimizer.step()
             # torch.cuda.synchronize()
-            self.hook(f'{mode}_on_update')
+            batch_dict.update(self.hook(f'{mode}_on_update'))
 
             timer['process'] = time.time() - timer['elapsed']
             if i == 0:
@@ -193,23 +198,25 @@ class Engine(object):
             else:
                 timer['run_avg'] = timer['run_avg'] * 0.8 + timer['process'] * 0.2
 
-            Logger().log_value(f'{mode}_batch.epoch', epoch, should_print=False)
-            Logger().log_value(f'{mode}_batch.batch', i, should_print=False)
-            Logger().log_value(f'{mode}_batch.timer.process', timer['process'], should_print=False)
-            Logger().log_value(f'{mode}_batch.timer.load', timer['load'], should_print=False)
+            batch_dict['epoch'] = epoch
+            batch_dict['batch'] = i
+            batch_dict['timer_process'] = timer['process']
+            batch_dict['timer_load'] = timer['load']
 
             for key, value in out.items():
                 if torch.is_tensor(value):
-                    if value.dim() <= 1:
+                    if value.numel() == 1:
                         value = value.item()  # get number from a torch scalar
                     else:
                         continue
                 if isinstance(value, (list, dict, tuple)):
                     continue
-                if key not in out_epoch:
-                    out_epoch[key] = []
-                out_epoch[key].append(value)
-                Logger().log_value(f'{mode}_batch.' + key, value, should_print=False)
+                if key not in epoch_dict:
+                    epoch_dict[key] = []
+                epoch_dict[key].append(value)
+                batch_dict[key] = value
+
+            Logger().log_dict(f'{mode}_batch', batch_dict)
 
             if i % Options()['engine']['print_freq'] == 0 or i == len(batch_loader) - 1:
                 Logger()("{}: epoch {} | batch {}/{}".format(mode, epoch, i, len(batch_loader) - 1))
@@ -219,16 +226,17 @@ class Engine(object):
                     datetime.timedelta(seconds=math.floor(timer['run_avg'] * (len(batch_loader) - 1 - i)))))
                 Logger()("{} process: {:.5f} | load: {:.5f}".format(' ' * len(mode), timer['process'], timer['load']))
                 Logger()("{} loss: {:.5f}".format(' ' * len(mode), out['loss'].data.item()))
-                self.hook(f'{mode}_on_print')
+                epoch_dict.update(self.hook(f'{mode}_on_print'))
 
             timer['elapsed'] = time.time()
-            self.hook(f'{mode}_on_end_batch')
+            epoch_dict.update(self.hook(f'{mode}_on_end_batch'))
 
-        Logger().log_value(f'{mode}_epoch.epoch', epoch, should_print=True)
-        for key, value in out_epoch.items():
-            Logger().log_value(f'{mode}_epoch.' + key, np.asarray(value).mean(), should_print=True)
+        for key in epoch_dict.keys():
+            epoch_dict[key] = np.asarray(epoch_dict[key]).mean()
+        epoch_dict['epoch'] = epoch
 
-        self.hook(f'{mode}_on_end_epoch')
+        epoch_dict.update(self.hook(f'{mode}_on_end_epoch'))
+        Logger().log_dict(f'{mode}_epoch', epoch_dict, should_print=True)
         Logger().flush()
         self.hook(f'{mode}_on_flush')
 
@@ -259,18 +267,19 @@ class Engine(object):
             'load': None,
             'run_avg': 0
         }
-        out_epoch = {}
+        epoch_dict = {}
         batch_loader = dataset.make_batch_loader()
 
-        self.hook('{}_on_start_epoch'.format(mode))
+        epoch_dict.update(self.hook('{}_on_start_epoch'.format(mode)))
         for i, batch in enumerate(batch_loader):
+            batch_dict = {}
             timer['load'] = time.time() - timer['elapsed']
-            self.hook('{}_on_start_batch'.format(mode))
+            batch_dict.update(self.hook('{}_on_start_batch'.format(mode)))
 
             with torch.no_grad():
                 out = model(batch)
             # torch.cuda.synchronize()
-            self.hook('{}_on_forward'.format(mode))
+            batch_dict.update(self.hook('{}_on_forward'.format(mode)))
 
             timer['process'] = time.time() - timer['elapsed']
             if i == 0:
@@ -278,23 +287,25 @@ class Engine(object):
             else:
                 timer['run_avg'] = timer['run_avg'] * 0.8 + timer['process'] * 0.2
 
-            Logger().log_value('{}_batch.batch'.format(mode), i, should_print=False)
-            Logger().log_value('{}_batch.epoch'.format(mode), epoch, should_print=False)
-            Logger().log_value('{}_batch.timer.process'.format(mode), timer['process'], should_print=False)
-            Logger().log_value('{}_batch.timer.load'.format(mode), timer['load'], should_print=False)
+            batch_dict['epoch'] = epoch
+            batch_dict['batch'] = i
+            batch_dict['timer_process'] = timer['process']
+            batch_dict['timer_load'] = timer['load']
 
             for key, value in out.items():
                 if torch.is_tensor(value):
-                    if value.dim() <= 1:
+                    if value.numel() == 1:
                         value = value.item()  # get number from a torch scalar
                     else:
                         continue
                 if isinstance(value, (list, dict, tuple)):
                     continue
-                if key not in out_epoch:
-                    out_epoch[key] = []
-                out_epoch[key].append(value)
-                Logger().log_value('{}_batch.{}'.format(mode, key), value, should_print=False)
+                if key not in epoch_dict:
+                    epoch_dict[key] = []
+                epoch_dict[key].append(value)
+                batch_dict[key] = value
+
+            Logger().log_dict(f'{mode}_batch', batch_dict)
 
             if i % Options()['engine']['print_freq'] == 0:
                 Logger()("{}: epoch {} | batch {}/{}".format(mode, epoch, i, len(batch_loader) - 1))
@@ -303,20 +314,18 @@ class Engine(object):
                     datetime.timedelta(seconds=math.floor(time.time() - timer['begin'])),
                     datetime.timedelta(seconds=math.floor(timer['run_avg'] * (len(batch_loader) - 1 - i)))))
                 Logger()("{}  process: {:.5f} | load: {:.5f}".format(' ' * len(mode), timer['process'], timer['load']))
-                self.hook('{}_on_print'.format(mode))
+                batch_dict.update(self.hook('{}_on_print'.format(mode)))
 
             timer['elapsed'] = time.time()
-            self.hook('{}_on_end_batch'.format(mode))
+            batch_dict.update(self.hook('{}_on_end_batch'.format(mode)))
 
-        out = {}
-        for key, value in out_epoch.items():
-            out[key] = sum(value) / len(value)
+        for key in epoch_dict.keys():
+            epoch_dict[key] = np.asarray(epoch_dict[key]).mean()
+        epoch_dict['epoch'] = epoch
 
-        Logger().log_value('{}_epoch.epoch'.format(mode), epoch, should_print=True)
-        for key, value in out.items():
-            Logger().log_value('{}_epoch.{}'.format(mode, key), value, should_print=True)
+        epoch_dict.update(self.hook('{}_on_end_epoch'.format(mode)))
+        Logger().log_dict(f'{mode}_epoch', epoch_dict, should_print=True)
 
-        self.hook('{}_on_end_epoch'.format(mode))
         if logs_json:
             Logger().flush()
 

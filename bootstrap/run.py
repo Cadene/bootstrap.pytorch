@@ -73,6 +73,7 @@ def run(path_opts=None):
         Logger()('Saving environment info')
         Logger().log_dict('env_info', utils.env_info())
         Logger().log_dict('options', Options(), should_print=True)  # display options
+        Logger().flush()
         Logger()(os.uname())  # display server name
 
         if torch.cuda.is_available():
