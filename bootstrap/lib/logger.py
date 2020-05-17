@@ -174,9 +174,8 @@ class Logger(object):
         print_subitem('  ', dictionary, stack_displacement=stack_displacement + 1)
 
     def _execute(self, statement, parameters=None, commit=True):
+        assert parameters is None or isinstance(parameters, tuple)
         parameters = parameters or ()
-        if not isinstance(parameters, tuple):
-            parameters = (parameters,)
         return_value = self.sqlite_cur.execute(statement, parameters)
         if commit:
             self.sqlite_conn.commit()
@@ -191,7 +190,7 @@ class Logger(object):
     def _check_table_exists(self, table_name):
         table_name = self._get_internal_table_name(table_name)
         query = "SELECT name FROM sqlite_master WHERE type='table' AND name=?"
-        return self._run_query(query, table_name)
+        return self._run_query(query, (table_name,))
 
     def _create_table(self, table_name):
         table_name = self._get_internal_table_name(table_name)
@@ -201,7 +200,7 @@ class Logger(object):
                 "__timestamp" DATETIME DEFAULT CURRENT_TIMESTAMP
             );
         """
-        self._execute(statement, ())
+        self._execute(statement)
 
     def _list_columns(self, table_name):
         table_name = self._get_internal_table_name(table_name)
