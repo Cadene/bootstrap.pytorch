@@ -51,11 +51,10 @@ def test_missing_key(tmpdir):
         Logger().log_dict('batch', {'loss': .22})
 
 
-def test_invalid_value(tmpdir):
+def test_str_and_none_values(tmpdir):
     Logger._instance = None
     Logger(dir_logs=tmpdir)
-    with pytest.raises(TypeError):
-        Logger().log_dict('batch', {'loss': .22, 'metric': '0.232'})
+    Logger().log_dict('batch', {'loss': None, 'metric': '0.232'})
 
 
 def test_read(tmpdir):
