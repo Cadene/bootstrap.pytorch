@@ -12,7 +12,7 @@ def test_new(tmpdir):
     options_file = os.path.join(test_dir, 'options/myproject.yaml')
     sys.path.insert(0, base_dir)
     reset_options_instance()
-    sys.argv += ['-o', options_file]
+    sys.argv += ['--path_opts', options_file]
     sys.argv += ['--exp.dir', 'logs/myproject/1_exp']
     sys.argv += ['--misc.cuda', 'False']
     sys.argv += ['--engine.nb_epochs', '10']
