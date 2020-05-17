@@ -215,9 +215,9 @@ class Logger(object):
     def _get_data_type(value):
         if isinstance(value, str):
             return 'TEXT'
-        if isinstance(value, (float, int)):
+        if isinstance(value, (float, int, type(None))):
             return 'NUMERIC'
-        raise ValueError('Only text and numeric are supported for now')
+        raise ValueError(f'Only text and numeric are supported for now, found {type(value)}')
 
     def _add_column(self, table_name, column_name, value_sample=None):
         table_name = self._get_internal_table_name(table_name)
@@ -231,7 +231,10 @@ class Logger(object):
             local_prefix = f'{prefix}.{key}' if prefix else key
             if isinstance(value, dict):
                 self._flatten_dict(value, flatten_dict, prefix=local_prefix)
-            elif not isinstance(value, (float, int)):
+            elif isinstance(value, list):
+                dict_list = {idx: val for idx, val in enumerate(value)}
+                self._flatten_dict(dict_list, flatten_dict, prefix=local_prefix)
+            elif not isinstance(value, (float, int, str, type(None))):
                 raise TypeError(f'Invalid value type {type(value)} for {local_prefix}')
             else:
                 flatten_dict[local_prefix] = value
