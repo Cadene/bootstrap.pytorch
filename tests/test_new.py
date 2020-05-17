@@ -2,6 +2,7 @@ import os
 import sys
 from bootstrap.new import new_project
 from bootstrap.run import run
+from tests.test_options import reset_options_instance
 
 
 def test_new(tmpdir):
@@ -10,7 +11,12 @@ def test_new(tmpdir):
     test_dir = os.path.join(base_dir, 'myproject')
     options_file = os.path.join(test_dir, 'options/myproject.yaml')
     sys.path.insert(0, base_dir)
-    run(options_file, run_parser=False)
+    reset_options_instance()
+    sys.argv += ['-o', options_file]
+    sys.argv += ['--exp.dir', 'logs/myproject/1_exp']
+    sys.argv += ['--misc.cuda', 'False']
+    sys.argv += ['--engine.nb_epochs', '10']
+    run()
 
     fnames = [
         'ckpt_best_accuracy_engine.pth.tar',
@@ -29,5 +35,5 @@ def test_new(tmpdir):
     ]
 
     for fname in fnames:
-        file_path = os.path.join(test_dir, f'logs/myproject/1_exp/{fname}')
+        file_path = f'logs/myproject/1_exp/{fname}'
         assert os.path.isfile(file_path)
