@@ -53,9 +53,9 @@ def init_logs_options_files(exp_dir, resume=None):
     Logger(exp_dir, name=logs_name)
 
 
-def run(path_opts=None):
+def run(path_opts=None, run_parser=True):
     # first call to Options() load the options yaml file from --path_opts command line argument if path_opts=None
-    Options(path_opts)
+    Options(path_opts, run_parser=run_parser)
 
     # init options and exp dir for logging
     init_experiment_directory(Options()['exp']['dir'], Options()['exp']['resume'])
