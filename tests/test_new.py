@@ -1,14 +1,8 @@
 from os import path as osp
 import sys
-from bootstrap.lib.options import Options
 from bootstrap.new import new_project
 from bootstrap.run import run
 from tests.test_options import reset_options_instance
-
-
-def reset_options_instance():
-    Options._Options__instance = None
-    sys.argv = [sys.argv[0]]  # reset command line args
 
 
 def test_new(tmpdir):
