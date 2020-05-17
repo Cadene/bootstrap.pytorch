@@ -12,7 +12,6 @@
 import collections
 import datetime
 import inspect
-import numbers
 import os
 import sqlite3
 import sys
@@ -217,7 +216,7 @@ class Logger(object):
     def _get_data_type(value):
         if isinstance(value, str):
             return 'TEXT'
-        if isinstance(value, numbers.Number):
+        if isinstance(value, (float, int)):
             return 'NUMERIC'
         raise ValueError('Only text and numeric are supported for now')
 
