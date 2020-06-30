@@ -185,12 +185,13 @@ def main(path_opts=None, run=None):
         if e.code != 0:
             # to avoid traceback for -h flag in arguments line
             Logger()(traceback.format_exc(), log_level=Logger.ERROR, raise_error=False)
-        pass
+        raise
     except KeyboardInterrupt:
         Logger()(traceback.format_exc(), log_level=Logger.ERROR, raise_error=False)
         Logger()('KeyboardInterrupt signal received. Exiting...', log_level=Logger.ERROR, raise_error=False)
+        raise
     except Options.MissingOptionsException:
-        pass
+        raise
     except Exception:
         # to be able to write the error trace to exp_dir/logs.txt
         try:
@@ -200,6 +201,7 @@ def main(path_opts=None, run=None):
             print(traceback.format_exc())
             pass
         process_debugger()
+        raise
 
 
 if __name__ == '__main__':
