@@ -200,8 +200,8 @@ class Engine(object):
 
             for key, value in out.items():
                 if torch.is_tensor(value):
-                    if value.dim() <= 1:
-                        value = value.item()  # get number from a torch scalar
+                    if value.numel() <= 1:
+                        value = value.item() # get number from a torch scalar
                     else:
                         continue
                 if isinstance(value, (list, dict, tuple)):
