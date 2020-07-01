@@ -116,6 +116,10 @@ def run(path_opts=None):
         if Options()['dataset']['train_split']:
             engine.train()
 
+        if hasattr(engine.view, 'current_thread') and engine.view.current_thread.is_alive():
+            # if a view is not yet generated, wait for it.
+            engine.view.current_thread.join()
+
     finally:
         # write profiling results, if enabled
         process_profiler(profiler)
