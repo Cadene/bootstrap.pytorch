@@ -15,6 +15,7 @@ import json
 import inspect
 import datetime
 import collections
+import torch
 
 
 class Logger(object):
@@ -165,7 +166,8 @@ class Logger(object):
     def log_value(self, name, value, stack_displacement=2, should_print=False, log_level=SUMMARY):
         if log_level < self.log_level:
             return -1
-
+        if type(value) == torch.Tensor:
+            value = value.item()
         if name not in self.values:
             self.values[name] = []
         self.values[name].append(value)
