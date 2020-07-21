@@ -1,0 +1,51 @@
+exp:
+  dir: logs/myproject/1_exp
+  resume: # last, best_[...], or empty (from scratch)
+dataset:
+  import: myproject.datasets.factory
+  name: myproject
+  dir: data/myproject
+  train_split: train
+  eval_split: val
+  nb_threads: 4
+  batch_size: 64
+  nb_items: 100
+model:
+  name: default
+  network:
+    import: myproject.models.networks.factory
+    name: myproject
+    dim_in: 10
+    dim_out: 1
+  criterion:
+    import: myproject.models.criterions.factory
+    name: myproject
+  metric:
+    import: myproject.models.metrics.factory
+    name: myproject
+    thresh: 0.5
+optimizer:
+  name: adam
+  lr: 0.0004
+engine:
+  name: default
+  debug: False
+  nb_epochs: 10
+  print_freq: 10
+  saving_criteria:
+  - loss:min     # save when new_best < best
+  - accuracy:max # save when new_best > best
+misc:
+  cuda: False
+  seed: 1337
+views:
+  name: plotly
+  items:
+  - logs:train_epoch.loss+logs:eval_epoch.loss
+  - logs:train_batch.loss
+  - logs:train_epoch.accuracy+logs:eval_epoch.accuracy
+
+
+gridsearch:
+  "optimizer.lr": [0.1, 1.e-3]
+  "misc.seed": [1337, 42]

@@ -161,7 +161,7 @@ class Options(object):
                 raise Options.MissingOptionsException()
             super().exit(status, message)
 
-    def __new__(cls, source=None, arguments_callback=None, lock=False, run_parser=True):
+    def __new__(cls, source=None, arguments_callback=None, lock=False, run_parser=True, override_options=None):
         # Options is a singleton, we will only build if it has not been built before
         if not Options.__instance:
             Options.__instance = object.__new__(Options)
@@ -178,7 +178,7 @@ class Options(object):
 
             if run_parser:
                 fullopt_parser = Options.HelpParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-                fullopt_parser.add_argument('-o', '--path_opts', type=str, required=True)
+                fullopt_parser.add_argument('-o', '--path_opts', type=str)
                 Options.__instance.add_options(fullopt_parser, options_dict)
 
                 arguments = fullopt_parser.parse_args()
@@ -200,6 +200,10 @@ class Options(object):
                     position[nametree[-1]] = value
             else:
                 Options.__instance.options = options_dict
+
+        if override_options is not None:
+            for key, value in override_options.items():
+                Options.__instance.options[key] = value
 
         if lock:
             Options.__instance.lock()
