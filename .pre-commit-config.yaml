@@ -4,3 +4,9 @@ repos:
     hooks:
     - id: flake8
       additional_dependencies: ["flake8-bugbear==20.1.4", "flake8-comprehensions==3.2.2"]
+
+-   repo: https://github.com/timothycrosley/isort
+    rev: 4.3.21  # pick the isort version you'd like to use from https://github.com/timothycrosley/isort/releases
+    hooks:
+    -   id: isort
+        exclude: ^docs/*

@@ -1,9 +1,11 @@
 import importlib
-from bootstrap.lib.options import Options
+
 from bootstrap.lib.logger import Logger
-from .nll import NLLLoss
+from bootstrap.lib.options import Options
+
 from .bce import BCEWithLogitsLoss
 from .cross_entropy import CrossEntropyLoss
+from .nll import NLLLoss
 
 
 def factory(engine=None, mode=None):

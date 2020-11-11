@@ -9,12 +9,12 @@
 # SOFTWARE.                                                                     #
 #################################################################################
 
+import collections
+import datetime
+import inspect
+import json
 import os
 import sys
-import json
-import inspect
-import datetime
-import collections
 
 
 class Logger(object):

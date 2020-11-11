@@ -1,10 +1,8 @@
 import importlib
 
-from ..lib.options import Options
 from ..lib.logger import Logger
-
-from .model import DefaultModel
-from .model import SimpleModel
+from ..lib.options import Options
+from .model import DefaultModel, SimpleModel
 
 
 def factory(engine=None):

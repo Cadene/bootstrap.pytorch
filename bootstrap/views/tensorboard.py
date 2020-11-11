@@ -1,6 +1,8 @@
-import os
 import json
+import os
+
 from tensorboardX import SummaryWriter
+
 from ..lib.logger import Logger
 
 

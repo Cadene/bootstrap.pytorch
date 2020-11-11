@@ -1,9 +1,12 @@
-import os
 import json
 import math
+import os
+
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+
 from plotly.offline import plot
+from plotly.subplots import make_subplots
+
 from ..lib.logger import Logger
 
 

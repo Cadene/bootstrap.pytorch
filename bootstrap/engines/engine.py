@@ -1,13 +1,16 @@
-import os
-import math
-import time
-import torch
 import datetime
+import math
+import os
 import threading
+import time
+
 import numpy as np
+
+import torch
+
 from ..lib import utils
-from ..lib.options import Options
 from ..lib.logger import Logger
+from ..lib.options import Options
 
 
 class Engine(object):

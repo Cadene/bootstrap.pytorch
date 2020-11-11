@@ -1,6 +1,8 @@
 import importlib
-from bootstrap.lib.options import Options
+
 from bootstrap.lib.logger import Logger
+from bootstrap.lib.options import Options
+
 from .accuracy import Accuracy
 
 
