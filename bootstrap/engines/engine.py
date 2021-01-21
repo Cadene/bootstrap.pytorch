@@ -330,7 +330,7 @@ class Engine(object):
             Logger().flush()
 
         self.hook('{}_on_flush'.format(mode))
-        return out
+        return epoch_dict
 
     def is_best(self, out, saving_criteria):
         """ Verify if the last model is the best for a specific saving criteria
