@@ -5,8 +5,6 @@ from .utils import MultiViews
 
 
 def factory(engine=None):
-    Logger()('Creating views...')
-
     # if views does not exist, pick view
     # to support backward compatibility
     if 'views' in Options():
@@ -23,6 +21,8 @@ def factory(engine=None):
         return view
 
     exp_dir = Options()['exp.dir']
+
+    Logger(exp_dir)('Creating views...')
 
     if 'names' in opt:
         view = make_multi_views(opt, exp_dir)

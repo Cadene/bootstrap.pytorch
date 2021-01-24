@@ -1,5 +1,4 @@
 import os
-import json
 import math
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -49,7 +48,6 @@ class Plotly():
         for log_name in log_names:
             path_sqlite = os.path.join(self.exp_dir, '{}.sqlite'.format(log_name))
             if os.path.isfile(path_sqlite):
-                Logger._instance = None
                 data_sqlite = Logger(dir_logs=self.exp_dir, name=log_name)
                 data_dict[log_name] = data_sqlite
             else:
@@ -93,16 +91,19 @@ class Plotly():
                 group = view['view_name'].split('.')[0]
                 columns = [view['view_name'].split('.')[1]]
 
-                y = [x[0] for x in data_dict[view['log_name']].select(group, columns)]
-                x = list(range(len(y)))
+                try:
+                    y = [x[0] for x in data_dict[view['log_name']].select(group, columns)]
+                    x = list(range(len(y)))
 
-                scatter = go.Scatter(
-                    x=x,
-                    y=y,
-                    name=view['view_interim'],
-                    line={'color': color}
-                )
-                figure.append_trace(scatter, figure_pos_y, figure_pos_x)
+                    scatter = go.Scatter(
+                        x=x,
+                        y=y,
+                        name=view['view_interim'],
+                        line={'color': color}
+                    )
+                    figure.append_trace(scatter, figure_pos_y, figure_pos_x)
+                except Exception:
+                    pass
 
         figure['layout'].update(
             autosize=True,
