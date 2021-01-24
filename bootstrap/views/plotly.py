@@ -47,14 +47,13 @@ class Plotly():
 
         data_dict = {}
         for log_name in log_names:
-            path_json = os.path.join(self.exp_dir,
-                                     '{}.json'.format(log_name))
-            if os.path.isfile(path_json):
-                with open(path_json, 'r') as handle:
-                    data_json = json.load(handle)
-                data_dict[log_name] = data_json
+            path_sqlite = os.path.join(self.exp_dir, '{}.sqlite'.format(log_name))
+            if os.path.isfile(path_sqlite):
+                Logger._instance = None
+                data_sqlite = Logger(dir_logs=self.exp_dir, name=log_name)
+                data_dict[log_name] = data_sqlite
             else:
-                Logger()("Json log file '{}' not found in '{}'".format(log_name, path_json), log_level=Logger.WARNING)
+                Logger()("sqlite log file '{}' not found in '{}'".format(log_name, path_sqlite), log_level=Logger.WARNING)
 
         nb_keys = len(items)
         nb_rows = math.ceil(nb_keys / 2)
@@ -83,10 +82,6 @@ class Plotly():
                 if view['log_name'] not in data_dict:
                     continue
 
-                if view['view_name'] not in data_dict[view['log_name']]:
-                    Logger()("View '{}' not in '{}.json'".format(view['view_name'], view['log_name']), log_level=Logger.WARNING)
-                    continue
-
                 if view['split_name'] not in colors:
                     Logger()(
                         "Split '{}' not in colors '{}'".format(view['split_name'], list(colors.keys())),
@@ -95,16 +90,11 @@ class Plotly():
                 else:
                     color = colors[view['split_name']]
 
-                y = data_dict[view['log_name']][view['view_name']]
+                group = view['view_name'].split('.')[0]
+                columns = [view['view_name'].split('.')[1]]
 
-                if 'epoch' in view['split_name']:
-                    # example: data_dict['logs_last']['test_epoch.epoch']
-                    key = view['split_name'] + '.epoch'  # TODO: ugly fix, to be remove
-                    if key not in data_dict[view['log_name']]:
-                        key = 'eval_epoch.epoch'
-                    x = data_dict[view['log_name']][key]
-                else:
-                    x = list(range(len(y)))
+                y = [x[0] for x in data_dict[view['log_name']].select(group, columns)]
+                x = list(range(len(y)))
 
                 scatter = go.Scatter(
                     x=x,

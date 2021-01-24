@@ -4,7 +4,7 @@ from .factory import factory
 
 
 def generate(path_opts=None):
-    Options(path_yaml=path_opts)
+    Options(source=path_opts)
     view = factory()
     view.generate()
 
