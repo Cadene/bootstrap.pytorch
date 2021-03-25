@@ -3,7 +3,7 @@ pre-commit==2.4.0
 torchvision==0.6.0
 numpy==1.18.4
 argparse==1.4.0
-pyyaml==5.3.1
+pyyaml==5.4
 chart-studio==1.1.0
 tensorboardX==2.0
 seaborn==0.10.1
